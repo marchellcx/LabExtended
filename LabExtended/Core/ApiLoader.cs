@@ -372,7 +372,6 @@ public class ApiLoader : Plugin
 
             Scp049CancellingResurrectionPatch.Internal_Init();
             MirrorSetSyncVarPatch.Internal_Init();
-            PrompterQueueIdleModeFix.Internal_Init();
 
             FirearmModuleCache.Internal_Init();
 
