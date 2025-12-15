@@ -25,6 +25,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.2" PrivateAssets="all" />
       <PackageReference Include="Lib.Harmony" Version="2.3.3" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
       <PackageReference Include="System.Drawing.Common" Version="10.0.0-preview.2.25163.9" />
@@ -32,32 +33,32 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Reference Include="Assembly-CSharp">
-        <HintPath>$(LABEX_REFERENCES)\Assembly-CSharp-publicized.dll</HintPath>
+      <Reference Include="Assembly-CSharp" Publicize="true">
+        <HintPath>$(LABEX_REFERENCES)\Assembly-CSharp.dll</HintPath>
       </Reference>
-      <Reference Include="Assembly-CSharp-firstpass">
-        <HintPath>$(LABEX_REFERENCES)\Assembly-CSharp-firstpass-publicized.dll</HintPath>
+      <Reference Include="Assembly-CSharp-firstpass" Publicize="true">
+        <HintPath>$(LABEX_REFERENCES)\Assembly-CSharp-firstpass.dll</HintPath>
       </Reference>
-      <Reference Include="CommandSystem.Core">
+      <Reference Include="CommandSystem.Core" Publicize="true">
         <HintPath>$(LABEX_REFERENCES)\CommandSystem.Core.dll</HintPath>
       </Reference>
-      <Reference Include="LabApi">
-        <HintPath>$(LABEX_REFERENCES)\LabApi-publicized.dll</HintPath>
+      <Reference Include="LabApi" Publicize="true">
+        <HintPath>$(LABEX_REFERENCES)\LabApi.dll</HintPath>
       </Reference>
-      <Reference Include="Mirror">
-        <HintPath>$(LABEX_REFERENCES)\Mirror-publicized.dll</HintPath>
+      <Reference Include="Mirror" Publicize="true">
+        <HintPath>$(LABEX_REFERENCES)\Mirror.dll</HintPath>
       </Reference>
       <Reference Include="Mirror.Components">
         <HintPath>$(LABEX_REFERENCES)\Mirror.Components.dll</HintPath>
       </Reference>
-      <Reference Include="NorthwoodLib">
-        <HintPath>$(LABEX_REFERENCES)\NorthwoodLib-publicized.dll</HintPath>
+      <Reference Include="NorthwoodLib" Publicize="true">
+        <HintPath>$(LABEX_REFERENCES)\NorthwoodLib.dll</HintPath>
       </Reference>
-      <Reference Include="Pooling">
+      <Reference Include="Pooling" Publicize="true">
         <HintPath>$(LABEX_REFERENCES)\Pooling.dll</HintPath>
       </Reference>
-      <Reference Include="Snake">
-        <HintPath>$(LABEX_REFERENCES)\Snake-publicized.dll</HintPath>
+      <Reference Include="Snake" Publicize="true">
+        <HintPath>$(LABEX_REFERENCES)\Snake.dll</HintPath>
       </Reference>
       <Reference Include="Unity.TextMeshPro">
         <HintPath>$(LABEX_REFERENCES)\Unity.TextMeshPro.dll</HintPath>
