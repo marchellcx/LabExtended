@@ -1033,6 +1033,15 @@ public class ExPlayer : Player, IDisposable
     public bool IsUnverified => InstanceMode is ClientInstanceMode.Unverified;
 
     /// <summary>
+    /// Whether or not the player can be seen in the player list.
+    /// </summary>
+    public bool IsVisibleInPlayerList
+    {
+        get => !ReferenceHub.serverRoles.NetworkHideFromPlayerList;
+        set => ReferenceHub.serverRoles.NetworkHideFromPlayerList = !value;
+    }
+
+    /// <summary>
     /// Whether the player is currently disarmed.
     /// </summary>
     public new bool IsDisarmed
