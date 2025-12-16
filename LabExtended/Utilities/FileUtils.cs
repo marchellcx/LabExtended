@@ -562,7 +562,20 @@ namespace LabExtended.Utilities
         /// otherwise, the default value for type T.</param>
         /// <returns>true if the YAML file was found and successfully deserialized; otherwise, false.</returns>
         public static bool TryLoadYamlFile<T>(string directory, string name, out T result)
-            => TryLoadYamlFile(directory, name, null, out result);
+            => TryLoadYamlFile(directory, name, default(IDeserializer), out result);
+        
+        /// <summary>
+        /// Attempts to load a YAML file from the specified directory and deserialize its contents into an object of
+        /// type T.
+        /// </summary>
+        /// <typeparam name="T">The type into which the YAML file contents will be deserialized.</typeparam>
+        /// <param name="directory">The path to the directory containing the YAML file. Cannot be null or empty.</param>
+        /// <param name="name">The name of the YAML file to load, without extension. Cannot be null or empty.</param>
+        /// <param name="result">When this method returns, contains the deserialized object if the file was loaded and parsed successfully;
+        /// otherwise, the default value for type T.</param>
+        /// <returns>true if the YAML file was found and successfully deserialized; otherwise, false.</returns>
+        public static bool TryLoadYamlFile<T>(string directory, string name, Type type, out T result)
+            => TryLoadYamlFile(directory, name, type, null, out result);
 
         /// <summary>
         /// Attempts to load and deserialize a YAML file into an object of type <typeparamref name="T"/>.
@@ -574,6 +587,17 @@ namespace LabExtended.Utilities
         /// <returns>true if the YAML file was successfully loaded and deserialized; otherwise, false.</returns>
         public static bool TryLoadYamlFile<T>(string filePath, out T result)
             => TryLoadYamlFile(filePath, default(IDeserializer), out result);
+        
+        /// <summary>
+        /// Attempts to load and deserialize a YAML file into an object of type <typeparamref name="T"/>.
+        /// </summary>
+        /// <typeparam name="T">The type into which the YAML file will be deserialized.</typeparam>
+        /// <param name="filePath">The path to the YAML file to load. Cannot be null or empty.</param>
+        /// <param name="result">When this method returns, contains the deserialized object if the operation succeeds; otherwise, the default
+        /// value for type <typeparamref name="T"/>.</param>
+        /// <returns>true if the YAML file was successfully loaded and deserialized; otherwise, false.</returns>
+        public static bool TryLoadYamlFile<T>(string filePath, Type type, out T result)
+            => TryLoadYamlFile(filePath, type, default(IDeserializer), out result);
 
         /// <summary>
         /// Attempts to load and deserialize a YAML file from the specified directory and file name into an object of
@@ -601,6 +625,34 @@ namespace LabExtended.Utilities
 
             var filePath = Path.Combine(directory, name);
             return TryLoadYamlFile(filePath, deserializer, out result);
+        }
+        
+        /// <summary>
+        /// Attempts to load and deserialize a YAML file from the specified directory and file name into an object of
+        /// type <typeparamref name="T"/>.
+        /// </summary>
+        /// <remarks>This method does not throw exceptions for missing or invalid files; instead, it
+        /// returns false if the file cannot be loaded or deserialized. The file path is constructed by combining the
+        /// specified directory and file name.</remarks>
+        /// <typeparam name="T">The type into which the YAML file will be deserialized.</typeparam>
+        /// <param name="directory">The path to the directory containing the YAML file. Cannot be null or empty.</param>
+        /// <param name="name">The name of the YAML file to load. Cannot be null or empty.</param>
+        /// <param name="deserializer">An optional YAML deserializer to use for parsing the file. If null, a default deserializer may be used.</param>
+        /// <param name="result">When this method returns, contains the deserialized object if the operation succeeds; otherwise, the default
+        /// value for type <typeparamref name="T"/>.</param>
+        /// <returns>true if the YAML file was successfully loaded and deserialized; otherwise, false.</returns>
+        public static bool TryLoadYamlFile<T>(string directory, string name,  Type type, IDeserializer? deserializer, out T result)
+        {
+            result = default!;
+
+            if (string.IsNullOrEmpty(directory))
+                return false;
+
+            if (string.IsNullOrEmpty(name))
+                return false;
+
+            var filePath = Path.Combine(directory, name);
+            return TryLoadYamlFile(filePath, type, deserializer, out result);
         }
 
         /// <summary>
@@ -640,6 +692,84 @@ namespace LabExtended.Utilities
             catch (Exception ex)
             {
                 ApiLog.Error("LabExtended", $"Caught an exception while loading file &3{Path.GetFileName(filePath)}&r (&6{typeof(T)}&r):\n{ex}");
+
+                try
+                {
+                    var movePath = Path.Combine(
+                        Path.GetDirectoryName(filePath),
+                        string.Concat(
+                            Path.GetFileNameWithoutExtension(filePath),
+                            "_error_",
+                            DateTime.Now.Ticks.ToString(),
+                            Path.GetExtension(filePath)));
+                    
+                    File.Move(filePath, movePath);
+                }
+                catch
+                {
+                    // ignored
+                }
+
+                return false;
+            }
+        }
+        
+        /// <summary>
+        /// Attempts to load and deserialize a YAML file into an object of type <typeparamref name="T"/>.
+        /// </summary>
+        /// <remarks>This method returns false if the file does not exist, is empty, or if deserialization
+        /// fails due to invalid content or an exception. The default deserializer is used if none is
+        /// provided.</remarks>
+        /// <typeparam name="T">The type into which the YAML file content will be deserialized.</typeparam>
+        /// <param name="filePath">The path to the YAML file to load. Cannot be null or empty.</param>
+        /// <param name="type">The type to deserialize to.</param>
+        /// <param name="deserializer">The YAML deserializer to use. If null, a default deserializer is used.</param>
+        /// <param name="result">When this method returns, contains the deserialized object if the operation succeeds; otherwise, the default
+        /// value for type <typeparamref name="T"/>.</param>
+        /// <returns>true if the file was successfully loaded and deserialized; otherwise, false.</returns>
+        public static bool TryLoadYamlFile<T>(string filePath, Type type, IDeserializer? deserializer, out T result)
+        {
+            result = default!;
+
+            if (string.IsNullOrEmpty(filePath))
+                return false;
+
+            deserializer ??= YamlConfigParser.Deserializer;
+
+            try
+            {
+                if (!File.Exists(filePath))
+                    return false;
+
+                var content = File.ReadAllText(filePath);
+
+                if (string.IsNullOrEmpty(content))
+                    return false;
+
+                result = (T)deserializer.Deserialize(content, type)!;
+                return result != null;
+            }
+            catch (Exception ex)
+            {
+                ApiLog.Error("LabExtended", $"Caught an exception while loading file &3{Path.GetFileName(filePath)}&r (&6{typeof(T)}&r):\n{ex}");
+                
+                try
+                {
+                    var movePath = Path.Combine(
+                        Path.GetDirectoryName(filePath),
+                        string.Concat(
+                            Path.GetFileNameWithoutExtension(filePath),
+                            "_error_",
+                            DateTime.Now.Ticks.ToString(),
+                            Path.GetExtension(filePath)));
+                    
+                    File.Move(filePath, movePath);
+                }
+                catch
+                {
+                    // ignored
+                }
+
                 return false;
             }
         }
