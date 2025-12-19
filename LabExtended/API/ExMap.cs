@@ -23,6 +23,8 @@ using MapGeneration.Distributors;
 using Mirror;
 
 using PlayerRoles;
+using PlayerRoles.FirstPersonControl;
+using PlayerRoles.PlayableScps.Scp106;
 using PlayerRoles.Ragdolls;
 using PlayerRoles.PlayableScps.Scp3114;
 
@@ -34,6 +36,7 @@ using UnityEngine;
 
 using Utils;
 using Utils.Networking;
+using Random = UnityEngine.Random;
 
 namespace LabExtended.API;
 
@@ -42,6 +45,8 @@ namespace LabExtended.API;
 /// </summary>
 public static class ExMap
 {
+    private static readonly FacilityZone[] allZones = EnumUtils<FacilityZone>.Values.Except([FacilityZone.None, FacilityZone.Other]).ToArray();
+    
     /// <summary>
     /// List of spawned pickups.
     /// </summary>
@@ -179,6 +184,87 @@ public static class ExMap
     }
 
     /// <summary>
+    /// Calculates and returns the pocket dimension exit position for a specified player.
+    /// </summary>
+    /// <param name="player">The player instance for whom the pocket dimension exit position is being determined.</param>
+    /// <param name="zones">An optional array of facility zones to consider when determining the exit position.</param>
+    /// <returns>A <see cref="Vector3"/> representing the calculated exit position. If the player is invalid or their role lacks the required movement module, returns <see cref="Vector3.zero"/>.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when the provided <paramref name="player"/> is <see langword="null"/> or does not have a valid reference hub.</exception>
+    public static Vector3 GetPocketExitPosition(ExPlayer player, params FacilityZone[] zones)
+    {
+        if (player?.ReferenceHub == null)
+            throw new ArgumentNullException(nameof(player));
+
+        if (player.Role.Role == null 
+            || player.Role.MovementModule == null
+            || player.Role.MovementModule.CharController == null)
+            return Vector3.zero;
+
+        var controller = player.Role.MovementModule.CharController;
+        return GetPocketExitPosition(controller.center, controller.radius, controller.height, zones);
+    }
+
+    /// <summary>
+    /// Calculates and retrieves a safe position for an SCP-106 pocket dimension exit.
+    /// </summary>
+    /// <param name="center">The offset applied to the position during calculation.</param>
+    /// <param name="radius">The radius used to determine the bounds for the pocket exit position.</param>
+    /// <param name="height">The vertical height to account for during calculations.</param>
+    /// <param name="zones">An optional array of facility zones to restrict where the pocket exit may be generated. If not provided, all valid zones will be used by default.</param>
+    /// <returns>A <see cref="Vector3"/> representing the calculated position for the pocket exit. Returns <see langword="Vector3.zero"/> if no valid position can be found.</returns>
+    /// <exception cref="Exception">Thrown if an invalid zone (Other or None) is specified in the <paramref name="zones"/> array.</exception>
+    public static Vector3 GetPocketExitPosition(Vector3 center, float radius, float height, params FacilityZone[] zones)
+    {
+        if (zones?.Length < 1)
+            zones = allZones;
+
+        var zone = zones.RandomItem();
+
+        if (zone is FacilityZone.Other or FacilityZone.None)
+            throw new("Invalid zone specified: Other or None cannot be used to get position");
+
+        var poses = Scp106PocketExitFinder.GetPosesForZone(zone);
+
+        if (poses?.Length < 1)
+            return Vector3.zero;
+
+        var pose = Scp106PocketExitFinder.GetRandomPose(poses);
+        var range = Scp106PocketExitFinder.GetRaycastRange(zone);
+        var forward = pose.forward;
+
+        if (Random.value > 0.5f)
+            forward = -forward;
+
+        return GetSafePosition(pose.position, forward, center, range, radius, height);
+    }
+
+    /// <summary>
+    /// Determines a safe position in a specified direction within a given range.
+    /// </summary>
+    /// <param name="position">The starting position for the calculation.</param>
+    /// <param name="direction">The direction in which to search for the safe position.</param>
+    /// <param name="center">The offset applied to the position during calculation.</param>
+    /// <param name="range">The maximum distance to search for a safe position.</param>
+    /// <param name="radius">The radius of the search area to consider for safety.</param>
+    /// <param name="height">The vertical height to account for during calculations.</param>
+    /// <returns>A <see cref="Vector3"/> representing the closest determined safe position.</returns>
+    public static Vector3 GetSafePosition(Vector3 position, Vector3 direction, Vector3 center, float range,
+        float radius, float height)
+    {
+        direction = Quaternion.Euler(0f, Random.Range(-30f, 30f), 0f) * direction;
+
+        var num = Mathf.Lerp(radius, range, Random.value);
+
+        var vector = Vector3.up * height / 2f;
+        var vector2 = position + center + SafeLocationFinder.GroundOffset + Vector3.up * radius;
+        
+        if (!Physics.SphereCast(vector2, radius, direction, out var hitInfo, num + radius, FpcStateProcessor.Mask))
+            return vector2 + direction * num + vector;
+        
+        return hitInfo.point + hitInfo.normal * radius + vector;
+    }
+
+    /// <summary>
     /// Spawns a new tantrum.
     /// </summary>
     /// <param name="position">Where to spawn the tantrum.</param>
@@ -189,9 +275,9 @@ public static class ExMap
         var instance = PrefabList.Tantrum.Spawn<TantrumEnvironmentalHazard>();
 
         if (!setActive)
-            instance.SynchronizedPosition = new RelativePosition(position);
+            instance.SynchronizedPosition = new(position);
         else
-            instance.SynchronizedPosition = new RelativePosition(position + (Vector3.up * 0.25f));
+            instance.SynchronizedPosition = new(position + (Vector3.up * 0.25f));
 
         instance._destroyed = !setActive;
 
@@ -241,7 +327,7 @@ public static class ExMap
             new UniversalDamageHandler(-1f, DeathTranslations.Warhead));
 
         if (ragdollInstance is null)
-            throw new Exception($"Failed to spawn ragdoll.");
+            throw new($"Failed to spawn ragdoll.");
 
         var bonesRagdoll = SpawnRagdoll(RoleTypeId.Scp3114, position, scale, velocity, rotation, true, ExPlayer.Host,
             new Scp3114DamageHandler(ragdollInstance, false)) as DynamicRagdoll;
@@ -251,7 +337,7 @@ public static class ExMap
         NetworkServer.Destroy(ragdollInstance.gameObject);
 
         if (bonesRagdoll is null)
-            throw new Exception("Failed to spawn bones ragdoll.");
+            throw new("Failed to spawn bones ragdoll.");
 
         Scp3114RagdollToBonesConverter.ServerConvertNew(ExPlayer.Host.Role.Scp3114, bonesRagdoll);
 
@@ -291,16 +377,16 @@ public static class ExMap
         DamageHandlerBase? damageHandler = null)
     {
         if (!ragdollRoleType.TryGetPrefab(out var role))
-            throw new Exception($"Failed to find role prefab for role {ragdollRoleType}");
+            throw new($"Failed to find role prefab for role {ragdollRoleType}");
 
         if (role is not IRagdollRole ragdollRole)
-            throw new Exception($"Role {ragdollRoleType} does not have a ragdoll.");
+            throw new($"Role {ragdollRoleType} does not have a ragdoll.");
 
         damageHandler ??= new UniversalDamageHandler(-1f, DeathTranslations.Crushed);
 
         var ragdoll = UnityEngine.Object.Instantiate(ragdollRole.Ragdoll);
 
-        ragdoll.NetworkInfo = new RagdollData((owner ?? ExPlayer.Host).ReferenceHub, damageHandler,
+        ragdoll.NetworkInfo = new((owner ?? ExPlayer.Host).ReferenceHub, damageHandler,
             ragdoll.transform.localPosition, ragdoll.transform.localRotation);
 
         ragdoll.transform.position = position;
@@ -389,13 +475,13 @@ public static class ExMap
 
         pickup.transform.localScale = scale;
 
-        pickup.Info = new PickupSyncInfo(item, prefab.Weight, serial ?? ItemSerialGenerator.GenerateNext());
+        pickup.Info = new(item, prefab.Weight, serial ?? ItemSerialGenerator.GenerateNext());
 
         if (spawn)
         {
             NetworkServer.Spawn(pickup.gameObject);
 
-            LabApi.Events.Handlers.ServerEvents.OnItemSpawned(new ItemSpawnedEventArgs(pickup));
+            LabApi.Events.Handlers.ServerEvents.OnItemSpawned(new(pickup));
         }
 
         return pickup;
@@ -496,42 +582,42 @@ public static class ExMap
         var settings = throwableItem.FullThrowSettings;
 
         projectile.transform.localScale = scale;
-        projectile.Info = new PickupSyncInfo(item, throwableItem.Weight,
-            serial.HasValue ? serial.Value : ItemSerialGenerator.GenerateNext());
+        projectile.Info = new(item, throwableItem.Weight, serial ?? ItemSerialGenerator.GenerateNext());
 
         settings.StartVelocity = force;
         settings.StartTorque = velocity;
 
-        (projectile as TimeGrenade)!._fuseTime = fuseTime;
+        if (projectile is TimeGrenade timeGrenade) timeGrenade._fuseTime = fuseTime;
 
         if (spawn)
         {
             NetworkServer.Spawn(projectile.gameObject);
-            LabApi.Events.Handlers.ServerEvents.OnItemSpawned(new ItemSpawnedEventArgs(projectile));
-        }
-
-        if (spawn && activate)
-        {
-            if (projectile.TryGetRigidbody(out var rigidbody) && rigidbody != null)
+            
+            LabApi.Events.Handlers.ServerEvents.OnItemSpawned(new(projectile));
+            
+            if (activate)
             {
-                var num = 1f - Mathf.Abs(Vector3.Dot(forward, Vector3.up));
-                var vector = up * throwableItem.FullThrowSettings.UpwardsFactor;
-                var vector2 = forward + vector * num;
+                if (projectile.TryGetRigidbody(out var rigidbody) && rigidbody != null)
+                {
+                    var num = 1f - Mathf.Abs(Vector3.Dot(forward, Vector3.up));
+                    var vector = up * throwableItem.FullThrowSettings.UpwardsFactor;
+                    var vector2 = forward + vector * num;
 
-                rigidbody.centerOfMass = Vector3.zero;
-                rigidbody.angularVelocity = settings.StartTorque;
-                rigidbody.linearVelocity = velocity + vector2 * force;
+                    rigidbody.centerOfMass = Vector3.zero;
+                    rigidbody.angularVelocity = settings.StartTorque;
+                    rigidbody.linearVelocity = velocity + vector2 * force;
+                }
+                else
+                {
+                    projectile.Position = position;
+                    projectile.Rotation = rotation;
+                }
+
+                projectile.ServerActivate();
+
+                new ThrowableNetworkHandler.ThrowableItemAudioMessage(projectile.Info.Serial,
+                    ThrowableNetworkHandler.RequestType.ConfirmThrowFullForce).SendToAuthenticated();
             }
-            else
-            {
-                projectile.Position = position;
-                projectile.Rotation = rotation;
-            }
-
-            projectile.ServerActivate();
-
-            new ThrowableNetworkHandler.ThrowableItemAudioMessage(projectile.Info.Serial,
-                ThrowableNetworkHandler.RequestType.ConfirmThrowFullForce).SendToAuthenticated();
         }
 
         return projectile;
