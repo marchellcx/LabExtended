@@ -299,13 +299,10 @@ public static class PrefabList
     #endregion
 
     #region Weapons
-
     /// <summary>
     /// Gets the prefab of a Jailbird.
     /// </summary>
-    public static PrefabDefinition Jailbird { get; } = new(!HolidayUtils.IsHolidayActive(HolidayType.Halloween)
-        ? "JailbirdPickup"
-        : "JailbirdPickup Halloween");
+    public static PrefabDefinition Jailbird { get; } = new(GetHolidaySuffix("JailbirdPickup", true, false));
 
     /// <summary>
     /// Gets the prefab of a Micro-HID.
@@ -345,14 +342,10 @@ public static class PrefabList
     /// <summary>
     /// Gets the prefab of an SCP-018 projectile.
     /// </summary>
-    public static PrefabDefinition Scp018Projectile { get; } = new(!HolidayUtils.IsHolidayActive(HolidayType.Halloween) 
-        ? "Scp018Projectile"
-        : "Scp018Projectile Halloween");
-
+    public static PrefabDefinition Scp018Projectile { get; } = new(GetHolidaySuffix("Scp018Projectile", true, true));
     #endregion
 
     #region Spawnable Map Prefabs
-
     /// <summary>
     /// Gets the sport version of the shooting target.
     /// </summary>
@@ -487,7 +480,7 @@ public static class PrefabList
     /// Gets the prefab of Hubert Moon.
     /// </summary>
     [Obsolete("Hubert Moon has been removed from the game due to the end of Halloween.", true)]
-    public static PrefabDefinition? HubertMoon { get; }
+    public static PrefabDefinition? HubertMoon { get; } = null;
 
     /// <summary>
     /// Gets the prefab of an elevator's gate.
@@ -573,7 +566,6 @@ public static class PrefabList
     /// Gets the prefab of a gate door.
     /// </summary>
     public static PrefabDefinition GateDoor { get; } = new("Spawnable Unsecured Pryable GateDoor");
-
     #endregion
 
     #region Halloween Prefabs
@@ -587,4 +579,71 @@ public static class PrefabList
     /// </summary>
     public static PrefabDefinition BrownCandyTantrum { get; } = new("TantrumObj (Brown Candy)");
     #endregion
+    
+    #region Christmas Prefabs
+    /// <summary>
+    /// Gets the SCP-559 (cake) prefab.
+    /// </summary>
+    public static PrefabDefinition Scp559 { get; } = new("SCP-559 Cake");
+
+    /// <summary>
+    /// Gets the prefab of the SCP-021-J bottle of water.
+    /// </summary>
+    public static PrefabDefinition Scp021J { get; } = new("SCP021JPickup");
+
+    /// <summary>
+    /// Gets the SCP-956 (pinata) prefab.
+    /// </summary>
+    public static PrefabDefinition Scp956 { get; } = new("SCP-956");
+
+    /// <summary>
+    /// Gets the SCP-2536 (christmas tree) prefab.
+    /// </summary>
+    public static PrefabDefinition Scp2536 { get; } = new("SCP-2536 Tree");
+
+    /// <summary>
+    /// Gets the snowpile prefab.
+    /// </summary>
+    public static PrefabDefinition Snowpile { get; } = new("Snowpile");
+
+    /// <summary>
+    /// Gets the snowball prefab.
+    /// </summary>
+    public static PrefabDefinition Snowball { get; } = new("SnowballProjectile");
+
+    /// <summary>
+    /// Gets the coal pickup prefab.
+    /// </summary>
+    public static PrefabDefinition Coal { get; } = new("CoalPickup");
+
+    /// <summary>
+    /// Gets the coal projectile prefab.
+    /// </summary>
+    public static PrefabDefinition CoalProjectile { get; } = new("CoalProjectile");
+
+    /// <summary>
+    /// Gets the SCP-2536 projectile (ball) prefab.
+    /// </summary>
+    public static PrefabDefinition Scp2536Projectile { get; } = new("Scp2536Projectile");
+
+    /// <summary>
+    /// Gets the prefab of the tape player.
+    /// </summary>
+    public static PrefabDefinition TapePlayer { get; } = new("TapePlayerPickup");
+    #endregion
+
+    // A helper function used to suffix the name of the current holiday (if active)
+    private static string GetHolidaySuffix(string prefab, bool allowHalloween, bool allowChristmas)
+    {
+        var isHalloween = allowHalloween && HolidayUtils.IsHolidayActive(HolidayType.Halloween);
+        var isChristmas = allowChristmas && HolidayUtils.IsHolidayActive(HolidayType.Christmas);
+
+        if (isHalloween)
+            return string.Concat(prefab, " ", "Halloween");
+
+        if (isChristmas)
+            return string.Concat(prefab, " ", "Christmas");
+
+        return prefab;
+    }
 }

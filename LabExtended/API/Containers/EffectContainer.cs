@@ -429,6 +429,11 @@ public class EffectContainer : IDisposable
     public Scp559Effect Scp559 { get; private set; }
     
     /// <summary>
+    /// Gets the player's <see cref="Scp956Target"/> effect.
+    /// </summary>
+    public Scp956Target Scp956 { get; private set; }
+    
+    /// <summary>
     /// Gets the player's <see cref="global::Snowed"/> effect.
     /// </summary>
     public Snowed Snowed { get; private set; }
