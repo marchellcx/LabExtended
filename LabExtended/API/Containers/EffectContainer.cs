@@ -416,6 +416,38 @@ public class EffectContainer : IDisposable
     /// </summary>
     public TraumatizedByEvil TraumatizedByEvil { get; private set; }
     #endregion
+    
+    #region Christmas Effects
+    /// <summary>
+    /// Gets the player's <see cref="CustomPlayerEffects.BecomingFlamingo"/> effect.
+    /// </summary>
+    public BecomingFlamingo BecomingFlamingo { get; private set; }
+    
+    /// <summary>
+    /// Gets the player's <see cref="Scp559Effect"/> effect.
+    /// </summary>
+    public Scp559Effect Scp559 { get; private set; }
+    
+    /// <summary>
+    /// Gets the player's <see cref="global::Snowed"/> effect.
+    /// </summary>
+    public Snowed Snowed { get; private set; }
+    
+    /// <summary>
+    /// Gets the player's <see cref="CustomPlayerEffects.FocusedVision"/> effect.
+    /// </summary>
+    public FocusedVision FocusedVision { get; private set; }
+    
+    /// <summary>
+    /// Gets the player's <see cref="CustomPlayerEffects.AnomalousRegeneration"/> effect.
+    /// </summary>
+    public AnomalousRegeneration AnomalousRegeneration { get; private set; }
+    
+    /// <summary>
+    /// Gets the player's <see cref="CustomPlayerEffects.AnomalousTarget"/> effect.
+    /// </summary>
+    public AnomalousTarget AnomalousTarget { get; private set; }
+    #endregion
 
     /// <summary>
     /// Whether or not the player has a forced fog type.
