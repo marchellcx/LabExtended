@@ -25,6 +25,7 @@ public static class CommandTokenParserUtils
     public static List<CommandTokenParser> Parsers { get; } =
     [
         new PropertyTokenParser(),
+        new MethodTokenParser(),
         
         new CollectionTokenParser(),
         new DictionaryTokenParser(),

@@ -24,6 +24,9 @@ public class PlayerParameterParser : CommandParameterParser
     {
         var sourceString = string.Empty;
 
+        if (token is MethodToken methodToken && methodToken.TryExecuteMethod<ExPlayer>(context, out var result))
+            return new(true, result, null, parameter, this);
+        
         if (token is PropertyToken propertyToken)
         {
             var tokenValue = propertyToken.Name;

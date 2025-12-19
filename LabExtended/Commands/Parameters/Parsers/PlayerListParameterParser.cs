@@ -36,6 +36,8 @@ public class PlayerListParameterParser : CommandParameterParser
     /// </summary>
     public static Dictionary<string, Action<CommandContext, List<ExPlayer>>> TokenHandles { get; } = new()
     {
+        ["@me"] = (ctx, list) => list.Add(ctx.Sender),
+        
         ["*"] = (_, list) => list.AddRange(ExPlayer.Players),
         ["*!"] = (context, list) => list.AddRangeWhere(ExPlayer.Players, p => p != context.Sender),
         
@@ -64,7 +66,7 @@ public class PlayerListParameterParser : CommandParameterParser
 
         if (token is StringToken stringToken)
         {
-            if (stringToken.Value.StartsWith("*") && TokenHandles.TryGetValue(stringToken.Value, out var tokenHandle))
+            if (TokenHandles.TryGetValue(stringToken.Value, out var tokenHandle))
             {
                 var players = new List<ExPlayer>();
 
@@ -78,6 +80,16 @@ public class PlayerListParameterParser : CommandParameterParser
         else if (token is CollectionToken collectionToken)
         {
             list = collectionToken.Values;
+        }
+        else if (token is MethodToken methodToken)
+        {
+            if (methodToken.TryExecuteMethod<List<ExPlayer>>(context, out var resultList))
+                return new(true, resultList, null, parameter, this);
+
+            if (methodToken.TryExecuteMethod<ExPlayer>(context, out var resultPlayer))
+                return new(true, new List<ExPlayer>([resultPlayer]), null, parameter, this);
+
+            return new(false, null, "Method token could not resolve a player instance or list!", parameter, this);
         }
         else
         {

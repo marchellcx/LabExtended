@@ -13,6 +13,7 @@ using LabExtended.Commands.Parameters;
 using LabExtended.Commands.Tokens.Parsing;
 
 using LabExtended.API;
+using LabExtended.Commands.Tokens.Methods;
 using LabExtended.Core;
 using LabExtended.Extensions;
 
@@ -416,5 +417,9 @@ public static class CommandManager
         => Executed?.InvokeSafe(ctx);
 
     internal static void Internal_Init()
-        => ServerEvents.CommandExecuting += OnCommand;
+    {
+        RaycastMethods.RegisterMethods();
+        
+        ServerEvents.CommandExecuting += OnCommand;
+    }
 }

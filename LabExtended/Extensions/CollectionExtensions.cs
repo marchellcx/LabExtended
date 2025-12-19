@@ -155,6 +155,22 @@ public static class CollectionExtensions
     #region Collection Extensions
 
     /// <summary>
+    /// Retrieves an element at the specified index in the collection or a default value if the index is out of range.
+    /// </summary>
+    /// <param name="collection">The collection to retrieve the element from.</param>
+    /// <param name="index">The zero-based index of the element to retrieve.</param>
+    /// <param name="defaultValue">The value to return if the index is out of range.</param>
+    /// <typeparam name="T">The type of elements in the collection.</typeparam>
+    /// <returns>The element at the specified index if within range; otherwise, the provided default value.</returns>
+    public static T AtOrDefault<T>(this IList<T> collection, int index, T defaultValue)
+    {
+        if (index < 0 || index >= collection.Count)
+            return defaultValue;
+
+        return collection[index];
+    }
+
+    /// <summary>
     /// Adds an item if it isn't in the list.
     /// </summary>
     public static bool AddUnique<T>(this IList<T> list, T item)
