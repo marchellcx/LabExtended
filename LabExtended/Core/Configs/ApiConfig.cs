@@ -10,6 +10,12 @@ namespace LabExtended.Core.Configs
     public class ApiConfig
     {
         /// <summary>
+        /// Gets or sets the probability of SCP-956 utilizing the Capybara model.
+        /// </summary>
+        [Description("Sets the chance of SCP-559 using the Capybara model.")]
+        public float? Scp956CapybaraChance { get; set; } = null;
+        
+        /// <summary>
         /// Gets or sets the configuration settings for file storage.
         /// </summary>
         [Description("File Storage configuration.")]
