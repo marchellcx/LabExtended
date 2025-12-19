@@ -30,17 +30,18 @@ namespace LabExtended.API.Custom.Gamemodes
         public static CustomGamemode? Current { get; private set; }
 
         /// <summary>
-        /// Enables the specified custom gamemode, optionally overriding the currently active gamemode.
+        /// Enables the specified gamemode as the current active gamemode.
         /// </summary>
-        /// <remarks>If a gamemode is already active and overrideCurrent is false, the method will not
-        /// enable the new gamemode. If the current gamemode cannot be interrupted mid-round, the specified gamemode may
-        /// be queued for later activation. If overrideCurrent is true, the current gamemode will be disabled before
-        /// enabling the new one.</remarks>
-        /// <param name="gamemode">The custom gamemode to enable. Cannot be null.</param>
-        /// <param name="overrideCurrent">true to forcibly disable the current gamemode and enable the specified one; otherwise, false to only enable
-        /// if no gamemode is currently active.</param>
-        /// <returns>true if the gamemode was successfully enabled; otherwise, false.</returns>
-        /// <exception cref="ArgumentNullException">Thrown if gamemode is null.</exception>
+        /// <remarks>
+        /// If the specified gamemode is already active or cannot be activated mid-round, the method returns without enabling the gamemode.
+        /// If an override is not allowed and a gamemode is already active, the method does not enable the new gamemode.
+        /// </remarks>
+        /// <param name="gamemode">The gamemode instance to enable.</param>
+        /// <param name="overrideCurrent">Indicates whether to allow overriding the currently active gamemode if one is active.</param>
+        /// <returns>
+        /// true if the gamemode is successfully enabled; otherwise, false.
+        /// </returns>
+        /// <exception cref="ArgumentNullException">Thrown when the provided gamemode instance is null.</exception>
         public static bool Enable(CustomGamemode gamemode, bool overrideCurrent = false)
         {
             if (gamemode is null)
@@ -49,13 +50,17 @@ namespace LabExtended.API.Custom.Gamemodes
             if (Current != null && Current == gamemode)
                 return false;
 
-            if (Current != null 
-                && !Current.CanActivateMidRound 
-                && !ExRound.IsWaitingForPlayers)
+            if (!gamemode.CanActivateMidRound && !ExRound.IsWaitingForPlayers)
             {
-                if (!Queue.Contains(gamemode))
-                    Queue.Enqueue(gamemode);
-
+                var list = Queue.ToList();
+                
+                list.Insert(0, gamemode);
+                
+                Queue.Clear();
+                
+                list.ForEach(Queue.Enqueue);
+                list.Clear();
+                
                 return false;
             }
 
