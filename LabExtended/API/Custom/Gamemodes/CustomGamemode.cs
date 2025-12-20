@@ -10,6 +10,8 @@ using LabExtended.Utilities.Update;
 using System.Diagnostics;
 using System.ComponentModel;
 
+using YamlDotNet.Serialization;
+
 namespace LabExtended.API.Custom.Gamemodes
 {
     /// <summary>
@@ -106,13 +108,14 @@ namespace LabExtended.API.Custom.Gamemodes
         /// <summary>
         /// Whether or not the gamemode is currently active.
         /// </summary>
+        [YamlIgnore]
         public bool IsActive { get; private set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the game mode can be activated after a round has already started.
         /// </summary>
         [Description("Whether or not the gamemode can be started in the middle of the round.")]
-        public virtual bool CanActivateMidRound { get; set; }
+        public virtual bool CanActivateMidRound { get; set; } = true;
 
         /// <summary>
         /// Gets or sets a value indicating whether the gamemode prevents the default wave spawns from occurring.
@@ -123,6 +126,7 @@ namespace LabExtended.API.Custom.Gamemodes
         /// <summary>
         /// Gets the amount of time that has elapsed since the gamemode has started.
         /// </summary>
+        [YamlIgnore]
         public TimeSpan RunTime => runTimeWatch.Elapsed;
 
         /// <summary>
@@ -131,6 +135,8 @@ namespace LabExtended.API.Custom.Gamemodes
         public virtual void OnEnabled()
         {
             runTimeWatch.Restart();
+            
+            ApiLog.Info("Custom Gamemodes", $"Enabled custom gamemode &3{Id}&r!");
         }
 
         /// <summary>
@@ -140,6 +146,8 @@ namespace LabExtended.API.Custom.Gamemodes
         {
             runTimeWatch.Stop();
             runTimeWatch.Reset();
+            
+            ApiLog.Info("Custom Gamemodes", $"Disabled custom gamemode &3{Id}&r!");
         }
 
         /// <inheritdoc/>
@@ -314,10 +322,19 @@ namespace LabExtended.API.Custom.Gamemodes
 
         private static void _WaitingForPlayers()
         {
-            Current?.OnWaitingForPlayers();
+            while (Current == null && Queue.TryDequeue(out var gamemode))
+            {
+                if (!Enable(gamemode, true))
+                {
+                    ApiLog.Warn("Custom Gamemodes", $"Queued gamemode &1{gamemode.Id}&r could not be enabled!");
+                }
+                else
+                {
+                    break;
+                }
+            }
 
-            if (Current == null && Queue.TryDequeue(out var gamemode))
-                Enable(gamemode);
+            Current?.OnWaitingForPlayers();
         }
 
         private static void _Update()
