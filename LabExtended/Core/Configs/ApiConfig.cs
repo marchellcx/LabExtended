@@ -14,6 +14,12 @@ namespace LabExtended.Core.Configs
         /// </summary>
         [Description("Sets the chance of SCP-559 using the Capybara model.")]
         public float? Scp956CapybaraChance { get; set; } = null;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether SCP-2536 spawning should be disabled.
+        /// </summary>
+        [Description("Whether or not the SCP-2536 should be prevented from spawning.")]
+        public bool Scp2536Disabled { get; set; }
         
         /// <summary>
         /// Gets or sets the configuration settings for file storage.
