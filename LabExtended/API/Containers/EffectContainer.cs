@@ -996,6 +996,30 @@ public class EffectContainer : IDisposable
         return effect;
     }
 
+    /// <summary>
+    /// Adds a custom player effect to the container and optionally enables it.
+    /// </summary>
+    /// <param name="effect">The custom effect to be added to the container.</param>
+    /// <param name="enableEffect">Specifies whether the effect should be enabled immediately upon being added. Defaults to <c>false</c>.</param>
+    /// <returns>The instance of the added custom player effect.</returns>
+    public CustomPlayerEffect AddCustomEffect(CustomPlayerEffect effect, bool enableEffect = false)
+    {
+        var type = effect.GetType();
+
+        if (CustomEffects.TryGetValue(type, out var active))
+            return active;
+        
+        CustomEffects.Add(type, effect);
+
+        effect.Player = Player;
+        effect.Start();
+
+        if (enableEffect)
+            effect.Enable();
+
+        return effect;
+    }
+
     public bool RemoveCustomEffect<T>() where T : CustomPlayerEffect
     {
         if (!CustomEffects.TryGetValue(typeof(T), out var effect))
