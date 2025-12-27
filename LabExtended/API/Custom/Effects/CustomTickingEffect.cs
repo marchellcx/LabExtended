@@ -2,6 +2,7 @@
 using LabExtended.Utilities.Update;
 
 using UnityEngine;
+using YamlDotNet.Serialization;
 
 namespace LabExtended.API.Custom.Effects;
 
@@ -12,11 +13,11 @@ namespace LabExtended.API.Custom.Effects;
 public class CustomTickingEffect : CustomPlayerEffect
 {
     private float delayTime = 0f;
-    
+
     /// <summary>
     /// Custom delay between each tick.
     /// </summary>
-    public virtual float Delay { get; } = 0f;
+    public virtual float Delay { get; set; } = 0f;
     
     /// <summary>
     /// Called once a frame.

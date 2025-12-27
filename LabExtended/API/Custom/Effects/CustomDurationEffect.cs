@@ -1,6 +1,7 @@
 ﻿using LabExtended.Attributes;
 
 using UnityEngine;
+using YamlDotNet.Serialization;
 
 namespace LabExtended.API.Custom.Effects;
 
@@ -11,21 +12,15 @@ namespace LabExtended.API.Custom.Effects;
 public abstract class CustomDurationEffect : CustomTickingEffect
 {
     /// <summary>
-    /// Gets or sets the remaining duration (in seconds).
+    /// Gets or sets the effect's duration.
     /// </summary>
-    public float RemainingDuration { get; set; } = 0f;
-
-    /// <summary>
-    /// Gets the effect's default duration.
-    /// </summary>
-    /// <returns>The effect's duration.</returns>
-    public abstract float GetDuration();
+    public float Duration { get; set; } = 0f;
     
     /// <summary>
-    /// Called once the remaining duration reaches zero.
+    /// Gets or sets the remaining duration (in seconds).
     /// </summary>
-    /// <returns>Seconds to add to remaining duration.</returns>
-    public virtual float CheckDuration() => 0f;
+    [YamlIgnore]
+    public float RemainingDuration { get; set; } = 0f;
 
     /// <inheritdoc cref="CustomTickingEffect.Tick"/>
     public override void Tick()
@@ -39,14 +34,6 @@ public abstract class CustomDurationEffect : CustomTickingEffect
 
         if (RemainingDuration <= 0f)
         {
-            var addDuration = CheckDuration();
-
-            if (addDuration > 0f)
-            {
-                RemainingDuration += addDuration;
-                return;
-            }
-            
             RemainingDuration = 0f;
             
             IsActive = false;
@@ -57,7 +44,7 @@ public abstract class CustomDurationEffect : CustomTickingEffect
     
     internal override void OnApplyEffects()
     {
-        RemainingDuration = GetDuration();
+        RemainingDuration = Duration;
         IsActive = RemainingDuration > 0f;
         
         if (IsActive)

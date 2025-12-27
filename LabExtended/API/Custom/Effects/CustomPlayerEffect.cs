@@ -7,6 +7,7 @@ using LabExtended.Extensions;
 using LabExtended.Utilities;
 
 using PlayerRoles;
+using YamlDotNet.Serialization;
 
 namespace LabExtended.API.Custom.Effects;
 
@@ -63,11 +64,13 @@ public class CustomPlayerEffect
     /// <summary>
     /// Gets the player that this effect belongs to.
     /// </summary>
+    [YamlIgnore]
     public ExPlayer? Player { get; internal set; }
     
     /// <summary>
     /// Whether or not this effect is active.
     /// </summary>
+    [YamlIgnore]
     public bool IsActive { get; internal set; }
     
     /// <summary>
