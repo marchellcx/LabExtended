@@ -37,7 +37,7 @@ namespace LabExtended.Patches.Functions.Scp939
             }
 
             var module = __instance._scpRole.FpcModule;
-            var range = __instance.BaseRangeForPlayer(hub, fpcRole as HumanRole);
+            var range = __instance.BaseRangeForPlayer(hub, fpcRole);
 
             range = Mathf.Max(range, __instance.DetectionRangeForPlayer(hub));
             range += module.MaxMovementSpeed * __instance._pingTolerance;
