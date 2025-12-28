@@ -296,14 +296,14 @@ public class ExPlayer : Player, IDisposable
         {
             var player = AllPlayers[index];
 
-            if (player is null)
+            if (player?.ReferenceHub == null || string.IsNullOrEmpty(player.UserId))
                 continue;
 
             if (string.Equals(player.UserId, nameOrId, StringComparison.InvariantCultureIgnoreCase)
                 || string.Equals(player.ClearUserId, nameOrId, StringComparison.InvariantCultureIgnoreCase)
                 || string.Equals(player.IpAddress, nameOrId, StringComparison.InvariantCultureIgnoreCase)
-                || string.Equals(player.PlayerId.ToString(), nameOrId) ||
-                string.Equals(player.NetworkId.ToString(), nameOrId))
+                || string.Equals(player.PlayerId.ToString(), nameOrId)
+                || string.Equals(player.NetworkId.ToString(), nameOrId))
                 return player;
 
             var lowerNickname = player.Nickname.ToLowerInvariant();
@@ -312,8 +312,7 @@ public class ExPlayer : Player, IDisposable
             if (similarity is 1.0)
                 return player;
 
-            if ((lowerNickname.Contains(lowerNameOrId) || similarity >= minNameScore) &&
-                similarity > bestMatchValue)
+            if ((lowerNickname.Contains(lowerNameOrId) || similarity >= minNameScore) && similarity > bestMatchValue)
             {
                 bestMatchValue = similarity;
                 bestMatch = player;
