@@ -63,6 +63,34 @@ public static class SettingsManager
         var list = ListPool<ServerSpecificSettingBase>.Shared.Rent();
         var headers = ListPool<string>.Shared.Rent();
 
+        foreach (var menuEntry in player.settingsMenuLookup)
+        {
+            if (menuEntry.Value.IsHidden)
+                continue;
+
+            if (!string.IsNullOrWhiteSpace(menuEntry.Value.Header) && !headers.Contains(menuEntry.Value.CustomId))
+            {
+                headers.Add(menuEntry.Value.CustomId);
+
+                list.Add(new SSGroupHeader(menuEntry.Value.Header,
+                    menuEntry.Value.HeaderReducedPadding, menuEntry.Value.HeaderHint));
+            }
+
+            foreach (var menuSetting in menuEntry.Value.Entries)
+            {
+                if (menuSetting?.Base == null)
+                    continue;
+
+                if (!menuSetting.Player)
+                    continue;
+
+                if (menuSetting.IsHidden)
+                    continue;
+
+                list.Add(menuSetting.Base);
+            }
+        }
+
         foreach (var settingsEntry in player.settingsIdLookup)
         {
             if (settingsEntry.Value?.Base == null)
@@ -75,18 +103,7 @@ public static class SettingsManager
                 continue;
 
             if (settingsEntry.Value.Menu != null)
-            {
-                if (settingsEntry.Value.Menu.IsHidden)
-                    continue;
-
-                if (!string.IsNullOrWhiteSpace(settingsEntry.Value.Menu.Header) && !headers.Contains(settingsEntry.Value.Menu.CustomId))
-                {
-                    headers.Add(settingsEntry.Value.Menu.CustomId);
-
-                    list.Add(new SSGroupHeader(settingsEntry.Value.Menu.Header,
-                        settingsEntry.Value.Menu.HeaderReducedPadding, settingsEntry.Value.Menu.HeaderHint));
-                }
-            }
+                continue;
 
             list.Add(settingsEntry.Value.Base);
         }
@@ -494,6 +511,7 @@ public static class SettingsManager
         menu.Entries = ListPool<SettingsEntry>.Shared.ToArrayReturn(entries);
 
         player.settingsMenuLookup.Add(menu.CustomId, menu);
+        player.settingsMenuLookup.Order(true, m => m.Value.Priority);
 
         if (!string.IsNullOrEmpty(menu.Header))
         {
@@ -775,6 +793,9 @@ public static class SettingsManager
                         $"Failed while building settings for player &1{player.Nickname} ({player.UserId})&r at index &3{i}&r:\n{ex.ToColoredString()}");
                 }
             }
+
+            if (player.settingsMenuLookup.Count > 0)
+                player.settingsMenuLookup.Order(true, m => m.Value.Priority);
 
             if (player.settingsIdLookup.Count > 0)
                 SyncEntries(player);

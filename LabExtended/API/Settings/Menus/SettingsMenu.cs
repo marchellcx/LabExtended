@@ -32,6 +32,11 @@ public abstract class SettingsMenu
     public virtual bool HeaderReducedPadding { get; } = false;
 
     /// <summary>
+    /// Gets the priority of the menu. Higher priority menus are displayed first.
+    /// </summary>
+    public virtual int Priority { get; } = 1;
+
+    /// <summary>
     /// Gets the player assigned to this menu.
     /// </summary>
     public ExPlayer Player { get; internal set; }

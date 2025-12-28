@@ -550,6 +550,40 @@ public static class CollectionExtensions
 
     #region Dictionary Extensions
     /// <summary>
+    /// Reorders the elements of the dictionary in place according to a specified key selector and sort direction.
+    /// </summary>
+    /// <remarks>This method clears and repopulates the dictionary to reflect the new order. The ordering is
+    /// determined by the integer value returned from the selector function for each key-value pair. Note that the order
+    /// of elements in a standard IDictionary{TKey, TValue} implementation is not guaranteed; use this method only with
+    /// dictionary types that preserve insertion order, such as Dictionary{TKey, TValue} in .NET Core 3.0 and later, or
+    /// OrderedDictionary.</remarks>
+    /// <typeparam name="TKey">The type of keys in the dictionary.</typeparam>
+    /// <typeparam name="TValue">The type of values in the dictionary.</typeparam>
+    /// <param name="dict">The dictionary whose elements are to be reordered. Cannot be null.</param>
+    /// <param name="descending">true to sort the dictionary in descending order; otherwise, false for ascending order.</param>
+    /// <param name="selector">A function to extract the sort key from each key-value pair. Cannot be null.</param>
+    /// <exception cref="ArgumentNullException">Thrown if dict or selector is null.</exception>
+    public static void Order<TKey, TValue>(this Dictionary<TKey, TValue> dict, bool descending, Func<KeyValuePair<TKey, TValue>, int> selector)
+    {
+        if (dict is null)
+            throw new ArgumentNullException(nameof(dict));
+
+        if (selector is null)
+            throw new ArgumentNullException(nameof(selector));
+
+        var ordered = (descending
+            ? dict.OrderByDescending(selector)
+            : dict.OrderBy(selector)).ToList();
+
+        dict.Clear();
+
+        foreach (var pair in ordered)
+            dict[pair.Key] = pair.Value;
+
+        ordered.Clear();
+    }
+
+    /// <summary>
     /// Attempts find a key by pair value.
     /// </summary>
     /// <typeparam name="TKey">The type of the key element.</typeparam>
