@@ -265,10 +265,18 @@ public static class WeightUtils
         {
             var weight = picker(i);
 
+            if (weight <= 0f)
+                continue;
+
+            if (weight >= 100f)
+                return i;
+
             for (float x = sum; x < weight + sum; x++)
             {
                 if (x >= rnd)
+                {
                     return i;
+                }
             }
 
             sum += weight;
