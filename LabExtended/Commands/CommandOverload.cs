@@ -38,11 +38,6 @@ public class CommandOverload
     public Dictionary<string, CommandParameterBuilder> ParameterBuilders { get; } = new();
 
     /// <summary>
-    /// Gets the compiled method delegate.
-    /// </summary>
-    public Func<object, object[], object> Method { get; }
-
-    /// <summary>
     /// Gets the empty buffer.
     /// </summary>
     public object[] EmptyBuffer { get; } = Array.Empty<object>();
@@ -120,8 +115,6 @@ public class CommandOverload
         IsEmpty = parameters?.Length == 0;
         IsAsync = target.ReturnType == typeof(Task);
         IsCoroutine = target.ReturnType == typeof(IEnumerator<float>);
-
-        Method = FastReflection.ForMethod(Target);
         
         if (target.DeclaringType != null && target.DeclaringType.InheritsType<ContinuableCommandBase>())
         {
@@ -142,5 +135,31 @@ public class CommandOverload
 
         if (!IsEmpty)
             Buffer = new(new object[ParameterCount], () => new object[ParameterCount]);
+    }
+
+    /// <summary>
+    /// Invokes the underlying command or method with the specified context and arguments.
+    /// </summary>
+    /// <param name="ctx">The command context that provides the target instance and execution environment. Cannot be null.</param>
+    /// <param name="args">An array of arguments to pass to the command or method. The number of elements must match the expected parameter
+    /// count. If the command takes no parameters, this can be null or an empty array.</param>
+    /// <returns>The result returned by the invoked command or method. The type and meaning of the result depend on the specific
+    /// command implementation.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if ctx is null, or if args is null when the command expects one or more parameters.</exception>
+    /// <exception cref="ArgumentException">Thrown if the number of elements in args does not match the expected parameter count.</exception>
+    public object Invoke(CommandContext ctx, object[] args)
+    {
+        if (ctx is null)
+            throw new ArgumentNullException(nameof(ctx));
+
+        if (args is null && !IsEmpty)
+            throw new ArgumentNullException(nameof(args));
+
+        args ??= Array.Empty<object>();
+
+        if (args.Length != ParameterCount)
+            throw new ArgumentException($"Expected {ParameterCount} arguments, but got {args.Length}.");
+
+        return Target.Invoke(ctx.Instance, args);
     }
 }

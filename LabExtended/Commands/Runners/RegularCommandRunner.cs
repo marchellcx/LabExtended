@@ -55,7 +55,7 @@ public class RegularCommandRunner : ICommandRunner
 
         try
         {
-            var result = ctx.Overload.Method(ctx.Instance, buffer);
+            var result = ctx.Overload.Invoke(ctx, buffer);
 
             if (result is IEnumerator<float> coroutine)
             {
