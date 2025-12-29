@@ -67,6 +67,9 @@ public class InputCommandRunner : ICommandRunner
 
         context.WriteResponse(out _);
         context.InvokeExecuted();
+
+        if (context.Response != null && (!context.Response.IsInput || context.Response.onInput == null))
+            context.Sender.activeRunner = null;
         
         return true;
     }

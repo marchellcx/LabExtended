@@ -181,6 +181,19 @@ public static class CommandManager
         if (!ExPlayer.TryGet(ev.Sender, out var player))
             return;
 
+        if (!string.IsNullOrEmpty(ev.CommandName) && string.Equals(ev.CommandName, "labexcmddebug", StringComparison.OrdinalIgnoreCase))
+        {
+            ev.IsAllowed = false;
+
+            player.SendRemoteAdminMessage(
+                $"Player: {player.ToCommandString()}\n" +
+                $"Runner: {player.activeRunner?.GetType().Name ?? "(null)"}\n" +
+                $"AllowOverride: {ApiLoader.ApiConfig.CommandSection.AllowOverride}\n" +
+                $"AllowPooling: {ApiLoader.ApiConfig.CommandSection.AllowInstancePooling}", true, true, "CMDDEBUG");
+
+            return;
+        }
+
         if (player.activeRunner != null && player.activeRunner.ShouldContinue(ev, player))
         {
             ev.IsAllowed = false;
