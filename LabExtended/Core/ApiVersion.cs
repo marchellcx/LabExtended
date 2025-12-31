@@ -20,7 +20,7 @@ public static class ApiVersion
     /// <summary>
     /// The build version part.
     /// </summary>
-    public const int Build = 4;
+    public const int Build = 5;
 
     /// <summary>
     /// The patch version part.
@@ -35,8 +35,7 @@ public static class ApiVersion
     /// <summary>
     /// Gets the game's current version.
     /// </summary>
-    public static Version Game { get; } =
-        new(GameCore.Version.Major, GameCore.Version.Minor, GameCore.Version.Revision);
+    public static Version Game { get; } = new(GameCore.Version.Major, GameCore.Version.Minor, GameCore.Version.Revision);
 
     /// <summary>
     /// Gets the loader's game version compatibility.

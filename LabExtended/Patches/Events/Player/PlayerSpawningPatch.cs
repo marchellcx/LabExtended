@@ -10,7 +10,12 @@ using LabExtended.Core;
 using LabExtended.Utilities;
 using LabExtended.Extensions;
 
+using LabExtended.Patches.Functions.Players;
+
+using Mirror;
+
 using PlayerRoles;
+using PlayerRoles.FirstPersonControl.NetworkMessages;
 
 namespace LabExtended.Patches.Events.Player;
 
@@ -68,14 +73,8 @@ public static class PlayerSpawningPatch
                 __instance.InitializeNewRole(newRole, reason, spawnFlags);
                 
                 beforeSendAction?.InvokeSafe(__instance.CurrentRole);
-                
-                if (RoleSync.IsEnabled)
-                    RoleSync.Internal_Resync(player);
-                else
-                    __instance.SendNewRoleInfo();
-                
-                if (PositionSync.IsEnabled)
-                    PositionSync.Internal_Reset(player);
+
+                SendNewRoleInfo(player);
 
                 PlayerEvents.OnChangedRole(new PlayerChangedRoleEventArgs(player.ReferenceHub,
                     curRole?.RoleTypeId ?? RoleTypeId.None,
@@ -88,6 +87,31 @@ public static class PlayerSpawningPatch
         {
             ApiLog.Error("PlayerSpawningPatch", ex);
             return true;
+        }
+    }
+
+    private static void SendNewRoleInfo(ExPlayer player)
+    {
+        for (var x = 0; x < ExPlayer.AllCount; x++)
+        {
+            var receiver = ExPlayer.AllPlayers[x];
+
+            if (receiver?.ReferenceHub == null) continue;
+            if (receiver.ReferenceHub.isLocalPlayer) continue;
+
+            var visibleRole = FpcServerPositionDistributor.GetVisibleRole(receiver.ReferenceHub, player.ReferenceHub);
+
+            using var writer = NetworkWriterPool.Get();
+
+            var baseRoleEvent = FpcServerPositionDistributor.InvokeRoleSyncEvent(player.ReferenceHub, receiver.ReferenceHub, visibleRole, writer);
+            var roleEvent = PlayerPositionSyncPatch.InvokeEvent(player, receiver, visibleRole, writer);
+
+            if (baseRoleEvent != null) visibleRole = baseRoleEvent.Value;
+            if (roleEvent != null) visibleRole = roleEvent.Value;
+
+            receiver.ReferenceHub.connectionToClient.Send(new RoleSyncInfo(player.ReferenceHub, visibleRole, receiver.ReferenceHub, writer), 0);
+
+            player.ReferenceHub.roleManager.PreviouslySentRole[receiver.ReferenceHub.netId] = visibleRole;
         }
     }
 }

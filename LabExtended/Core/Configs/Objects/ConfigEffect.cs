@@ -256,7 +256,9 @@ namespace LabExtended.Core.Configs.Objects
             }
             else
             {
-                ApiLog.Warn("LabExtended", $"Tried to apply an invalid config effect (&3{Name}&r)!");
+                if (!string.IsNullOrEmpty(Name))
+                    ApiLog.Warn("LabExtended", $"Tried to apply an invalid config effect (&3{Name}&r)!");
+
                 return false;
             }
         }
@@ -275,7 +277,7 @@ namespace LabExtended.Core.Configs.Objects
                 this.customEffect = customEffect;
             else if (BaseEffects.TryGetFirst(x => string.Equals(x.Name, Name, StringComparison.OrdinalIgnoreCase), out var baseEffect))
                 this.baseEffect = baseEffect;
-            else
+            else if (!string.IsNullOrEmpty(Name))
                 ApiLog.Warn("LabExtended", $"Effect &3{Name}&r could not be found in config.");
         }
     }

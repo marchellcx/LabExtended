@@ -427,29 +427,6 @@ public class RoleContainer
     #endregion
 
     /// <summary>
-    /// Gets the role type that the current player appears to have from the perspective of the specified target player.
-    /// </summary>
-    /// <param name="target">The player whose perspective is used to determine the appearance. Cannot be null.</param>
-    /// <param name="allowOverwatchSpoof">Indicates whether Overwatch role spoofing should be considered when determining the appearance. If <see
-    /// langword="true"/>, the returned role may be spoofed for Overwatch purposes; otherwise, the actual role is used.</param>
-    /// <returns>The role type identifier representing how the current player appears to the target player.</returns>
-    /// <exception cref="ArgumentNullException">Thrown if <paramref name="target"/> is null or does not have a valid reference hub.</exception>
-    public RoleTypeId GetAppearance(ExPlayer target, bool allowOverwatchSpoof = true)
-    {
-        if (target?.ReferenceHub == null)
-            throw new ArgumentNullException(nameof(target));
-
-        var appearance = allowOverwatchSpoof
-            ? RoleSync.GetSpoofedRoleToSend(Player, target)
-            : RoleSync.GetRoleToSend(Player, target);
-
-        if (CustomRole != null)
-            appearance = CustomRole.GetAppearance(Player, target, appearance, ref customRoleData);
-
-        return appearance;
-    }
-
-    /// <summary>
     /// Sets the player's current role.
     /// </summary>
     /// <param name="newRole">The new role to set.</param>

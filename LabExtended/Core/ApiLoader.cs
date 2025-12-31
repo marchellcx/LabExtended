@@ -375,9 +375,6 @@ public class ApiLoader : Plugin
 
             FirearmModuleCache.Internal_Init();
 
-            PositionSync.Internal_Init();
-            RoleSync.Internal_Init();
-
             PlayerLoopHelper.Internal_InitLast(); // has to be last
         }
     }

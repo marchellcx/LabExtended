@@ -16,6 +16,29 @@ namespace LabExtended.Extensions;
 public static class EventExtensions
 {
     /// <summary>
+    /// Resets the event state for the specified event argument instance, if supported.
+    /// </summary>
+    /// <remarks>This method has an effect only if <paramref name="obj"/> is an instance of a supported
+    /// singleton event argument type, such as <see cref="SingletonEventArgs{TEvent}"/> or <see
+    /// cref="SingletonBooleanEventArgs{TEvent}"/>. For other types, the method performs no action.</remarks>
+    /// <typeparam name="TEvent">The type of the event argument object. Must be compatible with supported singleton event argument types.</typeparam>
+    /// <param name="obj">The event argument instance whose event state is to be reset.</param>
+    public static void ResetEvent<TEvent>(this TEvent obj)
+    {
+        if (obj is SingletonEventArgs<TEvent> singletonEventArgs)
+        {
+            singletonEventArgs.ResetEvent();
+            return;
+        }
+
+        if (obj is SingletonBooleanEventArgs<TEvent> singletonBooleanEventArgs)
+        {
+            singletonBooleanEventArgs.ResetEvent();
+            return;
+        }
+    }
+
+    /// <summary>
     /// Invokes the <see cref="ExVoiceChatEvents.ReceivingVoiceMessageEventHandler"/> delegate.
     /// </summary>
     public static void InvokeEvent(this ExVoiceChatEvents.ReceivingVoiceMessageEventHandler receivingVoiceMessageEventHandler,

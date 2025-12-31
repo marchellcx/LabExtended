@@ -66,10 +66,13 @@ using UserSettings.ServerSpecific;
 using VoiceChat;
 
 using System.Text;
+
 using InventorySystem.Items.Firearms;
 using InventorySystem.Items.Firearms.Modules;
 using InventorySystem.Items.Firearms.ShotEvents;
+
 using LabExtended.Core;
+
 using PlayerStatsSystem;
 
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
@@ -725,18 +728,6 @@ public class ExPlayer : Player, IDisposable
     /// </summary>
     public HashSet<PersonalHintElement> HintElements { get; internal set; } =
         HashSetPool<PersonalHintElement>.Shared.Rent();
-
-    /// <summary>
-    /// Gets a list of sent role cache.
-    /// </summary>
-    public Dictionary<uint, RoleTypeId> SentRoles { get; private set; } =
-        DictionaryPool<uint, RoleTypeId>.Shared.Rent();
-    
-    /// <summary>
-    /// Gets a list of sent positions.
-    /// </summary>
-    public Dictionary<uint, PositionSync.SentPosition> SentPositions { get; private set; } =
-        DictionaryPool<uint, PositionSync.SentPosition>.Shared.Rent();
 
     /// <summary>
     /// Gets the currently spectated player.
@@ -1461,9 +1452,6 @@ public class ExPlayer : Player, IDisposable
             if (ply == null) 
                 return;
 
-            ply.SentRoles.Remove(NetworkId);
-            ply.SentPositions.Remove(NetworkId);
-
             ply.PersonalGhostFlags &= ~GhostBit;
         });
         
@@ -1519,12 +1507,6 @@ public class ExPlayer : Player, IDisposable
         
         if (Hints != null)
             ObjectPool<HintCache>.Shared.Return(Hints);
-        
-        if (SentRoles != null)
-            DictionaryPool<uint, RoleTypeId>.Shared.Return(SentRoles);
-        
-        if (SentPositions != null)
-            DictionaryPool<uint, PositionSync.SentPosition>.Shared.Return(SentPositions);
 
         if (infoBuilder != null)
             StringBuilderPool.Shared.Return(infoBuilder);
@@ -1540,9 +1522,6 @@ public class ExPlayer : Player, IDisposable
         removeNextFrame = null!;
         
         Hints = null;
-
-        SentRoles = null!;
-        SentPositions = null!;
 
         Position = null!;
         Rotation = null!;
