@@ -68,7 +68,9 @@ namespace LabExtended.Patches.Functions.Players
             {
                 var player = ExPlayer.Players[x];
 
-                if (player?.ReferenceHub == null) 
+                if (player?.ReferenceHub == null 
+                    || player.InstanceMode == CentralAuth.ClientInstanceMode.Unverified 
+                    || player.ReferenceHub.isLocalPlayer) 
                     continue;
 
                 if (!player.Toggles.ShouldReceivePositions)
@@ -89,8 +91,6 @@ namespace LabExtended.Patches.Functions.Players
                 ushort count = 0;
 
                 var customVisibilityRole = receiver.ReferenceHub.roleManager.CurrentRole as ICustomVisibilityRole;
-                var customVisibilityRoleNull = customVisibilityRole == null;
-                var customVisibilityRoleController = !customVisibilityRoleNull ? customVisibilityRole!.VisibilityController : null;
 
                 for (var x = 0; x < ExPlayer.AllCount; x++)
                 {
@@ -110,7 +110,7 @@ namespace LabExtended.Patches.Functions.Players
                     if (fpcRole == null) 
                         continue;
 
-                    var isInvisible = customVisibilityRoleNull || !customVisibilityRoleController!.ValidateVisibility(player.ReferenceHub);
+                    var isInvisible = customVisibilityRole?.VisibilityController != null && !customVisibilityRole.VisibilityController.ValidateVisibility(player.ReferenceHub);
 
                     if (!isInvisible)
                     {
@@ -187,7 +187,7 @@ namespace LabExtended.Patches.Functions.Players
 
             var fpcSyncData = isInvisible 
                 ? default 
-                : new FpcSyncData(prevSyncData, fpmm.SyncMovementState, fpmm.IsGrounded, fpmm.RelativePosition, fpmm.MouseLook);
+                : new FpcSyncData(prevSyncData, fpmm.SyncMovementState, fpmm.IsGrounded, position, fpmm.MouseLook);
 
             FpcServerPositionDistributor.PreviouslySent[receiver.ReferenceHub.netId][target.ReferenceHub.netId] = fpcSyncData;
             return fpcSyncData;
