@@ -102,6 +102,8 @@ namespace LabExtended.Patches.Events.Scp079
             }
 
             __instance.SetContainmentDoors(true, false);
+            __instance._unlockStopwatch.Start();
+
             return false;
         }
     }
