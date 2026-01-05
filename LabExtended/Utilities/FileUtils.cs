@@ -39,6 +39,68 @@ namespace LabExtended.Utilities
         }
 
         /// <summary>
+        /// Creates a directory path by combining the specified path segments, ensuring that all intermediate
+        /// directories exist.
+        /// </summary>
+        /// <remarks>If any intermediate directories in the specified path do not exist, they are created.
+        /// Path segments that include file extensions are treated as files and do not result in directory creation for
+        /// that segment. This method is useful for preparing a file path and ensuring the directory structure exists
+        /// before file operations.</remarks>
+        /// <param name="parts">An array of path segments to combine. Each segment represents a part of the final path. Cannot be null or
+        /// empty.</param>
+        /// <returns>The absolute path created by combining the specified segments. The returned path is fully qualified.</returns>
+        public static string CreatePath(params string[] parts)
+        {
+            for (var x = 0; x < parts.Length; x++)
+            {
+                var part = parts[x];
+                var extension = Path.GetExtension(part);
+
+                if (!string.IsNullOrEmpty(extension) && (x + 1 >= parts.Length || !string.IsNullOrEmpty(Path.GetExtension(parts[x + 1]))))
+                    continue;
+
+                var currentPath = string.Join(Path.DirectorySeparatorChar.ToString(), parts.Take(x + 1));
+
+                if (!Directory.Exists(currentPath))
+                    Directory.CreateDirectory(currentPath);
+            }
+
+            return Path.GetFullPath(Path.Combine(parts));
+        }
+
+        /// <summary>
+        /// Creates all directories and subdirectories in the specified file path that do not already exist.
+        /// </summary>
+        /// <remarks>This method does not create the file itself; it only ensures that all directories in
+        /// the specified path exist. If the directories already exist, no action is taken. The returned path is the
+        /// absolute path corresponding to the input.</remarks>
+        /// <param name="filePath">The full or relative path of the file for which to ensure all parent directories exist. Cannot be null or
+        /// empty.</param>
+        /// <returns>A fully qualified file path with all necessary directories created.</returns>
+        public static string CreatePath(string filePath)
+        {
+            filePath = Path.GetFullPath(filePath);
+
+            var parts = filePath.Split(Path.DirectorySeparatorChar);
+
+            for (var x = 0; x < parts.Length; x++)
+            {
+                var part = parts[x];
+                var extension = Path.GetExtension(part);
+
+                if (!string.IsNullOrEmpty(extension) && (x + 1 >= parts.Length || !string.IsNullOrEmpty(Path.GetExtension(parts[x + 1]))))
+                    continue;
+
+                var currentPath = string.Join(Path.DirectorySeparatorChar.ToString(), parts.Take(x + 1));
+
+                if (!Directory.Exists(currentPath))
+                    Directory.CreateDirectory(currentPath);
+            }
+
+            return filePath;
+        }
+
+        /// <summary>
         /// Attempts to save a binary file to the specified directory using the provided writer delegate.
         /// </summary>
         /// <remarks>This method combines the specified directory and file name to determine the file
@@ -713,7 +775,30 @@ namespace LabExtended.Utilities
                 return false;
             }
         }
-        
+
+        /// <summary>
+        /// Attempts to load and deserialize a YAML file from the specified path parts into an object of the given type.
+        /// </summary>
+        /// <typeparam name="T">The type of the object to deserialize the YAML content into.</typeparam>
+        /// <param name="pathParts">An array of path segments that are combined to form the full file path to the YAML file. Cannot be null or
+        /// empty.</param>
+        /// <param name="type">The type to use for deserialization. Must be compatible with <typeparamref name="T"/>.</param>
+        /// <param name="deserializer">The YAML deserializer to use. If null, a default deserializer is used.</param>
+        /// <param name="result">When this method returns, contains the deserialized object if the operation succeeds; otherwise, the default
+        /// value for <typeparamref name="T"/>.</param>
+        /// <returns><see langword="true"/> if the YAML file is successfully loaded and deserialized; otherwise, <see
+        /// langword="false"/>.</returns>
+        public static bool TryLoadYamlFile<T>(string[] pathParts, Type type, IDeserializer? deserializer, out T result)
+        {
+            if (pathParts == null || pathParts.Length == 0)
+            {
+                result = default!;
+                return false;
+            }
+
+            return TryLoadYamlFile(Path.Combine(pathParts), type, deserializer, out result);
+        }
+
         /// <summary>
         /// Attempts to load and deserialize a YAML file into an object of type <typeparamref name="T"/>.
         /// </summary>

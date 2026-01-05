@@ -145,4 +145,17 @@ public abstract class SettingsMenu
 
         SettingsManager.SyncEntries(Player);
     }
+
+    /// <summary>
+    /// Synchronizes the current player's settings entries with the settings manager.
+    /// </summary>
+    /// <remarks>This method has no effect if the player is not available. Call this method to ensure that any
+    /// changes to the player's settings are reflected in the settings manager.</remarks>
+    public void SyncEntries()
+    {
+        if (!Player)
+            return;
+
+        SettingsManager.SyncEntries(Player);
+    }
 }

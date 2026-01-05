@@ -79,19 +79,15 @@ namespace LabExtended.API.Settings.Entries
         public string Text
         {
             get => Base.Label;
-            set
-            {
-                Base.Label = value;
-                SendText(value);
-            }
+            set => SendText(value);
         }
-        
+
         /// <summary>
         /// Sends a text update.
         /// </summary>
         /// <param name="text">The text to set.</param>
         public void SendText(string text)
-            => Player?.Connection?.Send(new SSSUpdateMessage(Base, writer => writer.WriteString(text)));
+            => Base.SendLabelUpdate(text, true, hub => hub != null && hub == Player.ReferenceHub);
 
         /// <summary>
         /// Returns a string that represents the current state of the SettingsTextArea instance.

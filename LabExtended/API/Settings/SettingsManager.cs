@@ -63,54 +63,60 @@ public static class SettingsManager
         var list = ListPool<ServerSpecificSettingBase>.Shared.Rent();
         var headers = ListPool<string>.Shared.Rent();
 
-        foreach (var menuEntry in player.settingsMenuLookup)
+        if (player.settingsMenuLookup?.Count > 0)
         {
-            if (menuEntry.Value.IsHidden)
-                continue;
-
-            if (!string.IsNullOrWhiteSpace(menuEntry.Value.Header) && !headers.Contains(menuEntry.Value.CustomId))
+            foreach (var menuEntry in player.settingsMenuLookup)
             {
-                headers.Add(menuEntry.Value.CustomId);
-
-                list.Add(new SSGroupHeader(menuEntry.Value.Header,
-                    menuEntry.Value.HeaderReducedPadding, menuEntry.Value.HeaderHint));
-            }
-
-            foreach (var menuSetting in menuEntry.Value.Entries)
-            {
-                if (menuSetting?.Base == null)
+                if (menuEntry.Value.IsHidden)
                     continue;
 
-                if (!menuSetting.Player)
-                    continue;
+                if (!string.IsNullOrWhiteSpace(menuEntry.Value.Header) && !headers.Contains(menuEntry.Value.CustomId))
+                {
+                    headers.Add(menuEntry.Value.CustomId);
 
-                if (menuSetting.IsHidden)
-                    continue;
+                    list.Add(new SSGroupHeader(menuEntry.Value.Header,
+                        menuEntry.Value.HeaderReducedPadding, menuEntry.Value.HeaderHint));
+                }
 
-                list.Add(menuSetting.Base);
+                foreach (var menuSetting in menuEntry.Value.Entries)
+                {
+                    if (menuSetting?.Base == null)
+                        continue;
+
+                    if (!menuSetting.Player)
+                        continue;
+
+                    if (menuSetting.IsHidden)
+                        continue;
+
+                    list.Add(menuSetting.Base);
+                }
             }
         }
 
-        foreach (var settingsEntry in player.settingsIdLookup)
+        if (player.settingsIdLookup?.Count > 0)
         {
-            if (settingsEntry.Value?.Base == null)
-                continue;
+            foreach (var settingsEntry in player.settingsIdLookup)
+            {
+                if (settingsEntry.Value?.Base == null)
+                    continue;
 
-            if (!settingsEntry.Value.Player)
-                continue;
+                if (!settingsEntry.Value.Player)
+                    continue;
 
-            if (settingsEntry.Value.IsHidden)
-                continue;
+                if (settingsEntry.Value.IsHidden)
+                    continue;
 
-            if (settingsEntry.Value.Menu != null)
-                continue;
+                if (settingsEntry.Value.Menu != null)
+                    continue;
 
-            list.Add(settingsEntry.Value.Base);
+                list.Add(settingsEntry.Value.Base);
+            }
         }
 
         var playerSettings = DictionaryPool<Assembly, ServerSpecificSettingBase[]>.Shared.Rent(GlobalSettingsByAssembly); // todo Use SendOnJoinFilter
 
-        if (player.settingsByAssembly != null)
+        if (player.settingsByAssembly?.Count > 0)
             playerSettings.AddRange(player.settingsByAssembly);
 
         foreach (var sssByAssemblyEntry in playerSettings) 
@@ -118,7 +124,10 @@ public static class SettingsManager
             var pluginAssembly = sssByAssemblyEntry.Key;
             var collection = sssByAssemblyEntry.Value;
 
-            if (collection.First() is not SSGroupHeader)
+            if (collection?.Length < 1)
+                continue;
+
+            if (collection[0] is not SSGroupHeader)
             {
                 var pluginName = PluginLoader.Plugins.TryGetFirst(o => o.Value.Equals(pluginAssembly), out var result) 
                     ? result.Key.Name 
@@ -137,6 +146,7 @@ public static class SettingsManager
         player.Send(new SSSEntriesPack(ListPool<ServerSpecificSettingBase>.Shared.ToArrayReturn(list), Version));
 
         ListPool<string>.Shared.Return(headers);
+        DictionaryPool<Assembly, ServerSpecificSettingBase[]>.Shared.Return(playerSettings);
     }
 
     /// <summary>
@@ -898,7 +908,7 @@ public static class SettingsManager
                         entry.Menu.OnTextInput(textArea);
                         break;
 
-                    case SettingsKeyBind keyBind:
+                    case SettingsKeyBind keyBind when keyBind.IsPressed:
                         entry.Menu.OnKeyBindPressed(keyBind);
                         break;
 

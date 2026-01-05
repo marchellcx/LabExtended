@@ -142,11 +142,14 @@ namespace LabExtended.API.Settings.Entries
 
             _isPressed = IsPressed;
 
-            LastPressTime = Time.realtimeSinceStartup;
+            if (IsPressed)
+            {
+                LastPressTime = Time.realtimeSinceStartup;
 
-            HandlePress(IsPressed);
-            
-            OnPressed.InvokeSafe(this);
+                HandlePress(IsPressed);
+
+                OnPressed.InvokeSafe(this);
+            }
         }
 
         /// <summary>
