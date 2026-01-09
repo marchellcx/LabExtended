@@ -3,10 +3,14 @@
 using HarmonyLib;
 
 using LabExtended.Attributes;
-using LabExtended.Extensions;
+
+using LabExtended.Core;
+using LabExtended.Events;
 using LabExtended.Utilities;
+using LabExtended.Extensions;
 
 using PlayerRoles;
+
 using YamlDotNet.Serialization;
 
 namespace LabExtended.API.Custom.Effects;
@@ -133,6 +137,30 @@ public class CustomPlayerEffect
     
     internal virtual bool OnRoleChanged(RoleTypeId newRole) => RoleChanged(newRole);
 
+    private static void OnVerified(ExPlayer player)
+    {
+        foreach (var type in Effects)
+        {
+            try
+            {
+                if (player.Effects.CustomEffects.ContainsKey(type))
+                    continue;
+
+                if (Activator.CreateInstance(type) is not CustomPlayerEffect customPlayerEffect)
+                {
+                    ApiLog.Error("LabExtended", $"Failed to create instance of custom effect &1{type.Name}&r for player {player.ToLogString()}: Constructor returned null or invalid type.");
+                    continue;
+                }
+
+                player.Effects.AddCustomEffect(customPlayerEffect);
+            }
+            catch (Exception ex)
+            {
+                ApiLog.Error("LabExtended", $"Failed to add custom effect &1{type.Name}&r to player {player.ToLogString()}: {ex}");
+            }
+        }
+    }
+
     private static void OnDiscovered(Type type)
     {
         if (!type.InheritsType<CustomPlayerEffect>()
@@ -150,5 +178,7 @@ public class CustomPlayerEffect
     internal static void Internal_Init()
     {
         ReflectionUtils.Discovered += OnDiscovered;
+
+        ExPlayerEvents.Verified += OnVerified;
     }
 }
