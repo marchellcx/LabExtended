@@ -1,18 +1,19 @@
 ﻿using LabApi.Events.Arguments.ServerEvents;
 using LabApi.Events.Handlers;
 
+using LabExtended.Core;
+
 using LabExtended.Events;
 using LabExtended.Events.Round;
 
-using LabExtended.Core;
 using LabExtended.Extensions;
 using LabExtended.Utilities.Update;
 
-using System.Diagnostics;
 using System.ComponentModel;
+using System.Diagnostics;
+using System.Text;
 
 using YamlDotNet.Serialization;
-using System.Text;
 
 namespace LabExtended.API.Custom.Gamemodes
 {
@@ -24,9 +25,47 @@ namespace LabExtended.API.Custom.Gamemodes
         private static PlayerUpdateComponent updateComponent = PlayerUpdateComponent.Create();
 
         /// <summary>
-        /// Gets the curently enabled gamemode.
+        /// Disables all currently active registered game modes.
         /// </summary>
-        public static List<CustomGamemode> Active { get; } = new();
+        /// <returns>true if at least one game mode was disabled; otherwise, false.</returns>
+        public static bool DisableAll()
+        {
+            bool anyDisabled = false;
+
+            foreach (var pair in RegisteredObjects)
+            {
+                var gamemode = pair.Value;
+
+                if (gamemode.IsActive)
+                {
+                    gamemode.Disable();
+
+                    anyDisabled = true;
+                }
+            }
+
+            return anyDisabled;
+        }
+
+        /// <summary>
+        /// Retrieves a list of all currently active custom gamemodes.
+        /// </summary>
+        /// <returns>A list of <see cref="CustomGamemode"/> objects that are currently active. The list is empty if no custom
+        /// gamemodes are active.</returns>
+        public static List<CustomGamemode> GetActive()
+        {
+            var list = new List<CustomGamemode>();
+
+            foreach (var pair in RegisteredObjects)
+            {
+                if (pair.Value.IsActive)
+                {
+                    list.Add(pair.Value);
+                }
+            }
+
+            return list;
+        }
 
         private Stopwatch runTimeWatch = new();
 
@@ -81,20 +120,40 @@ namespace LabExtended.API.Custom.Gamemodes
             if (IsActive)
                 return false;
 
-            if (!CanBeEnabled(Active))
+            if (!CanBeEnabled(GetActive()))
                 return false;
-
-            if (!Active.AddUnique(this))
-            {
-                runTimeWatch.Restart();
-                return false;
-            }
 
             runTimeWatch.Restart();
 
             ApiLog.Info("Custom Gamemodes", $"Enabled custom gamemode &3{Id}&r!");
 
             OnEnabled();
+
+            updateComponent.OnLateUpdate += OnUpdate;
+
+            ExRoundEvents.AssignedRoles += OnAssignedRoles;
+            ExRoundEvents.AssigningRoles += OnAssigningRoles;
+
+            ExRoundEvents.LateJoinSetRole += OnLateJoinSetRole;
+            ExRoundEvents.LateJoinSettingRole += OnLateJoinSettingRole;
+
+            ExRoundEvents.Started += OnRoundStarted;
+            ExRoundEvents.Restarting += OnRoundRestarting;
+            ExRoundEvents.WaitingForPlayers += OnWaitingForPlayers;
+
+            ExPlayerEvents.Left += OnPlayerLeft;
+            ExPlayerEvents.Verified += OnPlayerJoined;
+
+            ServerEvents.WaveRespawned += OnWaveSpawned;
+            ServerEvents.WaveRespawning += OnWaveSpawning;
+
+            ServerEvents.WaveTeamSelected += OnWaveSelected;
+            ServerEvents.WaveTeamSelecting += OnWaveSelecting;
+
+            ServerEvents.RoundEnded += OnRoundEnded;
+            ServerEvents.RoundEnding += OnRoundEnding;
+
+            ServerEvents.RoundEndingConditionsCheck += OnRoundCheckingEndConditions;
             return true;
         }
 
@@ -107,12 +166,36 @@ namespace LabExtended.API.Custom.Gamemodes
             if (!IsActive)
                 return false;
 
-            Active.Remove(this);
-
             runTimeWatch.Stop();
             runTimeWatch.Reset();
 
+            ExRoundEvents.AssignedRoles -= OnAssignedRoles;
+            ExRoundEvents.AssigningRoles -= OnAssigningRoles;
+
+            ExRoundEvents.LateJoinSetRole -= OnLateJoinSetRole;
+            ExRoundEvents.LateJoinSettingRole -= OnLateJoinSettingRole;
+
+            ExRoundEvents.Started -= OnRoundStarted;
+            ExRoundEvents.Restarting -= OnRoundRestarting;
+            ExRoundEvents.WaitingForPlayers -= OnWaitingForPlayers;
+
+            ExPlayerEvents.Left -= OnPlayerLeft;
+            ExPlayerEvents.Verified -= OnPlayerJoined;
+
+            ServerEvents.WaveRespawned -= OnWaveSpawned;
+            ServerEvents.WaveRespawning -= OnWaveSpawning;
+
+            ServerEvents.WaveTeamSelected -= OnWaveSelected;
+            ServerEvents.WaveTeamSelecting -= OnWaveSelecting;
+
+            ServerEvents.RoundEnded -= OnRoundEnded;
+            ServerEvents.RoundEnding -= OnRoundEnding;
+
+            ServerEvents.RoundEndingConditionsCheck -= OnRoundCheckingEndConditions;
+
             ApiLog.Info("Custom Gamemodes", $"Disabled custom gamemode &3{Id}&r!");
+
+            updateComponent.OnLateUpdate -= OnUpdate;
 
             OnDisabled();
             return true;
@@ -324,7 +407,9 @@ namespace LabExtended.API.Custom.Gamemodes
         public virtual void OnWaveSpawning(WaveRespawningEventArgs args)
         {
             if (PreventWaveSpawns)
+            {
                 args.IsAllowed = false;
+            }
         }
 
         /// <summary>
@@ -334,120 +419,6 @@ namespace LabExtended.API.Custom.Gamemodes
         public virtual void OnWaveSpawned(WaveRespawnedEventArgs args)
         {
 
-        }
-
-        private static void _WaitingForPlayers()
-        {
-            Active.ForEach(x => x.OnWaitingForPlayers());
-        }
-
-        private static void _Update()
-        {
-            Active.ForEach(x => x.OnUpdate());
-        }
-
-        private static void _RoundCheckingEndConditions(RoundEndingConditionsCheckEventArgs args)
-        {
-            Active.ForEach(x => x.OnRoundCheckingEndConditions(args));
-        }
-
-        private static void _RoundEnding(RoundEndingEventArgs args)
-        {
-            Active.ForEach(x => x.OnRoundEnding(args));
-        }
-
-        private static void _RoundEnded(RoundEndedEventArgs args)
-        {
-            Active.ForEach(x => x.OnRoundEnded(args));
-        }
-
-        private static void _RoundRestarting()
-        {
-            Active.ForEach(x => x.OnRoundRestarting());
-        }
-
-        private static void _RoundStarted()
-        {
-            Active.ForEach(x => x.OnRoundStarted());
-        }
-
-        private static void _AssigningRoles(AssigningRolesEventArgs args)
-        {
-            Active.ForEach(x => x.OnAssigningRoles(args));
-        }
-
-        private static void _AssignedRoles(AssignedRolesEventArgs args)
-        {
-            Active.ForEach(x => x.OnAssignedRoles(args));
-        }
-
-        private static void _LateJoinSettingRole(LateJoinSettingRoleEventArgs args)
-        {
-            Active.ForEach(x => x.OnLateJoinSettingRole(args));
-        }
-
-        private static void _LateJoinSetRole(LateJoinSetRoleEventArgs args)
-        {
-            Active.ForEach(x => x.OnLateJoinSetRole(args));
-        }
-
-        private static void _PlayerJoined(ExPlayer player)
-        {
-            Active.ForEach(x => x.OnPlayerJoined(player));
-        }
-
-        private static void _PlayerLeft(ExPlayer player)
-        {
-            Active.ForEach(x => x.OnPlayerLeft(player));
-        }
-
-        private static void _WaveSelecting(WaveTeamSelectingEventArgs args)
-        {
-            Active.ForEach(x => x.OnWaveSelecting(args));
-        }
-
-        private static void _WaveSelected(WaveTeamSelectedEventArgs args)
-        {   
-            Active.ForEach(x => x.OnWaveSelected(args));
-        }
-
-        private static void _WaveSpawning(WaveRespawningEventArgs args)
-        {
-            Active.ForEach(x => x.OnWaveSpawning(args));
-        }
-
-        private static void _WaveSpawned(WaveRespawnedEventArgs args)
-        {
-            Active.ForEach(x => x.OnWaveSpawned(args));
-        }
-
-        internal static void _Init()
-        {
-            updateComponent.OnUpdate += _Update;
-
-            ExRoundEvents.AssignedRoles += _AssignedRoles;
-            ExRoundEvents.AssigningRoles += _AssigningRoles;
-
-            ExRoundEvents.LateJoinSetRole += _LateJoinSetRole;
-            ExRoundEvents.LateJoinSettingRole += _LateJoinSettingRole;
-
-            ExRoundEvents.Started += _RoundStarted;
-            ExRoundEvents.Restarting += _RoundRestarting;
-            ExRoundEvents.WaitingForPlayers += _WaitingForPlayers;
-
-            ExPlayerEvents.Left += _PlayerLeft;
-            ExPlayerEvents.Verified += _PlayerJoined;
-
-            ServerEvents.WaveRespawned += _WaveSpawned;
-            ServerEvents.WaveRespawning += _WaveSpawning;
-
-            ServerEvents.WaveTeamSelected += _WaveSelected;
-            ServerEvents.WaveTeamSelecting += _WaveSelecting;
-
-            ServerEvents.RoundEnded += _RoundEnded;
-            ServerEvents.RoundEnding += _RoundEnding;
-
-            ServerEvents.RoundEndingConditionsCheck += _RoundCheckingEndConditions;
         }
     }
 }

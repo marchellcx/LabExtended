@@ -341,8 +341,6 @@ public class ApiLoader : Plugin
             CustomFirearm.Internal_Init();
             CustomProjectile.Internal_Init();
 
-            CustomGamemode._Init();
-
             CustomTeamHandler.Internal_Init();
             CustomPlayerEffect.Internal_Init();
             CustomTeamRegistry.Internal_Init();

@@ -67,13 +67,15 @@ namespace LabExtended.Commands.Custom.CustomGamemodes
         {
             Ok(x =>
             {
-                if (CustomGamemode.Active.Count < 1)
+                var active = CustomGamemode.GetActive();
+
+                if (active.Count < 1)
                 {
                     x.AppendLine("No gamemode is currently active.");
                 }
                 else
                 {
-                    foreach (var mode in CustomGamemode.Active)
+                    foreach (var mode in active)
                     {
                         x.AppendLine();
                         x.AppendLine($"- Gamemode 'ID: {mode.Id}' has been active for '{mode.RunTime}'");
@@ -106,9 +108,11 @@ namespace LabExtended.Commands.Custom.CustomGamemodes
                     return;
                 }
 
-                if (gamemode.IncompatibleGamemodes?.Length > 0 && CustomGamemode.Active.Any(x => gamemode.IncompatibleGamemodes.Contains(x.Id)))
+                var active = CustomGamemode.GetActive();
+
+                if (gamemode.IncompatibleGamemodes?.Length > 0 && active.Any(x => gamemode.IncompatibleGamemodes.Contains(x.Id)))
                 {
-                    var incompatible = string.Join(", ", gamemode.IncompatibleGamemodes.Where(x => CustomGamemode.Active.Any(y => y.Id == x)));
+                    var incompatible = string.Join(", ", gamemode.IncompatibleGamemodes.Where(x => active.Any(y => y.Id == x)));
 
                     Fail($"Gamemode '{gamemode.Id}' is incompatible with the following active gamemodes: {incompatible}");
                     return;
@@ -149,13 +153,15 @@ namespace LabExtended.Commands.Custom.CustomGamemodes
             }
             else
             {
-                if (CustomGamemode.Active.Count < 1)
+                var active = CustomGamemode.GetActive();
+
+                if (active.Count < 1)
                 {
                     Fail("No gamemode is currently active.");
                     return;
                 }
 
-                foreach (var mode in CustomGamemode.Active.ToArray())
+                foreach (var mode in active)
                     mode.Disable();
 
                 Ok("Disabled all active gamemodes.");
