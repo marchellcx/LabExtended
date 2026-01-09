@@ -256,7 +256,7 @@ namespace LabExtended.Core.Storage
             if (lookup.ContainsKey(value.Name))
                 return false;
 
-            value.Path = System.IO.Path.GetFullPath(System.IO.Path.Combine(Path, value.Name));
+            value.Path = GetPath(value.Name);
 
             value.Storage = this;
             value.OnAdded();
@@ -270,6 +270,66 @@ namespace LabExtended.Core.Storage
 
             Added?.InvokeSafe(value);
             return true;
+        }
+
+        /// <summary>
+        /// Determines whether a file with the specified name exists.
+        /// </summary>
+        /// <param name="name">The name of the file to check for existence. Cannot be null or empty.</param>
+        /// <returns>true if a file with the specified name exists; otherwise, false.</returns>
+        /// <exception cref="ArgumentNullException">Thrown if name is null or empty.</exception>
+        public bool Exists(string name)
+        {
+            if (string.IsNullOrEmpty(name))
+                throw new ArgumentNullException(nameof(name));
+
+            return File.Exists(GetPath(name));
+        }
+
+        /// <summary>
+        /// Combines the specified file or directory name with the current base path and returns the absolute path.
+        /// </summary>
+        /// <param name="name">The file or directory name to combine with the base path. Cannot be null or empty.</param>
+        /// <returns>The absolute path resulting from combining the base path with the specified name.</returns>
+        /// <exception cref="ArgumentNullException">Thrown if <paramref name="name"/> is null or empty.</exception>
+        public string GetPath(string name)
+        {
+            if (string.IsNullOrEmpty(name))
+                throw new ArgumentNullException(nameof(name));
+
+            return System.IO.Path.GetFullPath(System.IO.Path.Combine(Path, name));
+        }
+
+        /// <summary>
+        /// Removes the entry with the specified name from the collection, and optionally deletes the associated file
+        /// from disk.
+        /// </summary>
+        /// <param name="name">The name of the entry to remove. Cannot be null, empty, or consist only of white-space characters.</param>
+        /// <param name="deleteFile">true to delete the associated file from disk if it exists; otherwise, false. The default is false.</param>
+        /// <returns>true if the entry or its associated file was successfully removed; otherwise, false.</returns>
+        /// <exception cref="ArgumentNullException">Thrown if name is null, empty, or consists only of white-space characters.</exception>
+        public bool Remove(string name, bool deleteFile = false)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentNullException(nameof(name));
+
+            var valueRemoved = lookup.TryGetValue(name, out var value) && Remove(value, deleteFile);
+
+            if (valueRemoved)
+                return true;
+
+            if (deleteFile)
+            {
+                var path = GetPath(name);
+
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
