@@ -1,3 +1,4 @@
+using LabExtended.API;
 using LabExtended.API.Custom.Gamemodes;
 
 using LabExtended.Commands.Attributes;
@@ -32,40 +33,9 @@ namespace LabExtended.Commands.Custom.CustomGamemodes
             });
         }
 
-        [CommandOverload("active", "Lists all currently active gamemodes (and the queue).", null)]
-        private void Active()
-        {
-            Ok(x =>
-            {
-                if (CustomGamemode.Current is null)
-                {
-                    x.AppendLine("- No gamemode is currently active.");
-                }
-                else
-                {
-                    x.AppendLine(
-                        $"- Gamemode 'ID: {CustomGamemode.Current.Id}' is running for '{CustomGamemode.Current.RunTime}'");
-                }
-
-                if (CustomGamemode.Queue.Count > 0)
-                {
-                    x.AppendLine("- Queue:");
-                    
-                    foreach (var mode in CustomGamemode.Queue)
-                    {
-                        if (mode != null)
-                        {
-                            x.AppendLine($"[ID: {mode.Id}] {mode.GetType().Name}");
-                        }
-                    }
-                }
-            });
-        }
-
-        [CommandOverload("enable", "Enables a new gamemode.", null)]
-        private void Enable(
-            [CommandParameter("ID", "The ID of the gamemode to enable.")] string id,
-            [CommandParameter("Override", "Whether or not the current gamemode should be stopped to start this one.")] bool overrideCurrent = false)
+        [CommandOverload("detail", "Shows detailed state information about a specific active gamemode.", null)]
+        private void Detail(
+            [CommandParameter("ID", "The ID of the mod to show the state of.")] string id)
         {
             if (!CustomGamemode.TryGet(id, out var gamemode))
             {
@@ -73,42 +43,122 @@ namespace LabExtended.Commands.Custom.CustomGamemodes
                 return;
             }
 
-            if (!CustomGamemode.Enable(gamemode, overrideCurrent))
+            if (!gamemode.IsActive)
             {
-                var index = CustomGamemode.Queue.ToList().IndexOf(gamemode);
+                Fail($"Gamemode '{gamemode.Id}' is not active.");
+                return;
+            }
 
-                if (index != -1)
+            Ok(x =>
+            {
+                x.AppendLine();
+                x.AppendLine($"- ID: {gamemode.Id}");
+                x.AppendLine($"- RunTime: {gamemode.RunTime}");
+
+                x.AppendLine();
+                x.AppendLine($"Additional Data:");
+
+                gamemode.PrintState(x);
+            });
+        }
+
+        [CommandOverload("active", "Lists all currently active gamemodes (and the queue).", null)]
+        private void Active()
+        {
+            Ok(x =>
+            {
+                if (CustomGamemode.Active.Count < 1)
                 {
-                    Ok($"Gamemode '{gamemode.Id}' cannot be activated mid-round and has been added to the queue, position: {index + 1}");
+                    x.AppendLine("No gamemode is currently active.");
+                }
+                else
+                {
+                    foreach (var mode in CustomGamemode.Active)
+                    {
+                        x.AppendLine();
+                        x.AppendLine($"- Gamemode 'ID: {mode.Id}' has been active for '{mode.RunTime}'");
+                    }
+                }
+            });
+        }
+
+        [CommandOverload("enable", "Enables a new gamemode.", null)]
+        private void Enable(
+            [CommandParameter("ID", "The ID of the gamemode to enable.")] string id)
+        {
+            if (!CustomGamemode.TryGet(id, out var gamemode))
+            {
+                Fail($"Unknown gamemode ID: {id}");
+                return;
+            }
+
+            if (!gamemode.Enable())
+            {
+                if (gamemode.IsActive)
+                {
+                    Fail($"Gamemode '{gamemode.Id}' is already active.");
                     return;
                 }
 
-                if (CustomGamemode.Current != null)
+                if (!gamemode.CanActivateMidRound && !ExRound.IsWaitingForPlayers)
                 {
-                    Fail("The current gamemode could not be disabled.");
+                    Fail($"Gamemode '{gamemode.Id}' cannot be activated mid-round.");
                     return;
                 }
-                
+
+                if (gamemode.IncompatibleGamemodes?.Length > 0 && CustomGamemode.Active.Any(x => gamemode.IncompatibleGamemodes.Contains(x.Id)))
+                {
+                    var incompatible = string.Join(", ", gamemode.IncompatibleGamemodes.Where(x => CustomGamemode.Active.Any(y => y.Id == x)));
+
+                    Fail($"Gamemode '{gamemode.Id}' is incompatible with the following active gamemodes: {incompatible}");
+                    return;
+                }
+
                 Fail($"Gamemode '{gamemode.Id}' could not be activated.");
                 return;
             }
 
-            if (CustomGamemode.Current != null && CustomGamemode.Current == gamemode)
-            {
-                Ok($"Started gamemode '{gamemode.Id}'");
-            }
+            Ok($"Started gamemode '{gamemode.Id}'");
         }
 
-        [CommandOverload("disable", "Disables the currently active gamemode.", null)]
-        private void Disable()
+        [CommandOverload("disable", "Disables a specific or all active gamemode(s).", null)]
+        private void Disable(
+            [CommandParameter("ID", "The ID of the gamemode to disable (specify * or all for all).")] string id)
         {
-            if (!CustomGamemode.Disable())
+            if (id != "*" && id != "all")
             {
-                Fail("The current gamemode could not be disabled.");
+                if (!CustomGamemode.TryGet(id, out var gamemode))
+                {
+                    Fail($"Unknown gamemode ID: {id}");
+                    return;
+                }
+
+                if (!gamemode.IsActive)
+                {
+                    Fail($"Gamemode '{gamemode.Id}' is not active.");
+                    return;
+                }
+
+                if (!gamemode.Disable())
+                {
+                    Fail($"Gamemode '{gamemode.Id}' could not be disabled.");
+                    return;
+                }
+
+                Ok($"Disabled gamemode '{gamemode.Id}'");
             }
             else
             {
-                Ok("Gamemode has been disabled.");
+                if (CustomGamemode.Active.Count < 1)
+                {
+                    Fail("No gamemode is currently active.");
+                    return;
+                }
+
+                foreach (var mode in CustomGamemode.Active.ToArray())
+                    mode.Disable();
+
+                Ok("Disabled all active gamemodes.");
             }
         }
     }

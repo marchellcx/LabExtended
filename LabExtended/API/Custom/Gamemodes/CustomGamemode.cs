@@ -5,12 +5,14 @@ using LabExtended.Events;
 using LabExtended.Events.Round;
 
 using LabExtended.Core;
+using LabExtended.Extensions;
 using LabExtended.Utilities.Update;
 
 using System.Diagnostics;
 using System.ComponentModel;
 
 using YamlDotNet.Serialization;
+using System.Text;
 
 namespace LabExtended.API.Custom.Gamemodes
 {
@@ -22,86 +24,9 @@ namespace LabExtended.API.Custom.Gamemodes
         private static PlayerUpdateComponent updateComponent = PlayerUpdateComponent.Create();
 
         /// <summary>
-        /// Gets a queue of gamemodes to be activated next.
-        /// </summary>
-        public static Queue<CustomGamemode> Queue { get; } = new();
-
-        /// <summary>
         /// Gets the curently enabled gamemode.
         /// </summary>
-        public static CustomGamemode? Current { get; private set; }
-
-        /// <summary>
-        /// Enables the specified gamemode as the current active gamemode.
-        /// </summary>
-        /// <remarks>
-        /// If the specified gamemode is already active or cannot be activated mid-round, the method returns without enabling the gamemode.
-        /// If an override is not allowed and a gamemode is already active, the method does not enable the new gamemode.
-        /// </remarks>
-        /// <param name="gamemode">The gamemode instance to enable.</param>
-        /// <param name="overrideCurrent">Indicates whether to allow overriding the currently active gamemode if one is active.</param>
-        /// <returns>
-        /// true if the gamemode is successfully enabled; otherwise, false.
-        /// </returns>
-        /// <exception cref="ArgumentNullException">Thrown when the provided gamemode instance is null.</exception>
-        public static bool Enable(CustomGamemode gamemode, bool overrideCurrent = false)
-        {
-            if (gamemode is null)
-                throw new ArgumentNullException(nameof(gamemode));
-
-            if (Current != null && Current == gamemode)
-                return false;
-
-            if (!gamemode.CanActivateMidRound && !ExRound.IsWaitingForPlayers)
-            {
-                var list = Queue.ToList();
-                
-                list.Insert(0, gamemode);
-                
-                Queue.Clear();
-                
-                list.ForEach(Queue.Enqueue);
-                list.Clear();
-                
-                return false;
-            }
-
-            if (Current != null)
-            {
-                if (!overrideCurrent)
-                    return false;
-
-                if (!Disable())
-                    return false;
-            }
-
-            Current = gamemode;
-            Current.OnEnabled();
-
-            Current.IsActive = true;
-            return true;
-        }
-
-        /// <summary>
-        /// Disables the current gamemode if one is active.
-        /// </summary>
-        /// <remarks>If no current gamemode is active, the method performs no action and returns false.
-        /// After disabling, the current gamemode is set to null and will no longer be considered active.</remarks>
-        /// <returns>true if an active gamemode was disabled; otherwise, false.</returns>
-        public static bool Disable()
-        {
-            if (Current == null)
-                return false;
-
-            var current = Current;
-
-            Current = null;
-
-            current.IsActive = false;
-            current.OnDisabled();
-
-            return true;
-        }
+        public static List<CustomGamemode> Active { get; } = new();
 
         private Stopwatch runTimeWatch = new();
 
@@ -109,7 +34,7 @@ namespace LabExtended.API.Custom.Gamemodes
         /// Whether or not the gamemode is currently active.
         /// </summary>
         [YamlIgnore]
-        public bool IsActive { get; private set; }
+        public bool IsActive => runTimeWatch.IsRunning;
 
         /// <summary>
         /// Gets or sets a value indicating whether the game mode can be activated after a round has already started.
@@ -118,10 +43,22 @@ namespace LabExtended.API.Custom.Gamemodes
         public virtual bool CanActivateMidRound { get; set; } = true;
 
         /// <summary>
+        /// Gets or sets a value indicating whether the gamemode is automatically disabled when the round ends.
+        /// </summary>
+        [Description("Whether or not the gamemode should be automatically disabled when the round ends.")]
+        public virtual bool ShouldDisableOnRoundEnd { get; set; } = true;
+
+        /// <summary>
         /// Gets or sets a value indicating whether the gamemode prevents the default wave spawns from occurring.
         /// </summary>
         [Description("Whether or not the gamemode prevents the default wave spawns from occurring.")]
-        public virtual bool PreventWaveSpawns { get; set; } = true;
+        public virtual bool PreventWaveSpawns { get; set; }
+
+        /// <summary>
+        /// Gets or sets the list of gamemode identifiers that are incompatible with this gamemode.
+        /// </summary>
+        [Description("A list of gamemode IDs that are incompatible with this gamemode.")]
+        public virtual string[] IncompatibleGamemodes { get; set; } = [];
 
         /// <summary>
         /// Gets the amount of time that has elapsed since the gamemode has started.
@@ -130,13 +67,82 @@ namespace LabExtended.API.Custom.Gamemodes
         public TimeSpan RunTime => runTimeWatch.Elapsed;
 
         /// <summary>
+        /// Gets the date and time at which the current run started.
+        /// </summary>
+        [YamlIgnore]
+        public DateTime StartTime => DateTime.Now - runTimeWatch.Elapsed;
+
+        /// <summary>
+        /// Enables the current instance if it is not already active and can be enabled.
+        /// </summary>
+        /// <returns>true if the instance was successfully enabled; otherwise, false.</returns>
+        public bool Enable()
+        {
+            if (IsActive)
+                return false;
+
+            if (!CanBeEnabled(Active))
+                return false;
+
+            if (!Active.AddUnique(this))
+            {
+                runTimeWatch.Restart();
+                return false;
+            }
+
+            runTimeWatch.Restart();
+
+            ApiLog.Info("Custom Gamemodes", $"Enabled custom gamemode &3{Id}&r!");
+
+            OnEnabled();
+            return true;
+        }
+
+        /// <summary>
+        /// Disables the current instance if it is active.
+        /// </summary>
+        /// <returns>true if the instance was active and is now disabled; otherwise, false.</returns>
+        public bool Disable()
+        {
+            if (!IsActive)
+                return false;
+
+            Active.Remove(this);
+
+            runTimeWatch.Stop();
+            runTimeWatch.Reset();
+
+            ApiLog.Info("Custom Gamemodes", $"Disabled custom gamemode &3{Id}&r!");
+
+            OnDisabled();
+            return true;
+        }
+
+        /// <summary>
+        /// Determines whether or not the gamemode can be enabled given the other currently active gamemodes.
+        /// </summary>
+        /// <param name="otherModes">List of other active modes.</param>
+        /// <returns><c>true</c> if the gamemode can be enabled; otherwise, <c>false</c>.</returns>
+        public virtual bool CanBeEnabled(List<CustomGamemode> otherModes)
+        {
+            if (IsActive)
+                return false;
+
+            if (!CanActivateMidRound && !ExRound.IsWaitingForPlayers)
+                return false;
+
+            if (IncompatibleGamemodes?.Length > 0 && otherModes.Any(x => IncompatibleGamemodes.Contains(x.Id)))
+                return false;
+
+            return true;
+        }
+
+        /// <summary>
         /// Gets called when the gamemode is enabled.
         /// </summary>
         public virtual void OnEnabled()
         {
-            runTimeWatch.Restart();
-            
-            ApiLog.Info("Custom Gamemodes", $"Enabled custom gamemode &3{Id}&r!");
+
         }
 
         /// <summary>
@@ -144,10 +150,17 @@ namespace LabExtended.API.Custom.Gamemodes
         /// </summary>
         public virtual void OnDisabled()
         {
-            runTimeWatch.Stop();
-            runTimeWatch.Reset();
-            
-            ApiLog.Info("Custom Gamemodes", $"Disabled custom gamemode &3{Id}&r!");
+
+        }
+
+        /// <summary>
+        /// Appends a textual representation of the current gamemode's state to the specified <see cref="StringBuilder"/>
+        /// instance.
+        /// </summary>
+        /// <param name="builder">The <see cref="StringBuilder"/> instance to which the gamemode's state will be appended. Cannot be null.</param>
+        public virtual void PrintState(StringBuilder builder)
+        {
+
         }
 
         /// <inheritdoc/>
@@ -163,7 +176,7 @@ namespace LabExtended.API.Custom.Gamemodes
         {
             base.OnUnregistered();
 
-            if (Current != null && Current == this)
+            if (IsActive)
                 Disable();
 
             ApiLog.Info("Custom Gamemodes", $"&1Unregistered&r custom gamemode &3{Id}&r");
@@ -210,7 +223,10 @@ namespace LabExtended.API.Custom.Gamemodes
         /// </summary>
         public virtual void OnRoundRestarting()
         {
-
+            if (ShouldDisableOnRoundEnd && IsActive)
+            {
+                Disable();
+            }
         }
 
         /// <summary>
@@ -322,99 +338,87 @@ namespace LabExtended.API.Custom.Gamemodes
 
         private static void _WaitingForPlayers()
         {
-            while (Current == null && Queue.TryDequeue(out var gamemode))
-            {
-                if (!Enable(gamemode, true))
-                {
-                    ApiLog.Warn("Custom Gamemodes", $"Queued gamemode &1{gamemode.Id}&r could not be enabled!");
-                }
-                else
-                {
-                    break;
-                }
-            }
-
-            Current?.OnWaitingForPlayers();
+            Active.ForEach(x => x.OnWaitingForPlayers());
         }
 
         private static void _Update()
         {
-            Current?.OnUpdate();
+            Active.ForEach(x => x.OnUpdate());
         }
 
         private static void _RoundCheckingEndConditions(RoundEndingConditionsCheckEventArgs args)
         {
-            Current?.OnRoundCheckingEndConditions(args);
+            Active.ForEach(x => x.OnRoundCheckingEndConditions(args));
         }
 
         private static void _RoundEnding(RoundEndingEventArgs args)
         {
-            Current?.OnRoundEnding(args);
+            Active.ForEach(x => x.OnRoundEnding(args));
         }
 
         private static void _RoundEnded(RoundEndedEventArgs args)
         {
-            Current?.OnRoundEnded(args);
+            Active.ForEach(x => x.OnRoundEnded(args));
         }
 
         private static void _RoundRestarting()
         {
-            Current?.OnRoundRestarting();
+            Active.ForEach(x => x.OnRoundRestarting());
         }
 
         private static void _RoundStarted()
         {
-            Current?.OnRoundStarted();
+            Active.ForEach(x => x.OnRoundStarted());
         }
 
         private static void _AssigningRoles(AssigningRolesEventArgs args)
         {
-            Current?.OnAssigningRoles(args);
+            Active.ForEach(x => x.OnAssigningRoles(args));
         }
 
         private static void _AssignedRoles(AssignedRolesEventArgs args)
         {
-            Current?.OnAssignedRoles(args);
+            Active.ForEach(x => x.OnAssignedRoles(args));
         }
 
         private static void _LateJoinSettingRole(LateJoinSettingRoleEventArgs args)
         {
-            Current?.OnLateJoinSettingRole(args);
+            Active.ForEach(x => x.OnLateJoinSettingRole(args));
         }
 
         private static void _LateJoinSetRole(LateJoinSetRoleEventArgs args)
         {
-            Current?.OnLateJoinSetRole(args);
+            Active.ForEach(x => x.OnLateJoinSetRole(args));
         }
 
         private static void _PlayerJoined(ExPlayer player)
         {
-            Current?.OnPlayerJoined(player);
+            Active.ForEach(x => x.OnPlayerJoined(player));
         }
 
         private static void _PlayerLeft(ExPlayer player)
         {
-            Current?.OnPlayerLeft(player);
+            Active.ForEach(x => x.OnPlayerLeft(player));
         }
 
         private static void _WaveSelecting(WaveTeamSelectingEventArgs args)
         {
-            Current?.OnWaveSelecting(args);
+            Active.ForEach(x => x.OnWaveSelecting(args));
         }
 
         private static void _WaveSelected(WaveTeamSelectedEventArgs args)
-        {
-            Current?.OnWaveSelected(args);
+        {   
+            Active.ForEach(x => x.OnWaveSelected(args));
         }
 
         private static void _WaveSpawning(WaveRespawningEventArgs args)
         {
-            Current?.OnWaveSpawning(args);
+            Active.ForEach(x => x.OnWaveSpawning(args));
         }
 
         private static void _WaveSpawned(WaveRespawnedEventArgs args)
         {
-            Current?.OnWaveSpawned(args);
+            Active.ForEach(x => x.OnWaveSpawned(args));
         }
 
         internal static void _Init()
