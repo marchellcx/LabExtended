@@ -46,11 +46,11 @@ namespace LabExtended.API;
 public static class ExMap
 {
     private static readonly FacilityZone[] allZones = EnumUtils<FacilityZone>.Values.Except([FacilityZone.None, FacilityZone.Other]).ToArray();
-    
+
     /// <summary>
-    /// List of spawned pickups.
+    /// List of spawned lockers.
     /// </summary>
-    public static List<ItemPickupBase> Pickups { get; } = new();
+    public static List<Locker> Lockers { get; } = new();
 
     /// <summary>
     /// List of spawned ragdolls.
@@ -58,9 +58,14 @@ public static class ExMap
     public static List<BasicRagdoll> Ragdolls { get; } = new();
 
     /// <summary>
-    /// List of spawned lockers.
+    /// List of spawned pickups.
     /// </summary>
-    public static List<Locker> Lockers { get; } = new();
+    public static List<ItemPickupBase> Pickups { get; } = new();
+
+    /// <summary>
+    /// List of frozen pickups.
+    /// </summary>
+    public static List<ItemPickupBase> FrozenPickups { get; } = new();
 
     /// <summary>
     /// List of locker chambers.
@@ -703,6 +708,7 @@ public static class ExMap
     private static void OnPickupDestroyed(ItemPickupBase pickup)
     {
         Pickups.Remove(pickup);
+        FrozenPickups.Remove(pickup);
 
         ExPlayer.AllPlayers.ForEach(p => p?.Inventory?.droppedItems?.Remove(pickup));
     }
@@ -716,6 +722,8 @@ public static class ExMap
     {
         if (phase is MapGenerationPhase.RoomCoordsRegistrations)
         {
+            FrozenPickups.Clear();
+
             Lockers.Clear();
 
             Chambers.Clear();

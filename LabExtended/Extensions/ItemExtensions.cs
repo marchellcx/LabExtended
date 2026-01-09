@@ -7,7 +7,6 @@ using InventorySystem.Items.Pickups;
 using InventorySystem.Items.Usables.Scp1344;
 
 using LabExtended.API;
-using LabExtended.Utilities;
 
 using Mirror;
 
@@ -246,13 +245,19 @@ public static class ItemExtensions
         if (itemPickupBase.PhysicsModule is not PickupStandardPhysics pickupStandardPhysics)
             return false;
 
-        if (pickupStandardPhysics.Rb is null)
+        if (pickupStandardPhysics.Rb == null)
             return false;
 
-        pickupStandardPhysics.Rb.isKinematic = true;
-        pickupStandardPhysics.Rb.constraints = RigidbodyConstraints.FreezeAll;
+        if (!pickupStandardPhysics.Rb.isKinematic)
+        {
+            pickupStandardPhysics.Rb.isKinematic = true;
+            pickupStandardPhysics.Rb.constraints = RigidbodyConstraints.FreezeAll;
 
-        pickupStandardPhysics.ClientFrozen = true;
+            pickupStandardPhysics.ClientFrozen = true;
+
+            ExMap.FrozenPickups.AddUnique(itemPickupBase);
+        }
+
         return true;
     }
 
@@ -273,6 +278,8 @@ public static class ItemExtensions
         pickupStandardPhysics.Rb.constraints = RigidbodyConstraints.None;
 
         pickupStandardPhysics.ClientFrozen = false;
+
+        ExMap.FrozenPickups.Remove(itemPickupBase);
         return true;
     }
 
