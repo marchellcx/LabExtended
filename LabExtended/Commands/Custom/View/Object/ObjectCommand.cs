@@ -16,7 +16,7 @@ public partial class ViewCommand
     /// serialization data, associated behaviours, and various state flags. If the specified object ID does not
     /// correspond to an active network object, an error message is returned.</remarks>
     /// <param name="objectId">The unique identifier of the target network object. Must correspond to an active object on the server.</param>
-    [CommandOverload("object", "Shows the description of a network object.", null)]
+    [CommandOverload("object", "Shows the description of a network object.", "view.object")]
     public void ObjectOverload(
         [CommandParameter("ID", "ID of the target object.")] uint objectId)
     {

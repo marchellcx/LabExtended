@@ -16,7 +16,7 @@ public partial class SpawnCommand
     /// <param name="amount">The number of items to spawn. Must be greater than zero.</param>
     /// <param name="type">The type of item to spawn.</param>
     /// <param name="scale">The scale to apply to each spawned item. If null, a scale of one is used.</param>
-    [CommandOverload("item", "Spawns an item.", null)]
+    [CommandOverload("item", "Spawns an item.", "spawn.item")]
     public void ItemOverload(
         [CommandParameter("Target", "The target player.")] ExPlayer target,
         [CommandParameter("Amount", "The amount of items to spawn.")] int amount, 

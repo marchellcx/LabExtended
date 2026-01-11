@@ -127,6 +127,22 @@ public static class StringExtensions
     }
 
     /// <summary>
+    /// Converts a Boolean value to a color-formatted string representation using custom markup codes.
+    /// </summary>
+    /// <remarks>The returned string uses custom markup codes (e.g., "&2" and "&1") to indicate color
+    /// formatting, which may be interpreted by specific rendering systems.</remarks>
+    /// <param name="value">The Boolean value to convert. If <see langword="true"/>, the returned string represents "true"; otherwise,
+    /// "false".</param>
+    /// <returns>A string containing "&2true&r" if <paramref name="value"/> is <see langword="true"/>; otherwise, "&1false&r".</returns>
+    public static string TrueColorFormatBool(this bool value)
+    {
+        if (value)
+            return "&2true&r";
+
+        return "&1false&r";
+    }
+
+    /// <summary>
     /// Removes compiler-generated artifacts and generic arity from a type or member name, returning a simplified,
     /// human-readable identifier.
     /// </summary>
@@ -331,7 +347,7 @@ public static class StringExtensions
                         if (unityRichText && lastTag != string.Empty)
                             newText += EndTag(ref lastTag);
 
-                        newText += unityRichText ? "<color=cyan>" : $"{escapeChar}[36m";
+                        newText += unityRichText ? "<color=blue>" : $"{escapeChar}[36m";
 
                         lastTag = "color";
                         break;
@@ -352,13 +368,12 @@ public static class StringExtensions
                         {
                             if (defaultColor != null)
                             {
-                                newText += EndTag(ref lastTag) + $"{defaultColor}";
-
+                                newText += EndTag(ref lastTag) + defaultColor;
                                 lastTag = "color";
                             }
                             else
                             {
-                                EndTag(ref lastTag);
+                                newText += EndTag(ref lastTag);
                             }
 
                             break;
@@ -366,6 +381,7 @@ public static class StringExtensions
 
                         if (!unityRichText)
                             newText += $"{escapeChar}[0m";
+
                         break;
 
                     // Bold on

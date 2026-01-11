@@ -18,7 +18,7 @@ public partial class ReloadCommand
     /// <param name="pluginName">The name of the plugin to reload. The name comparison is case-insensitive. Must refer to an enabled plugin.</param>
     /// <param name="onlyConfig">If <see langword="true"/>, only the plugin's configuration is reloaded; otherwise, the plugin is fully reloaded
     /// by disabling and re-enabling it.</param>
-    [CommandOverload("plugin", "Reloads a specific plugin.", null)]
+    [CommandOverload("plugin", "Reloads a specific plugin.", "reload.plugin")]
     public void PluginOverload(
         [CommandParameter("Name", "Name of the plugin to reload.")] string pluginName,
         [CommandParameter("OnlyConfig", "Whether or not to reload only the plugin's config.")] bool onlyConfig = false)

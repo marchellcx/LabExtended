@@ -5,6 +5,7 @@ using LabExtended.Commands.Interfaces;
 
 namespace LabExtended.Commands.Custom.Holidays
 {
+    /*
     /// <summary>
     /// Provides server-side commands related to the active in-game holiday update, including operations for managing
     /// holiday-specific features and entities.
@@ -41,6 +42,7 @@ namespace LabExtended.Commands.Custom.Holidays
 
             Ok($"Spawned a Hubert Moon instance (ID: {instance.netId})");
         }
-        #endregion
+        #endregion  
     }
+    */
 }

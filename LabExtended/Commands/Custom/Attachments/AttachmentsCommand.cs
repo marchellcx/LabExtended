@@ -21,7 +21,7 @@ public class AttachmentsCommand : CommandBase, IServerSideCommand
     /// <summary>
     /// Randomizes all attachments.
     /// </summary>
-    [CommandOverload("random", "Randomizes all attachments of a firearm.", null)]
+    [CommandOverload("random", "Randomizes all attachments of a firearm.", "attachments.random")]
     public void Random(ushort firearmSerial)
     {
         if (!InventoryExtensions.ServerTryGetItemWithSerial(firearmSerial, out var item)
@@ -39,7 +39,7 @@ public class AttachmentsCommand : CommandBase, IServerSideCommand
     /// <summary>
     /// Clears all attachments.
     /// </summary>
-    [CommandOverload("clear", "Clears all attachments on a firearm.", null)]
+    [CommandOverload("clear", "Clears all attachments on a firearm.", "attachments.clear")]
     public void Clear(ushort firearmSerial)
     {
         if (!InventoryExtensions.ServerTryGetItemWithSerial(firearmSerial, out var item)
@@ -61,7 +61,7 @@ public class AttachmentsCommand : CommandBase, IServerSideCommand
     /// <summary>
     /// Disables selected attachments.
     /// </summary>
-    [CommandOverload("disable", "Disables a list of attachments on a firearm.", null)]
+    [CommandOverload("disable", "Disables a list of attachments on a firearm.", "attachments.disable")]
     public void Disable(
         [CommandParameter(Name = "Serial", Description = "The serial number of the firearm.")] ushort firearmSerial,
         [CommandParameter(Name = "Attachments", Description = "List of attachments to disable.")] List<AttachmentName> attachments)
@@ -85,7 +85,7 @@ public class AttachmentsCommand : CommandBase, IServerSideCommand
     /// <summary>
     /// Enables selected attachments.
     /// </summary>
-    [CommandOverload("enable", "Enables a list of attachments on a firearm.", null)]
+    [CommandOverload("enable", "Enables a list of attachments on a firearm.", "attachments.enable")]
     public void Enable(
         [CommandParameter("Serial", "The serial of the target firearm.")] ushort firearmSerial, 
         [CommandParameter("Attachments", "List of attachments to enable.")] List<AttachmentName> attachments)
@@ -109,7 +109,7 @@ public class AttachmentsCommand : CommandBase, IServerSideCommand
     /// <summary>
     /// Lists all attachments on a specific firearm.
     /// </summary>
-    [CommandOverload("serial", "Lists all attachments on a specific firearm.", null)]
+    [CommandOverload("serial", "Lists all attachments on a specific firearm.", "attachments.serial")]
     public void Serial(
         [CommandParameter("Serial", "The serial number of the firearm item.")] ushort firearmSerial)
     {
@@ -163,7 +163,7 @@ public class AttachmentsCommand : CommandBase, IServerSideCommand
     /// <summary>
     /// Lists all available attachments on a firearm.
     /// </summary>
-    [CommandOverload("item", "Shows all attachments on an item.", null)]
+    [CommandOverload("item", "Shows all attachments on an item.", "attachments.item")]
     public void Item(
         [CommandParameter("Type", "The type of the firearm.")] ItemType type)
     {

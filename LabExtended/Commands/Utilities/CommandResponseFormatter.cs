@@ -33,7 +33,7 @@ internal static class CommandResponseFormatter
             {
                 if (TrueColorResponses)
                 {
-                    args.Sender.Respond(response, false);
+                    args.Sender.Respond(response.FormatTrueColorString(null, false, false), false);
                 }
                 else
                 {
@@ -42,7 +42,7 @@ internal static class CommandResponseFormatter
             }
             else if (TrueColorResponses)
             {
-                args.Sender.Respond(response.FormatTrueColorString(), false);
+                args.Sender.Respond(response.FormatTrueColorString(null, true, false), false);
             }
             else
             {
@@ -83,7 +83,7 @@ internal static class CommandResponseFormatter
             x.AppendLine();
 
             for (var i = 0; i < likelyCommands.Count; i++)
-                x.Append(likelyCommands[i].GetString(false));
+                x.Append(likelyCommands[i].GetString(false, TrueColorResponses));
         });
     }
     
@@ -95,7 +95,7 @@ internal static class CommandResponseFormatter
             {
                 if (ctx.Type is CommandType.Console)
                 {
-                    x.Append(ctx.Response.Content);
+                    x.Append(ctx.Response.Content.FormatTrueColorString("6", false, false));
                 }
                 else
                 {
@@ -106,9 +106,7 @@ internal static class CommandResponseFormatter
                         x.Append("]</color> ");
                     }
 
-                    x.Append("&6");
                     x.Append(ctx.Response.Content.FormatTrueColorString(null, true, false));
-                    x.Append("&r");
                 }
             }
             else
@@ -171,7 +169,7 @@ internal static class CommandResponseFormatter
         return StringBuilderPool.Shared.BuildString(x =>
         {
             x.AppendLine("&1Unknown overload, try using one of these:&r");
-            x.AppendLine(commandData.GetString(false));
+            x.AppendLine(commandData.GetString(false, TrueColorResponses));
         });
     }
 
@@ -198,16 +196,9 @@ internal static class CommandResponseFormatter
                 x.Append(i);
                 x.Append("]&r &7");
                 x.Append(parameter.Name);
-                x.Append("&r &6(");
+                x.Append("&r &3(");
                 x.Append(parameter.Description);
                 x.Append(")&r");
-
-                if (!string.IsNullOrEmpty(parameter.Description))
-                {
-                    x.Append(" &3(");
-                    x.Append(parameter.Description);
-                    x.Append(")&r");
-                }
             }
         });
     }
@@ -235,7 +226,7 @@ internal static class CommandResponseFormatter
 
                     x.Append("&3[");
                     x.Append(i);
-                    x.Append("]&r &1");
+                    x.Append("]&r &7");
                     x.Append(result.Parameter.Name);
                     x.Append("&r:");
 
@@ -251,7 +242,7 @@ internal static class CommandResponseFormatter
 
                         if (!string.IsNullOrEmpty(result.Parameter.Description))
                         {
-                            x.Append(" &6(");
+                            x.Append(" &3(");
                             x.Append(result.Parameter.Description);
                             x.Append(")&r");
                         }

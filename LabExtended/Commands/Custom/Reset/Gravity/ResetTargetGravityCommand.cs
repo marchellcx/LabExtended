@@ -11,7 +11,7 @@ public partial class ResetTargetCommand
     /// Resets the gravity setting for the specified player to the default value.
     /// </summary>
     /// <param name="target">The player whose gravity will be reset. If null, the command sender's gravity is reset.</param>
-    [CommandOverload("gravity", "Resets the gravity of a specific player.", null)]
+    [CommandOverload("gravity", "Resets the gravity of a specific player.", "reset.target.gravity")]
     public void GravityTarget(ExPlayer? target = null)
     {
         var player = target ?? Sender;

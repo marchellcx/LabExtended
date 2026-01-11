@@ -14,7 +14,7 @@ public partial class ReloadCommand
     /// state is preserved.</remarks>
     /// <param name="onlyConfig">true to reload only the configuration files for each plugin; false to fully reload each plugin by disabling and
     /// re-enabling it.</param>
-    [CommandOverload("plugins", "Reloads all plugins.", null)]
+    [CommandOverload("plugins", "Reloads all plugins.", "reload.plugins")]
     public void PluginsOverload( 
         [CommandParameter("OnlyConfig", "Whether or not to reload only the plugin's config.")] bool onlyConfig = false)
     {

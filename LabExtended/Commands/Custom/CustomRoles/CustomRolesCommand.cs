@@ -1,6 +1,7 @@
-﻿using LabExtended.API;
+﻿using LabApi.Features.Permissions;
+using LabApi.Features.Wrappers;
+using LabExtended.API;
 using LabExtended.API.Custom.Roles;
-
 using LabExtended.Commands.Attributes;
 using LabExtended.Commands.Interfaces;
 
@@ -12,7 +13,7 @@ namespace LabExtended.Commands.Custom.CustomRoles
     [Command("customroles", "Manages custom roles.", "cr")]
     public class CustomRolesCommand : CommandBase, IServerSideCommand
     {
-        [CommandOverload("list", "Lists all registered custom roles.", null)]
+        [CommandOverload("list", "Lists all registered custom roles.", "customrole.list")]
         private void List()
         {
             if (CustomRole.RegisteredObjects.Count == 0)
@@ -30,7 +31,7 @@ namespace LabExtended.Commands.Custom.CustomRoles
             });
         }
 
-        [CommandOverload("active", "Displays the currently active custom role of a player.", null)]
+        [CommandOverload("active", "Displays the currently active custom role of a player.", "customrole.active")]
         private void Active(ExPlayer? target = null)
         {
             target ??= Sender;
@@ -44,12 +45,18 @@ namespace LabExtended.Commands.Custom.CustomRoles
             Ok($"Player {target.ToCommandString()} has the '{target.Role.CustomRole.Name}' ({target.Role.CustomRole.Id}) custom role active.");
         }
 
-        [CommandOverload("set", "Sets the custom role of a player.", null)]
+        [CommandOverload("set", "Sets the custom role of a player.", "customrole.set")]
         private void Set(ExPlayer target, string roleId)
         {
             if (!CustomRole.TryGet(roleId, out var role))
             {
                 Fail($"Custom Role with ID '{roleId}' does not exist.");
+                return;
+            }
+
+            if (!Sender.HasAnyPermission("customrole.set.all", $"customrole.set.{roleId}"))
+            {
+                Fail($"You do not have permission to set this custom role.");
                 return;
             }
 
@@ -65,7 +72,7 @@ namespace LabExtended.Commands.Custom.CustomRoles
                 Fail($"Could not set custom role '{role.Name}' ({role.Id}) to player {target.ToCommandString()}");
         }
 
-        [CommandOverload("remove", "Removes the custom role of a player.", null)]
+        [CommandOverload("remove", "Removes the custom role of a player.", "customrole.remove")]
         private void Remove(ExPlayer? target = null)
         {
             target ??= Sender;

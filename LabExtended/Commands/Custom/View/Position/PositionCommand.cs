@@ -18,7 +18,7 @@ public partial class ViewCommand
     /// transform and camera positions, rotation values, grounded state, and room information. It also includes relative
     /// position details if the sender's role supports first-person controls, and camera controller data if available.
     /// Use this command to diagnose or inspect the sender's current in-game location and orientation.</remarks>
-    [CommandOverload("position", "Shows information about your current position.", null)]
+    [CommandOverload("position", "Shows information about your current position.", "view.position")]
     public void Position()
     {
         Ok(x =>

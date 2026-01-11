@@ -16,7 +16,7 @@ namespace LabExtended.Commands.Custom.CustomAmmo;
 [Command("customammo", "Custom Ammo management.", "cammo")]
 public class CustomAmmoCommand : CommandBase, IServerSideCommand
 {
-    [CommandOverload("get", "Gets the amount of custom ammo in a player's inventory.", null)]
+    [CommandOverload("get", "Gets the amount of custom ammo in a player's inventory.", "customammo.get")]
     private void GetCommand(
         [CommandParameter("ID", "ID of the ammo.")] string ammoId,
         [CommandParameter("Targets", "The target players.")] List<ExPlayer> players)
@@ -28,7 +28,7 @@ public class CustomAmmoCommand : CommandBase, IServerSideCommand
         });
     }
 
-    [CommandOverload("set", "Sets a specific amount of custom ammo in a player's inventory.", null)]
+    [CommandOverload("set", "Sets a specific amount of custom ammo in a player's inventory.", "customammo.set")]
     private void SetCommand(
         [CommandParameter("ID", "ID of the ammo.")] string ammoId,
         [CommandParameter("Amount", "Amount to set.")] int amount,
@@ -41,7 +41,7 @@ public class CustomAmmoCommand : CommandBase, IServerSideCommand
         });
     }
     
-    [CommandOverload("add", "Adds a specific amount of custom ammo to a player's inventory.", null)]
+    [CommandOverload("add", "Adds a specific amount of custom ammo to a player's inventory.", "customammo.add")]
     private void AddCommand(
         [CommandParameter("ID", "ID of the ammo.")] string ammoId,
         [CommandParameter("Amount", "Amount to add.")] int amount,
@@ -54,7 +54,7 @@ public class CustomAmmoCommand : CommandBase, IServerSideCommand
         });
     }
     
-    [CommandOverload("remove", "Removes a specific amount of custom ammo from a player's inventory.", null)]
+    [CommandOverload("remove", "Removes a specific amount of custom ammo from a player's inventory.", "customammo.remove")]
     private void RemoveCommand(
         [CommandParameter("ID", "ID of the ammo.")] string ammoId,
         [CommandParameter("Amount", "Amount to remove.")] int amount,
@@ -67,7 +67,7 @@ public class CustomAmmoCommand : CommandBase, IServerSideCommand
         });
     }
     
-    [CommandOverload("clear", "Removes all custom ammo from a player's inventory.", null)]
+    [CommandOverload("clear", "Removes all custom ammo from a player's inventory.", "customammo.clear")]
     private void ClearCommand(
         [CommandParameter("Targets", "The target players.")] List<ExPlayer> players)
     {

@@ -3,10 +3,12 @@ using CommandSystem.Commands.Shared;
 
 using HarmonyLib;
 
-using LabApi.Features.Enums;
-
+using LabExtended.API;
 using LabExtended.Commands;
 using LabExtended.Commands.Utilities;
+
+using LabExtended.Extensions;
+
 using NorthwoodLib.Pools;
 
 namespace LabExtended.Patches.Functions.RemoteAdmin;
@@ -24,7 +26,27 @@ public static class RemoteAdminHelpPatch
         {
             response = __instance.GetCommandList(__instance._commandHandler, "Commands:");
 
-            CommandFormatter.AppendCommands(ref response);
+            CommandFormatter.AppendCommands(ref response, CommandResponseFormatter.TrueColorResponses);
+
+            if (CommandResponseFormatter.TrueColorResponses)
+            {
+                if (ExPlayer.TryGet(sender, out var player))
+                {
+                    if (player.IsHost)
+                    {
+                        response = response.FormatTrueColorString(null, true, false);
+
+                    }
+                    else
+                    {
+                        response = response.FormatTrueColorString(null, false, false);
+                    }
+                }
+                else
+                {
+                    response = response.SanitizeTrueColorString();
+                }
+            }
 
             __result = true;
             return false;
@@ -80,9 +102,28 @@ public static class RemoteAdminHelpPatch
 
             ListPool<string>.Shared.Return(args);
 
-            response = foundCommand.GetString();
+            response = foundCommand.GetString(true, CommandResponseFormatter.TrueColorResponses);
 
-            __result = true;
+            if (CommandResponseFormatter.TrueColorResponses)
+            {
+                if (ExPlayer.TryGet(sender, out var player))
+                {
+                    if (player.IsHost)
+                    {
+                        response = response.FormatTrueColorString(null, true, false);
+                    }
+                    else
+                    {
+                        response = response.FormatTrueColorString(null, false, false);
+                    }
+                }
+                else
+                {
+                    response = response.SanitizeTrueColorString();
+                }
+            }
+
+             __result = true;
             return false;
         }
 

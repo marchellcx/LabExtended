@@ -12,7 +12,7 @@ public partial class SetTargetsCommand
     /// </summary>
     /// <param name="gravity">The new gravity vector to apply to each targeted player.</param>
     /// <param name="targets">The list of players whose gravity will be set. Cannot be null.</param>
-    [CommandOverload("gravity", "Sets the gravity of a list of players.", null)]
+    [CommandOverload("gravity", "Sets the gravity of a list of players.", "set.targets.gravity")]
     public void GravityTarget(
         [CommandParameter("Value", "The new gravity vector.")] Vector3 gravity,
         [CommandParameter("Targets", "List of targeted players.")] List<ExPlayer> targets)

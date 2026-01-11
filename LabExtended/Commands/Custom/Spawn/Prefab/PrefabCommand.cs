@@ -18,7 +18,7 @@ public partial class SpawnCommand
     /// <param name="size">The size to apply to the spawned prefab. If not specified, the default size of one is used.</param>
     /// <param name="position">The world position at which to spawn the prefab. If not specified, the sender's current position is used.</param>
     /// <param name="rotation">The rotation to apply to the spawned prefab. If not specified, the sender's current rotation is used.</param>
-    [CommandOverload("prefab", "Spawns a prefab", null)]
+    [CommandOverload("prefab", "Spawns a prefab", "spawn.prefab")]
     public void PrefabOverload(
         [CommandParameter("Name", "Name of the prefab")] string prefabName, 
         [CommandParameter("Size", "Size of the prefab (defaults to one)")] Vector3? size = null, 

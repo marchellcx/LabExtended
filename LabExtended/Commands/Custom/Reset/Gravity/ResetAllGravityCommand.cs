@@ -12,7 +12,7 @@ public partial class ResetAllCommand
     /// </summary>
     /// <remarks>This method affects all currently active players. Use this command to restore normal gravity
     /// if it has been modified for any player.</remarks>
-    [CommandOverload("gravity", "Resets the gravity of all players.", null)]
+    [CommandOverload("gravity", "Resets the gravity of all players.", "reset.all.gravity")]
     public void GravityTarget()
     {
         PositionContainer.ResetGravity();

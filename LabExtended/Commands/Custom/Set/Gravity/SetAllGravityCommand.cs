@@ -12,7 +12,7 @@ public partial class SetAllCommand
     /// </summary>
     /// <param name="gravity">The new gravity vector to apply to all players. Each component represents the acceleration due to gravity along
     /// the corresponding axis.</param>
-    [CommandOverload("gravity", "Sets the gravity of all players.", null)]
+    [CommandOverload("gravity", "Sets the gravity of all players.", "set.all.gravity")]
     public void GravityTarget([CommandParameter("Value", "The new gravity vector.")] Vector3 gravity)
     {
         ExPlayer.AllPlayers.ForEach(p => p.Position.Gravity = gravity);

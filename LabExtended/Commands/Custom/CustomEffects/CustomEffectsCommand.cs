@@ -20,7 +20,7 @@ public class CustomEffectsCommand : CommandBase, IServerSideCommand
     /// </summary>
     /// <param name="target">The target player whose registered custom effects will be listed. If null, lists all available custom effects
     /// instead.</param>
-    [CommandOverload("list", "Lists all available Custom Effects.", null)]
+    [CommandOverload("list", "Lists all available Custom Effects.", "customeffect.list")]
     public void ListCommand(
         [CommandParameter("Target", "The target player. Specifying a " +
                                     "target will list of effects registered on a player.")] ExPlayer? target = null)
@@ -65,7 +65,7 @@ public class CustomEffectsCommand : CommandBase, IServerSideCommand
     /// effects.</remarks>
     /// <param name="effectName">The name of the Custom Effect to enable. Must correspond to a registered effect.</param>
     /// <param name="target">The player on whom to enable the effect. If not specified, the effect is enabled on the command sender.</param>
-    [CommandOverload("enable", "Enables an inactive Custom Effect.", null)]
+    [CommandOverload("enable", "Enables an inactive Custom Effect.", "customeffect.enable")]
     public void EnableCommand(
         [CommandParameter("Name", "Name of the Custom Effect.")] string effectName, 
         [CommandParameter("Target", "The target player (defaults to you).")] ExPlayer? target = null)
@@ -102,7 +102,7 @@ public class CustomEffectsCommand : CommandBase, IServerSideCommand
     /// will fail with an appropriate message. Use the "customeffect list" command to view available effects.</remarks>
     /// <param name="effectName">The name of the Custom Effect to disable. This must match the name of an existing effect.</param>
     /// <param name="target">The player on whom to disable the effect. If not specified, the effect is disabled on the command sender.</param>
-    [CommandOverload("disable", "Disables an active Custom Effect.", null)]
+    [CommandOverload("disable", "Disables an active Custom Effect.", "customeffect.disable")]
     public void DisableCommand(
         [CommandParameter("Name", "Name of the Custom Effect")] string effectName, 
         [CommandParameter("Target", "The target player (defaults to you).")] ExPlayer? target = null)
@@ -136,7 +136,7 @@ public class CustomEffectsCommand : CommandBase, IServerSideCommand
     /// Disables all active custom effects for the specified player.
     /// </summary>
     /// <param name="target">The player whose custom effects will be cleared. If null, the command sender is used.</param>
-    [CommandOverload("clear", "Clears all Custom Effects.", null)]
+    [CommandOverload("clear", "Clears all Custom Effects.", "customeffect.clear")]
     public void ClearCommand(ExPlayer? target = null)
     {
         var player = target ?? Sender;

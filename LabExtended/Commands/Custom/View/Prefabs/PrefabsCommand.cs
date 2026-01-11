@@ -12,7 +12,7 @@ public partial class ViewCommand
     /// </summary>
     /// <remarks>This method is intended to be used as a command overload for displaying all registered prefab
     /// names. The output includes the total count of prefabs followed by each prefab's identifier and name.</remarks>
-    [CommandOverload("prefabs", "Lists prefab names.", null)]
+    [CommandOverload("prefabs", "Lists prefab names.", "view.prefabs")]
     public void PrefabsOverload()
     {
         Ok(x =>

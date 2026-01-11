@@ -128,18 +128,6 @@ public static class RemoteAdminCommandListPatch
                 postfix = ")";
             }
 
-            if (parameter.UsageAlias?.Length > 0)
-            {
-                name = parameter.UsageAlias;
-
-                prefix = string.Empty;
-                postfix = string.Empty;
-            }
-            else if (parameter.FriendlyAlias?.Length > 0)
-            {
-                name = parameter.FriendlyAlias;
-            }
-
             usage[i] = string.Concat(prefix, name, postfix);
         }
 

@@ -13,7 +13,7 @@ public partial class SetTargetCommand
     /// <param name="gravity">The new gravity vector to apply to the player. Each component represents the force of gravity along the
     /// corresponding axis.</param>
     /// <param name="target">The player whose gravity will be set. If null, the gravity is set for the command sender.</param>
-    [CommandOverload("gravity", "Sets the gravity of a specific player.", null)]
+    [CommandOverload("gravity", "Sets the gravity of a specific player.", "set.target.gravity")]
     public void GravityTarget(
         [CommandParameter("Value", "The new gravity vector.")]Vector3 gravity, 
         [CommandParameter("Target", "The target player (defaults to you).")] ExPlayer? target = null)

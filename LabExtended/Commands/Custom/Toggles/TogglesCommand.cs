@@ -17,7 +17,7 @@ public class TogglesCommand : CommandBase, IServerSideCommand
     /// <summary>
     /// Sets a player's switch.
     /// </summary>
-    [CommandOverload("set", "Sets the value of player toggles.", null)]
+    [CommandOverload("set", "Sets the value of player toggles.", "toggles.set")]
     public void SetToggle(
         [CommandParameter("Target", "The targeted player")] ExPlayer target,
         [CommandParameter("Property", "The property to set")] string property,
@@ -53,7 +53,7 @@ public class TogglesCommand : CommandBase, IServerSideCommand
     /// <summary>
     /// Sets a player's switch.
     /// </summary>
-    [CommandOverload("get", "Gets the value of player toggles.", null)]
+    [CommandOverload("get", "Gets the value of player toggles.", "toggles.get")]
     public void GetToggle(
         [CommandParameter("Target", "The targeted player")] ExPlayer target,
         [CommandParameter("Property", "The property to set")] string property)

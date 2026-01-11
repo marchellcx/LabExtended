@@ -15,7 +15,7 @@ public partial class PerformanceCommand : CommandBase, IServerSideCommand
     /// Runs the profiler for the specified duration in milliseconds.
     /// </summary>
     /// <param name="duration">The length of time, in milliseconds, to run the profiler. Must be a non-negative value.</param>
-    [CommandOverload(null, null)]
+    [CommandOverload(null, "performance.profiler")]
     public void InvokeCommand(int duration)
     {
         ProfilerUtils.Run(duration);

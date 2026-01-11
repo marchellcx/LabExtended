@@ -1,3 +1,5 @@
+using LabApi.Features.Permissions;
+using LabApi.Features.Wrappers;
 using LabExtended.API.CustomTeams;
 
 using LabExtended.Commands.Attributes;
@@ -22,7 +24,7 @@ public class CustomTeamsCommand : CommandBase, IServerSideCommand
     /// Displays a list of all registered custom teams to the user.
     /// </summary>
     /// <remarks>If no custom teams are registered, an error message is displayed instead of a list.</remarks>
-    [CommandOverload("list", "Lists all custom teams.", null)]
+    [CommandOverload("list", "Lists all custom teams.", "customteams.list")]
     public void List()
     {
         if (CustomTeamRegistry.RegisteredHandlers.Count == 0)
@@ -46,7 +48,7 @@ public class CustomTeamsCommand : CommandBase, IServerSideCommand
     /// Lists all currently active waves for the specified team.
     /// </summary>
     /// <param name="name">The name of the team whose active waves are to be listed. Cannot be null or empty.</param>
-    [CommandOverload("waves", "Lists all spawned waves of a team.", null)]
+    [CommandOverload("waves", "Lists all spawned waves of a team.", "customteams.waves")]
     public void Waves(
         [CommandParameter("Name", "Name of the team.")] string name)
     {
@@ -80,7 +82,7 @@ public class CustomTeamsCommand : CommandBase, IServerSideCommand
     /// </summary>
     /// <param name="name">The name of the team for which to display wave information. Cannot be null or empty.</param>
     /// <param name="id">The identifier of the wave to display information for.</param>
-    [CommandOverload("wave", "Shows information about an active wave.", null)]
+    [CommandOverload("wave", "Shows information about an active wave.", "customteams.wave")]
     public void Wave(
         [CommandParameter("Name", "Name of the team.")] string name,
         [CommandParameter("ID", "ID of the wave.")] int id)
@@ -142,13 +144,19 @@ public class CustomTeamsCommand : CommandBase, IServerSideCommand
     /// and no team is spawned. Only one wave is spawned per invocation.</remarks>
     /// <param name="name">The name of the custom team to spawn. This value is case-sensitive and must correspond to a registered custom
     /// team.</param>
-    [CommandOverload("spawn", "Spawns a new wave of a custom team.", null)]
+    [CommandOverload("spawn", "Spawns a new wave of a custom team.", "customteams.spawn")]
     public void Spawn(
         [CommandParameter("Name", "Name of the team to spawn.")] string name)
     {
         if (!CustomTeamRegistry.TryGet(name, out CustomTeamHandler handler))
         {
             Fail($"Could not find custom team '{name}'");
+            return;
+        }
+
+        if (!Sender.HasAnyPermission("customteam.spawn.all", $"customteam.spawn.{handler.Name}"))
+        {
+            Fail($"You do not have permission to spawn this custom team.");
             return;
         }
 
@@ -171,7 +179,7 @@ public class CustomTeamsCommand : CommandBase, IServerSideCommand
     /// <param name="name">The name of the custom team to despawn. This value is case-sensitive and must correspond to a registered team.</param>
     /// <param name="id">The ID of the team instance to despawn. Specify an integer value to target a specific instance, or use "*" to
     /// despawn all active instances of the specified team.</param>
-    [CommandOverload("despawn", "Despawns an active wave of a custom team.", null)]
+    [CommandOverload("despawn", "Despawns an active wave of a custom team.", "customteams.despawn")]
     public void Despawn(
         [CommandParameter("Name", "Name of the team to despawn.")] string name,
         [CommandParameter("ID", "ID of the instance to despawn (or * for all).")] string id)

@@ -10,7 +10,7 @@ public partial class SetAllCommand
     /// </summary>
     /// <param name="value">The new pitch value to assign to all players. A value of 1 represents the default pitch. Values greater than 1
     /// increase the pitch; values less than 1 decrease it.</param>
-    [CommandOverload("pitch", "Sets the voice pitch of all players.", null)]
+    [CommandOverload("pitch", "Sets the voice pitch of all players.", "set.all.pitch")]
     public void PitchTarget(
         [CommandParameter("Value", "The new pitch value (1 is default).")] float value)
     {

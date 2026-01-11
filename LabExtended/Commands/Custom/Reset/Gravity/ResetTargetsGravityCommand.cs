@@ -11,7 +11,7 @@ public partial class ResetTargetsCommand
     /// Resets the gravity setting for each player in the specified list to the default value.
     /// </summary>
     /// <param name="targets">The list of players whose gravity will be reset. Cannot be null.</param>
-    [CommandOverload("gravity", "Resets the gravity of a list of players.", null)]
+    [CommandOverload("gravity", "Resets the gravity of a list of players.", "reset.targets.gravity")]
     public void GravityTarget(List<ExPlayer> targets)
     {
         targets.ForEach(p => p.Position.Gravity = PositionContainer.DefaultGravity);

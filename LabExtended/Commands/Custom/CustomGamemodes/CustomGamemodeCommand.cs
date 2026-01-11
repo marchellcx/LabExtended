@@ -13,7 +13,7 @@ namespace LabExtended.Commands.Custom.CustomGamemodes
     [Command("customgamemode", "Management commands for the Custom Gamemode API.", "cg")]
     public class CustomGamemodeCommand : CommandBase, IServerSideCommand
     {
-        [CommandOverload("list", "Lists all registered gamemodes.", null)]
+        [CommandOverload("list", "Lists all registered gamemodes.", "customgamemode.list")]
         private void List()
         {
             if (CustomGamemode.RegisteredObjects.Count < 1)
@@ -33,7 +33,7 @@ namespace LabExtended.Commands.Custom.CustomGamemodes
             });
         }
 
-        [CommandOverload("detail", "Shows detailed state information about a specific active gamemode.", null)]
+        [CommandOverload("detail", "Shows detailed state information about a specific active gamemode.", "customgamemode.detail")]
         private void Detail(
             [CommandParameter("ID", "The ID of the mod to show the state of.")] string id)
         {
@@ -62,7 +62,7 @@ namespace LabExtended.Commands.Custom.CustomGamemodes
             });
         }
 
-        [CommandOverload("active", "Lists all currently active gamemodes (and the queue).", null)]
+        [CommandOverload("active", "Lists all currently active gamemodes (and the queue).", "customgamemode.active")]
         private void Active()
         {
             Ok(x =>
@@ -84,7 +84,7 @@ namespace LabExtended.Commands.Custom.CustomGamemodes
             });
         }
 
-        [CommandOverload("enable", "Enables a new gamemode.", null)]
+        [CommandOverload("enable", "Enables a new gamemode.", "customgamemode.enable")]
         private void Enable(
             [CommandParameter("ID", "The ID of the gamemode to enable.")] string id)
         {
@@ -125,7 +125,7 @@ namespace LabExtended.Commands.Custom.CustomGamemodes
             Ok($"Started gamemode '{gamemode.Id}'");
         }
 
-        [CommandOverload("disable", "Disables a specific or all active gamemode(s).", null)]
+        [CommandOverload("disable", "Disables a specific or all active gamemode(s).", "customgamemode.disable")]
         private void Disable(
             [CommandParameter("ID", "The ID of the gamemode to disable (specify * or all for all).")] string id)
         {

@@ -10,7 +10,7 @@ public partial class TextCommand
     /// </summary>
     /// <param name="toyId">The unique identifier of the text toy whose text will be set.</param>
     /// <param name="text">The new text to assign to the text toy.</param>
-    [CommandOverload("set", "Sets the text of a text toy.", null)]
+    [CommandOverload("set", "Sets the text of a text toy.", "text.set")]
     public void SetOverload(
         [CommandParameter("ID", "ID of the text toy.")] uint toyId, 
         [CommandParameter("Text", "The text to set.")] string text)

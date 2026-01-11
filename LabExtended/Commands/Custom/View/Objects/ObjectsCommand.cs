@@ -20,7 +20,7 @@ public partial class ViewCommand
     /// IDs of each group.</remarks>
     /// <param name="objectType">The name of the object's type to filter the results by. Specify "all" to list all spawned objects. The
     /// comparison is case-insensitive.</param>
-    [CommandOverload("objects", "Lists all spawned network objects.", null)]
+    [CommandOverload("objects", "Lists all spawned network objects.", "view.objects")]
     public void ListObjects(
         [CommandParameter("Type", "Name of the object's type (use \"all\" to show all objects).")] string objectType = "all")
     {

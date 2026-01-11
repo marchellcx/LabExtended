@@ -1,7 +1,7 @@
 ﻿using InventorySystem;
 using InventorySystem.Items;
 using InventorySystem.Items.Pickups;
-
+using LabApi.Features.Permissions;
 using LabExtended.API;
 using LabExtended.API.Custom.Items;
 
@@ -26,7 +26,7 @@ namespace LabExtended.Commands.Custom.CustomItems
         /// <summary>
         /// Lists all active custom item instances owned by a specific player.
         /// </summary>
-        [CommandOverload("inv", "Lists all active custom instances owned by a specific player.", null)]
+        [CommandOverload("inv", "Lists all active custom instances owned by a specific player.", "customitem.inventory")]
         public void Inventory(
             [CommandParameter("Player", "The targeted player (defaults to you).")] ExPlayer? target = null)
         {
@@ -99,7 +99,7 @@ namespace LabExtended.Commands.Custom.CustomItems
         /// <summary>
         /// Lists all registered custom items.
         /// </summary>
-        [CommandOverload("list", "Lists all registered custom items.", null)]
+        [CommandOverload("list", "Lists all registered custom items.", "customitem.list")]
         public void List()
         {
             if (CustomItem.RegisteredObjects.Count == 0)
@@ -125,7 +125,7 @@ namespace LabExtended.Commands.Custom.CustomItems
         /// <summary>
         /// Lists all active custom item instances.
         /// </summary>
-        [CommandOverload("active", "Lists all active custom item instances.", null)]
+        [CommandOverload("active", "Lists all active custom item instances.", "customitem.active")]
         public void Active()
         {
             if (CustomItem.RegisteredObjects.Count == 0)
@@ -184,7 +184,7 @@ namespace LabExtended.Commands.Custom.CustomItems
         /// <summary>
         /// Destroys an active instance of a custom item.
         /// </summary>
-        [CommandOverload("destroy", "Destroys an active instance of a custom item.", null)]
+        [CommandOverload("destroy", "Destroys an active instance of a custom item.", "customitem.destroy")]
         public void Destroy(
             [CommandParameter("Serial", "The serial number of the item to destroy. Specify 0 to destroy all.")] ushort itemSerial)
         {
@@ -252,8 +252,8 @@ namespace LabExtended.Commands.Custom.CustomItems
         /// <summary>
         /// Adds a custom item to a player's inventory.
         /// </summary>
-        [CommandOverload("add", "Adds a custom item to a player's inventory.", null)]
-        [CommandOverload("give", null, null)]
+        [CommandOverload("add", "Adds a custom item to a player's inventory.", "customitem.give")]
+        [CommandOverload("give", "Adds a custom item to a player's inventory.", "customitem.give")]
         public void Add(
             [CommandParameter("ID", "The ID of the custom item to add.")] string itemId,
             [CommandParameter("Target", "The player to add the item to (defaults to you).")] ExPlayer? target = null)
@@ -272,6 +272,12 @@ namespace LabExtended.Commands.Custom.CustomItems
                 return;
             }
 
+            if (!Sender.HasAnyPermission("customitem.give.all", $"customitem.give.{itemId}"))
+            {
+                Fail($"You do not have permission to give this custom item.");
+                return;
+            }
+
             var addedItem = customItem.AddItem(target);
 
             if (addedItem != null)
@@ -287,7 +293,7 @@ namespace LabExtended.Commands.Custom.CustomItems
         /// <summary>
         /// Spawns a custom item at a specific position.
         /// </summary>
-        [CommandOverload("spawn", "Spawns a custom item at a specific position.", null)]
+        [CommandOverload("spawn", "Spawns a custom item at a specific position.", "customitem.spawn")]
         public void Spawn(
             [CommandParameter("ID", "The ID of the custom item to spawn.")] string itemId,
             [CommandParameter("Position", "The position to spawn the item at.")] Vector3 position)
@@ -301,6 +307,12 @@ namespace LabExtended.Commands.Custom.CustomItems
             if (!CustomItem.RegisteredObjects.TryGetValue(itemId, out var customItem))
             {
                 Fail($"Unknown custom item ID");
+                return;
+            }
+
+            if (!Sender.HasAnyPermission("customitem.spawn.all", $"customitem.spawn.{itemId}"))
+            {
+                Fail($"You do not have permission to give this custom item.");
                 return;
             }
 

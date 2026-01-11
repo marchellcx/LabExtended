@@ -7,8 +7,6 @@ using LabExtended.Commands.Interfaces;
 
 using Mirror;
 
-using UnityEngine;
-
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
@@ -29,7 +27,7 @@ public class DespawnCommand : CommandBase, IRemoteAdminCommand
     /// destroyed. If the raycast does not hit a valid target, an error message is returned.</remarks>
     /// <param name="originPlayer">The player whose camera is used as the origin for the raycast. If null, the command sender is used.</param>
     /// <param name="distance">The maximum distance, in units, for the raycast to detect objects. Must be positive.</param>
-    [CommandOverload("Despawns an object that you're currently looking at.", null)]
+    [CommandOverload("Despawns an object that you're currently looking at.", "despawn.raycast")]
     public void RaycastOverload(
         [CommandParameter("Player", "The player of which camera will be used")] ExPlayer? originPlayer = null, 
         [CommandParameter("Distance", "The maximum hit distance")] float distance = 50f)
@@ -83,7 +81,7 @@ public class DespawnCommand : CommandBase, IRemoteAdminCommand
     /// Despawns a network object with the specified network ID.
     /// </summary>
     /// <param name="id">The unique identifier of the network object to despawn.</param>
-    [CommandOverload("id", "Despawns a network object by it's ID.", null)]
+    [CommandOverload("id", "Despawns a network object by it's ID.", "despawn.id")]
     public void NetworkIdOverload(
         [CommandParameter("ID", "ID of the network object.")] uint id)
     {
