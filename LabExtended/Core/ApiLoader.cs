@@ -186,9 +186,6 @@ public class ApiLoader : Plugin
                 File.WriteAllText(ApiConfigPath!, SerializedApiConfig);
             else
                 ApiConfig = YamlConfigParser.Deserializer.Deserialize<ApiConfig>(File.ReadAllText(ApiConfigPath!));
-
-            ApiLog.IsTrueColorEnabled = BaseConfig?.TrueColorEnabled ?? true;
-            ApiPatcher.TranspilerDebug = BaseConfig?.TranspilerDebugEnabled ?? false;
         }
         catch (Exception ex)
         {

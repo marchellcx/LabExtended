@@ -1,4 +1,8 @@
-﻿using System.Diagnostics;
+﻿using LabExtended.Extensions;
+
+using System.Reflection;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace LabExtended.Core
 {
@@ -7,10 +11,28 @@ namespace LabExtended.Core
 	/// </summary>
     public static class ApiLog
     {
-	    /// <summary>
-	    /// Whether or not True Color formatting is enabled.
-	    /// </summary>
-        public static bool IsTrueColorEnabled { get; set; } = true;
+#if DEBUG
+		private static bool debugOverride = true;
+#else
+		private static bool debugOverride = false;
+#endif
+
+		/// <summary>
+		/// Gets a value indicating whether debug mode is currently enabled for the application.
+		/// </summary>
+		/// <remarks>Debug mode may be enabled by configuration or programmatically. When enabled, additional
+		/// diagnostic information may be logged or displayed to assist with troubleshooting.</remarks>
+		public static bool IsDebugEnabled => debugOverride || ApiLoader.BaseConfig == null || ApiLoader.BaseConfig.DebugEnabled;
+
+		/// <summary>
+		/// Whether or not True Color formatting is enabled.
+		/// </summary>
+		public static bool IsTrueColorEnabled => ApiLoader.BaseConfig == null || ApiLoader.BaseConfig.TrueColorEnabled;
+
+		/// <summary>
+		/// Whether or not to prepend assembly names when extracting log source type.
+		/// </summary>
+		public static bool PrependAssemblyName { get; set; } = true;
         
 	    /// <summary>
 	    /// Prints an INFO message to the console.
@@ -98,265 +120,39 @@ namespace LabExtended.Core
 	    /// <param name="msg">The message.</param>
 	    /// <exception cref="ArgumentNullException"></exception>
         public static void Debug(string? source, object msg)
-        { 
-            if (ApiLoader.BaseConfig != null && !ApiLoader.BaseConfig.DebugEnabled)
+        {
+            if (msg is null)
+                throw new ArgumentNullException(nameof(msg));
+
+            if (!IsDebugEnabled)
                 return;
 
             if (source is null || source.Length < 1 || source[0] == ' ')
                 source = GetSourceType();
 
-            if (!CheckDebug(source))
-                return;
-
-            if (msg is null)
-	            throw new ArgumentNullException(nameof(msg));
-
             AppendLog($"&7[&b&5DEBUG&B&7] &7[&b&5{source}&B&7]&r {msg}", ConsoleColor.White);
         }
 
-	    /// <summary>
-	    /// Checks if a specific source can log debug messages.
-	    /// </summary>
-	    /// <param name="sourceName">The source to check.</param>
-	    /// <param name="ifMissingConfig">What to do if the config has not been loaded yet.</param>
-	    /// <returns>true if the source is allowed to show debug</returns>
-        public static bool CheckDebug(string? sourceName, bool ifMissingConfig = true)
-        {
-	        if (ApiLoader.BaseConfig is null)
-		        return ifMissingConfig;
-
-            return !string.IsNullOrWhiteSpace(sourceName) && !ApiLoader.BaseConfig.DisabledDebugSources.Contains(sourceName);
-        }
-
-        // https://github.com/northwood-studios/NwPluginAPI/blob/master/NwPluginAPI/Core/Log.cs
-        // This function was removed in LabAPI so I'm re-adding it.
-        
-        /// <summary>
-        /// Formats color-coded text to ANSI text.
-        /// <para>Formatting works as follows:</para>
-        /// <para>A singular letter / number that specifies the operation follows.</para>
-        /// <para>0 - Black</para>
-        /// <para>1 - Red</para>
-        /// <para>2 - Green</para>
-        /// <para>3 - Yellow</para>
-        /// <para>4 - Blue</para>
-        /// <para>5 - Purple</para>
-        /// <para>6 - Cyan</para>
-        /// <para>7 - White</para>
-        /// <para>r - Resets all tags</para>
-        /// <para>b / B - Bold characters on / off</para>
-        /// <para>o / O - Italic characters on / off</para>
-        /// <para>m / M - Strikethrough on / off</para>
-        /// <para>n / N - Underlinining on / off</para>
-        /// </summary>
-        /// <param name="message">The message to format.</param>
-        /// <param name="defaultColor">The color to use as default.</param>
-        /// <param name="unityRichText">Whether or not to convert to Rich Text.</param>
-        /// <param name="ignoreTrueColor">Whether or not to ignore true color tags.</param>
-        /// <returns>The formatted string.</returns>
-        public static string FormatTrueColorText(string message, string defaultColor = "7", bool unityRichText = false, bool ignoreTrueColor = false)
-        {
-            bool isPrefix = false;
-			char escapeChar = (char)27;
-			
-			string newText = string.Empty;
-			string lastTag = string.Empty;
-
-			if (defaultColor != null)
-				defaultColor = FormatTrueColorText($"&{defaultColor}", null, unityRichText, ignoreTrueColor);
-
-			for (int x = 0; x < message.Length; x++)
-			{
-				if (message[x] == '&' && !isPrefix)
-				{
-					isPrefix = true;
-					continue;
-				}
-				
-				if (isPrefix)
-				{
-					if (!IsTrueColorEnabled && !ignoreTrueColor)
-					{
-						isPrefix = false;
-						continue;
-					}
-
-					switch (message[x])
-					{
-						//Black
-						case '0':
-							if (unityRichText && lastTag != string.Empty)
-								newText += EndTag(ref lastTag);
-
-							newText += unityRichText ? "<color=black>" : $"{escapeChar}[30m";
-							lastTag = "color";
-							break;
-						
-						//Red
-						case '1':
-							if (unityRichText && lastTag != string.Empty)
-								newText += EndTag(ref lastTag);
-
-							newText += unityRichText ? "<color=red>" : $"{escapeChar}[31m";
-							lastTag = "color";
-							break;
-						
-						//Green
-						case '2':
-							if (unityRichText && lastTag != string.Empty)
-								newText += EndTag(ref lastTag);
-
-							newText += unityRichText ? "<color=green>" : $"{escapeChar}[32m";
-							lastTag = "color";
-							break;
-						
-						//Yellow
-						case '3':
-							if (unityRichText && lastTag != string.Empty)
-								newText += EndTag(ref lastTag);
-
-							newText += unityRichText ? "<color=yellow>" : $"{escapeChar}[33m";
-							lastTag = "color";
-							break;
-						
-						//Blue
-						case '4':
-							if (unityRichText && lastTag != string.Empty)
-								newText += EndTag(ref lastTag);
-
-							newText += unityRichText ? "<color=blue>" : $"{escapeChar}[34m";
-							lastTag = "color";
-							break;
-						
-						//Purple
-						case '5':
-							if (unityRichText && lastTag != string.Empty)
-								newText += EndTag(ref lastTag);
-
-							newText += unityRichText ? "<color=purple>" : $"{escapeChar}[35m";
-							lastTag = "color";
-							break;
-						
-						//Cyan
-						case '6':
-							if (unityRichText && lastTag != string.Empty)
-								newText += EndTag(ref lastTag);
-
-							newText += unityRichText ? "<color=cyan>" : $"{escapeChar}[36m";
-							lastTag = "color";
-							break;
-						
-						//White
-						case '7':
-							if (unityRichText && lastTag != string.Empty)
-								newText += EndTag(ref lastTag);
-
-							newText += unityRichText ? "<color=white>" : $"{escapeChar}[37m";
-							lastTag = "color";
-							break;
-
-						//Reset
-						case 'r':
-							if (unityRichText && lastTag != string.Empty)
-							{
-								newText += EndTag(ref lastTag) + $"{defaultColor}";
-								lastTag = "color";
-								break;
-							}
-
-							if (!unityRichText)
-								newText += $"{escapeChar}[0m";
-							break;
-						
-						//Bold on
-						case 'b':
-							if (unityRichText && lastTag != string.Empty)
-								newText += EndTag(ref lastTag);
-
-							newText += unityRichText ? "<b>" : $"{escapeChar}[1m";
-							break;
-						
-						//Bold off
-						case 'B':
-							if (unityRichText && lastTag != string.Empty)
-								newText += EndTag(ref lastTag);
-
-							newText += unityRichText ? "</b>" : $"{escapeChar}[22m";
-							break;
-						
-						//Italic on
-						case 'o':
-							if (unityRichText && lastTag != string.Empty)
-								newText += EndTag(ref lastTag);
-
-							newText += unityRichText ? "<i>" : $"{escapeChar}[3m";
-							break;
-						
-						//Italic off
-						case 'O':
-							if (unityRichText && lastTag != string.Empty)
-								newText += EndTag(ref lastTag);
-
-							newText += unityRichText ? "</i>" : $"{escapeChar}[23m";
-							break;
-						
-						//Underline on
-						case 'n':
-							if (unityRichText) break;
-
-							newText += $"{escapeChar}[4m";
-							break;
-						
-						//Underline off
-						case 'N':
-							if (unityRichText) break;
-
-							newText += $"{escapeChar}[24m";
-							break;
-						
-						//Strikethrough on 
-						case 'm':
-							if (unityRichText) break;
-
-							newText += $"{escapeChar}[9m";
-							break;
-						
-						//Strikethrough off
-						case 'M':
-							if (unityRichText) break;
-
-							newText += $"{escapeChar}[29m";
-							break;
-					}
-					
-					isPrefix = false;
-					continue;
-				}
-				
-				newText += message[x];
-
-				if (unityRichText && x == message.Length - 1 && lastTag != string.Empty)
-					newText += EndTag(ref lastTag);
-			}
-
-			return newText;
-        }
-        
-        private static string EndTag(ref string currentTag)
-        {
-	        var saveTag = currentTag;
-	        
-	        currentTag = string.Empty;
-	        return $"</{saveTag}>";
-        }
-
-        private static string GetSourceType()
+		/// <summary>
+		/// Retrieves the name of the source type from the current call stack, optionally including the assembly name if
+		/// configured.
+		/// </summary>
+		/// <remarks>This method inspects the call stack to determine the most relevant source type, excluding
+		/// compiler-generated types and internal logging infrastructure. If the source type is compiler-generated, its
+		/// declaring type or sanitized name is used. The returned value may vary depending on the call context and
+		/// configuration.</remarks>
+		/// <returns>A string representing the source type name. If assembly name prepending is enabled and available, the result is
+		/// formatted as "AssemblyName / TypeName"; otherwise, only the type name is returned.</returns>
+        public static string GetSourceType()
         {
             var trace = new StackTrace();
             var frames = trace.GetFrames();
+			var name = "LabExtended";
+			var assembly = default(Assembly);
 
-            foreach (var frame in frames)
+            for (var i = 0; i < frames.Length; i++)
             {
+                var frame = frames[i];
                 var method = frame.GetMethod();
 
                 if (method is null)
@@ -368,18 +164,55 @@ namespace LabExtended.Core
                 if (method.DeclaringType == typeof(ApiLog))
                     continue;
 
-                return method.DeclaringType.Name;
+                var type = method.DeclaringType;
+
+				if (type.HasAttribute<CompilerGeneratedAttribute>())
+				{
+					if (type.DeclaringType != null)
+					{
+						name = type.DeclaringType.Name;
+						assembly = type.DeclaringType.Assembly;
+
+						break;
+					}
+					else
+					{
+						name = type.Name.SanitizeCompilerGeneratedName();
+						assembly = type.Assembly;
+
+						break;
+					}
+				}
+				else
+				{
+					name = type.Name;
+					assembly = type.Assembly;
+
+					break;
+				}
             }
 
-            return "Unknown";
+			if (PrependAssemblyName && assembly != null)
+			{
+				var asmName = assembly.GetName();
+
+				if (!string.IsNullOrEmpty(asmName?.Name))
+					return string.Concat(asmName!.Name, " / ", name);
+
+				return string.Concat(assembly.FullName, " / ", name);
+			}
+
+			return name;
         }
 
         private static void AppendLog(string msg, ConsoleColor color)
         {
-	        if (IsTrueColorEnabled)
-		        msg = FormatTrueColorText(msg, "7", false, true);
+			if (IsTrueColorEnabled)
+				msg = msg.FormatTrueColorString("7", false, false);
+			else
+				msg = msg.SanitizeTrueColorString();
 
-	        ServerConsole.AddLog(msg, color);
+			ServerConsole.AddLog(msg, color);
         }
     }
 }

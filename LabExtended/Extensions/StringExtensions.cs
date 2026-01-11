@@ -1,7 +1,7 @@
-﻿using System.Text;
-using System.Text.RegularExpressions;
+﻿using NorthwoodLib.Pools;
 
-using NorthwoodLib.Pools;
+using System.Text;
+using System.Text.RegularExpressions;
 
 using UnityEngine;
 
@@ -41,30 +41,54 @@ public static class StringExtensions
     /// List of all supported ANSI colors.
     /// </summary>
     public static readonly IReadOnlyList<string> LogAnsiColors = new List<string>()
-        {
-            "[30m", // Black - &0
-            "[31m", // Red = &1
-            "[32m", // Green - &2
-            "[33m", // Yellow - &3
-            "[34m", // Blue - &4
-            "[35m", // Purple - &5
-            "[36m", // Cyan - &6
-            "[37m", // White - &7
+    {
+        "[30m", // Black - &0
+        "[31m", // Red = &1
+        "[32m", // Green - &2
+        "[33m", // Yellow - &3
+        "[34m", // Blue - &4
+        "[35m", // Purple - &5
+        "[36m", // Cyan - &6
+        "[37m", // White - &7
 
-            "[0m", // Reset - &r
+        "[0m", // Reset - &r
 
-            "[1m", // Bold On - &b
-            "[22m", // Bold Off - &B
+        "[1m", // Bold On - &b
+        "[22m", // Bold Off - &B
 
-            "[3m", // Italic On - &o
-            "[23m", // Italic Off - &O
+        "[3m", // Italic On - &o
+        "[23m", // Italic Off - &O
 
-            "[4m", // Underline On - &n
-            "[24m", // Underline Off - &N
+        "[4m", // Underline On - &n
+        "[24m", // Underline Off - &N
 
-            "[9m", // Strikethrough On - &m
-            "[29m" // Strikethrough Off - &M
-        };
+        "[9m", // Strikethrough On - &m
+        "[29m" // Strikethrough Off - &M
+    };
+
+    /// <summary>
+    /// Gets a read-only list of string prefixes used to represent true color and text formatting codes.
+    /// </summary>
+    public static readonly IReadOnlyList<string> TrueColorPrefixes = new List<string>()
+    {
+        "&0", // Black
+        "&1", // Red
+        "&2", // Green
+        "&3", // Yellow
+        "&4", // Blue
+        "&5", // Purple
+        "&6", // Cyan
+        "&7", // White
+        "&r", // Reset
+        "&b", // Bold On
+        "&B", // Bold Off
+        "&o", // Italic On
+        "&O", // Italic Off
+        "&n", // Underline On
+        "&N", // Underline Off
+        "&m", // Strikethrough On
+        "&M"  // Strikethrough Off
+    };
 
     /// <summary>
     /// Trims the end of all strings in an array.
@@ -100,6 +124,326 @@ public static class StringExtensions
     {
         for (int i = 0; i < strings.Length; i++)
             strings[i] = strings[i].Trim(chars);
+    }
+
+    /// <summary>
+    /// Removes compiler-generated artifacts and generic arity from a type or member name, returning a simplified,
+    /// human-readable identifier.
+    /// </summary>
+    /// <remarks>This method is useful for displaying type or member names in logs, diagnostics, or user
+    /// interfaces where compiler-generated details are unnecessary or confusing. It handles common patterns such as
+    /// generic arity (e.g., '`1'), lambda display classes, and compiler-generated method names (e.g.,
+    /// '{MethodName}b__'). For constructors and static constructors, the method returns 'constructor' or 'static
+    /// constructor' respectively.</remarks>
+    /// <param name="name">The name to sanitize. This may be a compiler-generated name or a generic type name.</param>
+    /// <returns>A sanitized string representing the original name without compiler-generated patterns or generic arity. Returns
+    /// an empty string if the input is null or empty.</returns>
+    public static string SanitizeCompilerGeneratedName(this string name)
+    {
+        if (string.IsNullOrEmpty(name))
+            return string.Empty;
+
+        // Quick exit for normal types
+        if (!name.Contains('<') && !name.Contains('`'))
+            return name;
+
+        // Remove generic arity (`1, `2 etc.)
+        var backtickIndex = name.IndexOf('`');
+
+        if (backtickIndex >= 0)
+            name = name.Substring(0, backtickIndex);
+
+        // Handle compiler generated names: <MethodName>b__, <MethodName>c__, d__ etc.
+        // and lambda display classes <Main>b__0, <Main>b__0_0 etc.
+        if (name.StartsWith("<"))
+        {
+            var closingBracket = name.IndexOf('>');
+
+            if (closingBracket > 1)
+            {
+                var inner = name.Substring(1, closingBracket - 1);
+
+                if (inner == "cctor") 
+                    return "static constructor";
+
+                if (inner == "ctor") 
+                    return "constructor";
+
+                for (var i = inner.Length - 1; i >= 0; i--)
+                {
+                    if (!char.IsLetter(inner[i]))
+                    {
+                        if (i > 0)
+                            inner = inner.Substring(0, i);
+
+                        break;
+                    }
+                }
+
+                return inner;
+            }
+        }
+
+        return name;
+    }
+
+    /// <summary>
+    /// Removes all recognized true color escape sequence prefixes from the specified string.
+    /// </summary>
+    /// <remarks>This method is intended for use with strings that may contain ANSI true color escape
+    /// sequences, such as those used for terminal color formatting. Only recognized prefixes defined in the internal
+    /// prefix list are removed; other content is left unchanged.</remarks>
+    /// <param name="str">The string to sanitize by removing true color escape sequence prefixes.</param>
+    /// <returns>A new string with all true color escape sequence prefixes removed. If no such prefixes are found, the original
+    /// string is returned.</returns>
+    public static string SanitizeTrueColorString(this string str)
+    {
+        for (var x = 0; x < TrueColorPrefixes.Count; x++)
+            str = str.Replace(TrueColorPrefixes[x], "");
+
+        return str;
+    }
+
+    // https://github.com/northwood-studios/NwPluginAPI/blob/master/NwPluginAPI/Core/Log.cs
+    // This function was removed in LabAPI so I'm re-adding it.
+    /// <summary>
+    /// Formats color-coded text to ANSI text.
+    /// <para>Formatting works as follows:</para>
+    /// <para>A singular letter / number that specifies the operation follows.</para>
+    /// <para>0 - Black</para>
+    /// <para>1 - Red</para>
+    /// <para>2 - Green</para>
+    /// <para>3 - Yellow</para>
+    /// <para>4 - Blue</para>
+    /// <para>5 - Purple</para>
+    /// <para>6 - Cyan</para>
+    /// <para>7 - White</para>
+    /// <para>r - Resets all tags</para>
+    /// <para>b / B - Bold characters on / off</para>
+    /// <para>o / O - Italic characters on / off</para>
+    /// <para>m / M - Strikethrough on / off</para>
+    /// <para>n / N - Underlinining on / off</para>
+    /// </summary>
+    /// <param name="str">The message to format.</param>
+    /// <param name="defaultColor">The color to use as default.</param>
+    /// <param name="unityRichText">Whether or not to convert to Rich Text.</param>
+    /// <param name="ignoreTrueColor">Whether or not to ignore true color tags.</param>
+    /// <returns>The formatted string.</returns>
+    public static string FormatTrueColorString(this string str, string? defaultColor = "7", bool unityRichText = false, bool ignoreTrueColor = false)
+    {
+        var isPrefix = false;
+        var escapeChar = (char)27;
+
+        var newText = string.Empty;
+        var lastTag = string.Empty;
+
+        if (defaultColor != null)
+            defaultColor = FormatTrueColorString($"&{defaultColor}", null, unityRichText, ignoreTrueColor);
+
+        string EndTag(ref string currentTag)
+        {
+            var saveTag = currentTag;
+
+            currentTag = string.Empty;
+            return $"</{saveTag}>";
+        }
+
+        for (var x = 0; x < str.Length; x++)
+        {
+            if (str[x] == '&' && !isPrefix)
+            {
+                isPrefix = true;
+                continue;
+            }
+
+            if (isPrefix)
+            {
+                if (ignoreTrueColor)
+                {
+                    isPrefix = false;
+                    continue;
+                }
+
+                switch (str[x])
+                {
+                    // Black
+                    case '0':
+                        if (unityRichText && lastTag != string.Empty)
+                            newText += EndTag(ref lastTag);
+
+                        newText += unityRichText ? "<color=black>" : $"{escapeChar}[30m";
+
+                        lastTag = "color";
+                        break;
+
+                    // Red
+                    case '1':
+                        if (unityRichText && lastTag != string.Empty)
+                            newText += EndTag(ref lastTag);
+
+                        newText += unityRichText ? "<color=red>" : $"{escapeChar}[31m";
+
+                        lastTag = "color";
+                        break;
+
+                    // Green
+                    case '2':
+                        if (unityRichText && lastTag != string.Empty)
+                            newText += EndTag(ref lastTag);
+
+                        newText += unityRichText ? "<color=green>" : $"{escapeChar}[32m";
+
+                        lastTag = "color";
+                        break;
+
+                    // Yellow
+                    case '3':
+                        if (unityRichText && lastTag != string.Empty)
+                            newText += EndTag(ref lastTag);
+
+                        newText += unityRichText ? "<color=yellow>" : $"{escapeChar}[33m";
+
+                        lastTag = "color";
+                        break;
+
+                    // Blue
+                    case '4':
+                        if (unityRichText && lastTag != string.Empty)
+                            newText += EndTag(ref lastTag);
+
+                        newText += unityRichText ? "<color=blue>" : $"{escapeChar}[34m";
+
+                        lastTag = "color";
+                        break;
+
+                    // Purple
+                    case '5':
+                        if (unityRichText && lastTag != string.Empty)
+                            newText += EndTag(ref lastTag);
+
+                        newText += unityRichText ? "<color=purple>" : $"{escapeChar}[35m";
+
+                        lastTag = "color";
+                        break;
+
+                    // Cyan
+                    case '6':
+                        if (unityRichText && lastTag != string.Empty)
+                            newText += EndTag(ref lastTag);
+
+                        newText += unityRichText ? "<color=cyan>" : $"{escapeChar}[36m";
+
+                        lastTag = "color";
+                        break;
+
+                    // White
+                    case '7':
+                        if (unityRichText && lastTag != string.Empty)
+                            newText += EndTag(ref lastTag);
+
+                        newText += unityRichText ? "<color=white>" : $"{escapeChar}[37m";
+
+                        lastTag = "color";
+                        break;
+
+                    // Reset
+                    case 'r':
+                        if (unityRichText && lastTag != string.Empty)
+                        {
+                            if (defaultColor != null)
+                            {
+                                newText += EndTag(ref lastTag) + $"{defaultColor}";
+
+                                lastTag = "color";
+                            }
+                            else
+                            {
+                                EndTag(ref lastTag);
+                            }
+
+                            break;
+                        }
+
+                        if (!unityRichText)
+                            newText += $"{escapeChar}[0m";
+                        break;
+
+                    // Bold on
+                    case 'b':
+                        if (unityRichText && lastTag != string.Empty)
+                            newText += EndTag(ref lastTag);
+
+                        newText += unityRichText ? "<b>" : $"{escapeChar}[1m";
+                        break;
+
+                    // Bold off
+                    case 'B':
+                        if (unityRichText && lastTag != string.Empty)
+                            newText += EndTag(ref lastTag);
+
+                        newText += unityRichText ? "</b>" : $"{escapeChar}[22m";
+                        break;
+
+                    // Italic on
+                    case 'o':
+                        if (unityRichText && lastTag != string.Empty)
+                            newText += EndTag(ref lastTag);
+
+                        newText += unityRichText ? "<i>" : $"{escapeChar}[3m";
+                        break;
+
+                    // Italic off
+                    case 'O':
+                        if (unityRichText && lastTag != string.Empty)
+                            newText += EndTag(ref lastTag);
+
+                        newText += unityRichText ? "</i>" : $"{escapeChar}[23m";
+                        break;
+
+                    // Underline on
+                    case 'n':
+                        if (unityRichText) 
+                            break;
+
+                        newText += $"{escapeChar}[4m";
+                        break;
+
+                    // Underline off
+                    case 'N':
+                        if (unityRichText) 
+                            break;
+
+                        newText += $"{escapeChar}[24m";
+                        break;
+
+                    // Strikethrough on 
+                    case 'm':
+                        if (unityRichText) 
+                            break;
+
+                        newText += $"{escapeChar}[9m";
+                        break;
+
+                    // Strikethrough off
+                    case 'M':
+                        if (unityRichText) 
+                            break;
+
+                        newText += $"{escapeChar}[29m";
+                        break;
+                }
+
+                isPrefix = false;
+                continue;
+            }
+
+            newText += str[x];
+
+            if (unityRichText && x == str.Length - 1 && lastTag != string.Empty)
+                newText += EndTag(ref lastTag);
+        }
+
+        return newText;
     }
 
     /// <summary>
