@@ -294,11 +294,8 @@ namespace LabExtended.API.Custom.Roles
             if (player?.ReferenceHub == null)
                 return false;
 
-            var validSpawnPoints = useSpawnpoint ? null : SpawnLocations.Where(x => MapUtilities.TryGet(x, null, out _, out _));
-            var useDefaultSpawn = useSpawnpoint || validSpawnPoints?.Count() < 1;
-
             player.Role.Set(Type, RoleChangeReason.RemoteAdmin, 
-                useDefaultSpawn ? (ClearInventory || !addInventory
+                useSpawnpoint ? (ClearInventory || !addInventory
                                     ? RoleSpawnFlags.UseSpawnpoint
                                     : RoleSpawnFlags.All)
                                 : (ClearInventory || !addInventory
@@ -369,21 +366,6 @@ namespace LabExtended.API.Custom.Roles
                 CustomAmmo.ForEach(pair => player.Ammo.AddCustomAmmo(pair.Key, pair.Value));
 
                 Effects.ForEach(effect => effect.Apply(player));
-
-                if (!useDefaultSpawn && useSpawnpoint)
-                {
-                    var spawnPointName = validSpawnPoints!.GetRandomItem();
-
-                    if (MapUtilities.TryGet(spawnPointName, null, out var position, out var rotation))
-                    {
-                        player.Position.Position = position;
-                        player.Rotation.Rotation = rotation;
-                    }
-                    else
-                    {
-                        ApiLog.Warn("LabExtended", $"Could not find spawn-point &3{spawnPointName}&r while spawning custom role &3{Id}&r!");
-                    }
-                }
 
                 OnSpawned(player, ref player.Role.customRoleData);
             }, 1);
