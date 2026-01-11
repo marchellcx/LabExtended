@@ -22,6 +22,12 @@ public class CommandSection
     public bool AllowOverride { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether command responses use true color codes.
+    /// </summary>
+    [Description("Whether or not to use true color codes in command responses.")]
+    public bool TrueColorResponses { get; set; } = true;
+
+    /// <summary>
     /// Gets or sets the character token that indicates the start of a collection.
     /// </summary>
     [Description("The token used to start a collection.")]

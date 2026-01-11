@@ -3,31 +3,51 @@ using LabApi.Events.Arguments.ServerEvents;
 
 using NorthwoodLib.Pools;
 
+using LabExtended.Core;
+using LabExtended.Extensions;
 using LabExtended.Commands.Parameters;
 
 using RemoteAdmin;
 
 namespace LabExtended.Commands.Utilities;
 
-using Extensions;
-
 /// <summary>
 /// Used to format command responses.
 /// </summary>
 internal static class CommandResponseFormatter
 {
+    internal static bool TrueColorResponses => ApiLoader.ApiConfig?.CommandSection != null && ApiLoader.ApiConfig.CommandSection.TrueColorResponses;
+
     internal static void WriteError(this CommandExecutingEventArgs args, string response, string? color = null)
     {
         if (args.CommandType is CommandType.Client)
         {
             if (args.Sender is PlayerCommandSender sender)
             {
-                sender.ReferenceHub.gameConsoleTransmission.SendToClient(response, color ?? "magenta");
+                sender.ReferenceHub.gameConsoleTransmission.SendToClient(response.SanitizeTrueColorString(), color ?? "magenta");
             }
         }
         else
         {
-            args.Sender.Respond(response, false);
+            if (args.CommandType is CommandType.Console)
+            {
+                if (TrueColorResponses)
+                {
+                    args.Sender.Respond(response, false);
+                }
+                else
+                {
+                    args.Sender.Respond(response.SanitizeTrueColorString(), false);
+                }
+            }
+            else if (TrueColorResponses)
+            {
+                args.Sender.Respond(response.FormatTrueColorString(), false);
+            }
+            else
+            {
+                args.Sender.Respond(response.SanitizeTrueColorString(), false);
+            }
         }
     }
     
@@ -37,11 +57,11 @@ internal static class CommandResponseFormatter
         {
             if (ctx.Type is CommandType.Console or CommandType.RemoteAdmin)
             {
-                ctx.Sender.SendRemoteAdminMessage(ctx.FormatCommandResponse(), ctx.Response is { IsSuccess: true }, true, ctx.Command.Name.ToUpperInvariant());
+                ctx.Sender.SendRemoteAdminMessage(ctx.FormatCommandResponse(TrueColorResponses), ctx.Response is { IsSuccess: true }, true, ctx.Command.Name.ToUpperInvariant());
             }
             else
             {
-                ctx.Sender.SendConsoleMessage(ctx.FormatCommandResponse(), ctx.Response is { IsSuccess: true } ? "green" : "red");
+                ctx.Sender.SendConsoleMessage(ctx.FormatCommandResponse(false), ctx.Response is { IsSuccess: true } ? "green" : "red");
             }
 
             if (ctx.Response.IsContinued)
@@ -59,26 +79,56 @@ internal static class CommandResponseFormatter
     {
         return StringBuilderPool.Shared.BuildString(x =>
         {
-            x.AppendLine($"Unable to find a command matching your query (\"{query.Trim()}\"), did you perhaps mean one of these?");
+            x.AppendLine($"&1Unable to find a command matching your query (&6{query.Trim()}&r), did you perhaps mean one of these?&r");
             x.AppendLine();
-            
+
             for (var i = 0; i < likelyCommands.Count; i++)
                 x.Append(likelyCommands[i].GetString(false));
         });
     }
     
-    internal static string FormatCommandResponse(this CommandContext ctx)
+    internal static string FormatCommandResponse(this CommandContext ctx, bool trueColor)
     {
         return StringBuilderPool.Shared.BuildString(x =>
         {
-            if (ctx.Type is CommandType.Client)
+            if (trueColor)
             {
-                x.Append("[");
-                x.Append(ctx.Command.Name.ToUpperInvariant());
-                x.Append("] ");
-            }
+                if (ctx.Type is CommandType.Console)
+                {
+                    x.Append(ctx.Response.Content);
+                }
+                else
+                {
+                    if (ctx.Type is CommandType.Client)
+                    {
+                        x.Append("<color=black>[");
+                        x.Append(ctx.Command.Name.ToUpperInvariant());
+                        x.Append("]</color> ");
+                    }
 
-            x.AppendLine(ctx.Response.Content);
+                    x.Append("&6");
+                    x.Append(ctx.Response.Content.FormatTrueColorString(null, true, false));
+                    x.Append("&r");
+                }
+            }
+            else
+            {
+                if (ctx.Type is CommandType.Console)
+                {
+                    x.Append(ctx.Response.Content.SanitizeTrueColorString());
+                }
+                else
+                {
+                    if (ctx.Type is CommandType.Client)
+                    {
+                        x.Append("[");
+                        x.Append(ctx.Command.Name.ToUpperInvariant());
+                        x.Append("] ");
+                    }
+
+                    x.Append(ctx.Response.Content.SanitizeTrueColorString());
+                }
+            }
         });
     }
 
@@ -88,13 +138,14 @@ internal static class CommandResponseFormatter
         {
             if (ctx.Type is CommandType.Client)
             {
-                x.Append("[");
+                x.Append("&0[");
                 x.Append(ctx.Command.Name.ToUpperInvariant());
-                x.Append("] ");
+                x.Append("]&r ");
             }
 
-            x.AppendLine("Failed while invoking command: ");
-            x.AppendLine(ex.Message);
+            x.AppendLine("&3Failed while invoking command:&r &1");
+            x.Append(ex.Message);
+            x.AppendLine("&r");
         });
     }
 
@@ -104,14 +155,14 @@ internal static class CommandResponseFormatter
         {
             if (type is CommandType.Console)
             {
-                x.Append("[");
+                x.Append("&0[");
                 x.Append(commandName.ToUpperInvariant());
-                x.Append("] ");
+                x.Append("]&r ");
             }
 
-            x.Append("You are missing the required \"");
+            x.Append("&1You are missing the required&r &3");
             x.Append(requiredPermission);
-            x.AppendLine("\" permission to execute this command.");
+            x.AppendLine("&r &1permission to execute this command.&r");
         });
     }
 
@@ -119,7 +170,7 @@ internal static class CommandResponseFormatter
     {
         return StringBuilderPool.Shared.BuildString(x =>
         {
-            x.AppendLine("Unknown overload, try using one of these:");
+            x.AppendLine("&1Unknown overload, try using one of these:&r");
             x.AppendLine(commandData.GetString(false));
         });
     }
@@ -130,12 +181,12 @@ internal static class CommandResponseFormatter
         {
             if (ctx.Type is CommandType.Client)
             {
-                x.Append("[");
+                x.Append("&0[");
                 x.Append(ctx.Command.Name.ToUpperInvariant());
-                x.Append("] ");
+                x.Append("]&r ");
             }
 
-            x.Append("Missing required command arguments!");
+            x.Append("&1Missing required command arguments!&r");
 
             for (var i = 0; i < ctx.Overload.ParameterCount; i++)
             {
@@ -143,25 +194,19 @@ internal static class CommandResponseFormatter
 
                 x.AppendLine();
 
-                x.Append("[");
+                x.Append("&3[");
                 x.Append(i);
-                x.Append("] ");
+                x.Append("]&r &7");
                 x.Append(parameter.Name);
-                x.Append(" (");
+                x.Append("&r &6(");
                 x.Append(parameter.Description);
-                x.Append(")");
+                x.Append(")&r");
 
-                if (parameter.FriendlyAlias?.Length > 0)
+                if (!string.IsNullOrEmpty(parameter.Description))
                 {
-                    x.Append(" (");
-                    x.Append(parameter.FriendlyAlias);
-                    x.Append(")");
-                }
-                else
-                {
-                    x.Append(" (");
-                    x.Append((parameter.Type.NullableType ?? parameter.Type.Type).Name);
-                    x.Append(")");
+                    x.Append(" &3(");
+                    x.Append(parameter.Description);
+                    x.Append(")&r");
                 }
             }
         });
@@ -173,45 +218,43 @@ internal static class CommandResponseFormatter
         {
             if (ctx.Type is CommandType.Client)
             {
-                x.Append("[");
+                x.Append("&0[");
                 x.Append(ctx.Command.Name.ToUpperInvariant());
-                x.Append("] ");
+                x.Append("]&r ");
             }
 
-            x.Append("Failed while parsing command arguments!");
+            x.Append("&1Failed while parsing command arguments!&r");
 
             for (var i = 0; i < results.Count; i++)
             {
                 var result = results[i];
 
-                x.AppendLine();
-
-                x.Append("[");
-                x.Append(i);
-                x.Append("] ");
-                x.Append(result.Parameter?.Name ?? "null");
-                x.Append(":");
-
-                if (result.Success)
+                if (result.Parameter != null)
                 {
-                    x.Append(" OK");
-                }
-                else
-                {
-                    x.Append(" ");
-                    x.Append(result.Error);
+                    x.AppendLine();
 
-                    if (result.Parameter?.FriendlyAlias?.Length > 0)
+                    x.Append("&3[");
+                    x.Append(i);
+                    x.Append("]&r &1");
+                    x.Append(result.Parameter.Name);
+                    x.Append("&r:");
+
+                    if (result.Success)
                     {
-                        x.Append(" (");
-                        x.Append(result.Parameter.FriendlyAlias);
-                        x.Append(")");
+                        x.Append(" &2OK&r");
                     }
                     else
                     {
-                        x.Append(" (");
-                        x.Append((result.Parameter.Type.NullableType ?? result.Parameter.Type.Type)?.Name ?? "null");
-                        x.Append(")");
+                        x.Append(" &1");
+                        x.Append(result.Error);
+                        x.Append("&r");
+
+                        if (!string.IsNullOrEmpty(result.Parameter.Description))
+                        {
+                            x.Append(" &6(");
+                            x.Append(result.Parameter.Description);
+                            x.Append(")&r");
+                        }
                     }
                 }
             }
@@ -224,12 +267,12 @@ internal static class CommandResponseFormatter
         {
             if (ctx.Type is CommandType.Client)
             {
-                x.Append("[");
+                x.Append("&0[");
                 x.Append(ctx.Command.Name.ToUpperInvariant());
-                x.Append("] ");
+                x.Append("]&r ");
             }
 
-            x.Append("Failed while parsing command line tokens!");
+            x.Append("&1Failed while parsing command line tokens!&r");
         });
     }
 }

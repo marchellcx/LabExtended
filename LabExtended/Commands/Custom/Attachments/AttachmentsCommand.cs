@@ -63,11 +63,8 @@ public class AttachmentsCommand : CommandBase, IServerSideCommand
     /// </summary>
     [CommandOverload("disable", "Disables a list of attachments on a firearm.", null)]
     public void Disable(
-        [CommandParameter(Name = "Serial", Description = "The serial number of the firearm.")]
-        ushort firearmSerial,
-
-        [CommandParameter(Name = "Attachments", Description = "List of attachments to disable.")]
-        List<AttachmentName> attachments)
+        [CommandParameter(Name = "Serial", Description = "The serial number of the firearm.")] ushort firearmSerial,
+        [CommandParameter(Name = "Attachments", Description = "List of attachments to disable.")] List<AttachmentName> attachments)
     {
         if (!InventoryExtensions.ServerTryGetItemWithSerial(firearmSerial, out var item)
             || item is not Firearm firearm || firearm == null)

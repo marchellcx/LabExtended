@@ -10,10 +10,11 @@ using LabExtended.Commands.Utilities;
 using LabExtended.Commands.Attributes;
 using LabExtended.Commands.Interfaces;
 using LabExtended.Commands.Parameters;
+
 using LabExtended.Commands.Tokens.Parsing;
+using LabExtended.Commands.Tokens.Methods;
 
 using LabExtended.API;
-using LabExtended.Commands.Tokens.Methods;
 using LabExtended.Core;
 using LabExtended.Extensions;
 
@@ -214,7 +215,7 @@ public static class CommandManager
                 {
                     var response = CommandResponseFormatter.FormatLikelyCommands(likelyCommands,
                         ev.CommandName + " " + string.Join(" ", ev.Arguments));
-                    
+
                     ev.IsAllowed = false;
                     ev.WriteError(response, "magenta");
 
@@ -249,7 +250,7 @@ public static class CommandManager
                 if (command.DefaultOverload is null)
                 {
                     var response = CommandResponseFormatter.FormatUnknownOverloadFailure(command);
-                    
+
                     ev.WriteError(response, "red");
 
                     ServerEvents.OnCommandExecuted(new(ev.Sender, ev.CommandType, null, ev.Arguments, false, response));
@@ -366,7 +367,7 @@ public static class CommandManager
             ApiLog.Error("Command Manager", $"An error occured while executing command:\n{ex.ToColoredString()}");
 
             ev.IsAllowed = false;
-            ev.Sender.Respond(ex.Message, false);
+            ev.Sender.Respond(ex.ToString(), false);
             
             ServerEvents.OnCommandExecuted(new(ev.Sender, ev.CommandType, ev.Command, ev.Arguments, false, ex.Message));
         }
