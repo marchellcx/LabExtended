@@ -1,20 +1,13 @@
 # LabExtended
 [![Build](https://github.com/marchellc/LabExtended/actions/workflows/dotnet.yml/badge.svg)](https://github.com/marchellc/LabExtended/actions/workflows/dotnet.yml)
 
-LabExtended is an unofficial extension for the [LabAPI](https://github.com/northwood-studios/LabAPI) modding framework for [SCP Secret Laboratory](https://scpslgame.com), developed by [Northwood Studios](https://github.com/northwood-studios).  
-The sole reason for the existence of this project is the fact that LabAPI lacks a lot of functionality when compared to Exiled *(which is just bloated with random stuff)*, 
-so we're trying to fix that by providing developers with clear and simple to use APIs.  
-
 These APIs include, but are not limited to:
-- Custom Ammo
-- Custom Items *(including Firearms & Usable Items)*
-- Custom Teams
-- Custom Roles
-- Voice Chat API *(with threaded voice message modifications!)*
-- Hint API *(yes, another Hint API ..)*
-- Settings API *(a simple Server-Specific-Settings wrapper)*
-- Remote Admin API *(adds custom dummy actions and objects)*
-- More events *(also some events which already exist in LabAPI, but lack* ***a lot*** *of properties)*
+- Custom Ammo, Items, Teams, Roles
+- Voice Chat API with threaded voice message modifications.
+- Hint Overlay API
+- Settings API for easy server-specific settings management with fixes to prevent settings being overriden by other plugins.
+- Remote Admin API that allows simple actions implementations
+- More events and fixes to LabAPI and base-game.
 - A fully-custom Commands API  
 .. and much more!
 
