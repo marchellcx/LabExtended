@@ -1,5 +1,6 @@
 # LabExtended
 [![Build](https://github.com/marchellc/LabExtended/actions/workflows/dotnet.yml/badge.svg)](https://github.com/marchellc/LabExtended/actions/workflows/dotnet.yml)
+A feature-rich API aimed to be an extension for the LabAPI modding framework.
 
 These APIs include, but are not limited to:
 - Custom Ammo, Items, Teams, Roles
