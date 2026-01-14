@@ -31,7 +31,6 @@ namespace LabExtended.Patches.Fixes
                 if (ApiPatcher.Harmony.Patch(targetMethod, new HarmonyMethod(patchMethod)) != null)
                 {
                     ApiPatcher.labExPatchCountOffset++;
-                    ApiLog.Debug("LabExtended", $"Applied &6{nameof(LabApiNullPluginVersionFix)}&r");
                 }
                 else
                 {

@@ -15,12 +15,12 @@ public static class ApiVersion
     /// <summary>
     /// The minor version part.
     /// </summary>
-    public const int Minor = 2;
+    public const int Minor = 3;
 
     /// <summary>
     /// The build version part.
     /// </summary>
-    public const int Build = 5;
+    public const int Build = 0;
 
     /// <summary>
     /// The patch version part.
@@ -40,7 +40,7 @@ public static class ApiVersion
     /// <summary>
     /// Gets the loader's game version compatibility.
     /// </summary>
-    public static VersionRange? Compatibility { get; } = new VersionRange(new(14, 2, 4));
+    public static VersionRange? Compatibility { get; } = new VersionRange(new(14, 2, 5));
 
     /// <summary>
     /// Checks for server version compatibility.
