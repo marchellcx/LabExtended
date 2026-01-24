@@ -12,6 +12,7 @@ using InventorySystem.Items;
 using InventorySystem.Items.Pickups;
 
 using LabApi.Features.Wrappers;
+using LabApi.Features.Permissions;
 
 using LabExtended.API.Containers;
 
@@ -27,9 +28,9 @@ using LabExtended.API.RemoteAdmin;
 using LabExtended.API.Settings.Entries;
 using LabExtended.API.Settings.Menus;
 
-using LabExtended.Commands.Attributes;
 using LabExtended.Commands.Interfaces;
 
+using LabExtended.Core;
 using LabExtended.Core.Storage;
 using LabExtended.Core.Pooling.Pools;
 
@@ -50,14 +51,17 @@ using NetworkManagerUtils.Dummies;
 
 using NorthwoodLib.Pools;
 
+using PlayerStatsSystem;
 using PlayerRoles;
-using PlayerRoles.FirstPersonControl;
 using PlayerRoles.Spectating;
+using PlayerRoles.FirstPersonControl;
 
 using RemoteAdmin;
 using RemoteAdmin.Communication;
 
+using System.Text;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 using UnityEngine;
 
@@ -65,17 +69,9 @@ using UserSettings.ServerSpecific;
 
 using VoiceChat;
 
-using System.Text;
-
 using InventorySystem.Items.Firearms;
 using InventorySystem.Items.Firearms.Modules;
 using InventorySystem.Items.Firearms.ShotEvents;
-
-using LabExtended.Core;
-
-using PlayerStatsSystem;
-using LabApi.Features.Permissions;
-using System.Text.RegularExpressions;
 
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
 #pragma warning disable CS8604 // Possible null reference argument.
@@ -1148,6 +1144,15 @@ public class ExPlayer : Player, IDisposable
     /// </summary>
     public string UserIdType => UserIdHelper.GetIdType(UserId);
 
+    /// <summary>
+    /// Determines whether the current user has the specified permission.
+    /// </summary>
+    /// <remarks>The method first checks if the permission string is valid and if the user is online and
+    /// verified. It also considers host permissions and applies regex matching if configured. Wildcards are supported
+    /// for flexible permission checks.</remarks>
+    /// <param name="permission">The permission to check, which must be a non-empty string. It can include wildcard characters such as '*' for
+    /// pattern matching.</param>
+    /// <returns>true if the user has the specified permission; otherwise, false.</returns>
     public bool HasPermission(string permission)
     {
         if (string.IsNullOrEmpty(permission))
@@ -1165,6 +1170,9 @@ public class ExPlayer : Player, IDisposable
 
         if (!ApiLoader.ApiConfig.RegexPermissions)
             return PermissionsManager.HasPermissions(this, permission);
+
+        if (HasPermission($"-{permission}"))
+            return false;
 
         var permissions = PermissionsManager.GetPermissions(this);
 
