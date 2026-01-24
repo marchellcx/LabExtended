@@ -1,9 +1,9 @@
 ﻿using InventorySystem;
 using InventorySystem.Items;
-using InventorySystem.Items.DebugTools;
+using InventorySystem.Items.Pickups;
 using InventorySystem.Items.Firearms;
 using InventorySystem.Items.Keycards;
-using InventorySystem.Items.Pickups;
+using InventorySystem.Items.DebugTools;
 using InventorySystem.Items.Usables.Scp1344;
 
 using LabExtended.API;
@@ -32,10 +32,61 @@ public static class ItemExtensions
     public static bool PrefabsLoaded => Prefabs is { Count: > 0 };
 
     /// <summary>
+    /// Gets or sets the synchronizated network ID flags for item pickups.
+    /// </summary>
+    public static uint SyncFlags { get; set; } = 0;
+
+    /// <summary>
     /// Reloads item prefabs.
     /// </summary>
     public static void ReloadPrefabs()
         => InventoryItemLoader.ForceReload();
+
+    /// <summary>
+    /// Sets the synchronization status for the specified item pickup instance.
+    /// </summary>
+    /// <remarks>If the specified status matches the current synchronization state, no changes are made. This
+    /// method updates the synchronization flags for the item pickup based on the provided status.</remarks>
+    /// <param name="pickup">The item pickup whose synchronization status will be updated.</param>
+    /// <param name="status">A value indicating whether the item pickup should be synchronized. Specify <see langword="true"/> to enable
+    /// synchronization; otherwise, <see langword="false"/>.</param>
+    public static void SetSynced(this ItemPickupBase pickup, bool status)
+    {
+        var flag = GetSyncFlag(pickup);
+        var current = IsSynced(pickup);
+
+        if (status == current)
+            return;
+
+        if (status)
+            SyncFlags |= flag;
+        else
+            SyncFlags &= ~flag;
+    }
+
+    /// <summary>
+    /// Determines whether the specified item pickup is synchronized according to the current synchronization flags.
+    /// </summary>
+    /// <remarks>This method checks the synchronization status of the provided item pickup by comparing its
+    /// synchronization flag with the current set of synchronization flags. Use this method to verify if an item pickup
+    /// is currently considered synchronized in the context of the active flags.</remarks>
+    /// <param name="pickup">The item pickup to evaluate for synchronization. This parameter cannot be null.</param>
+    /// <returns>true if the item pickup is synchronized with the current synchronization flags; otherwise, false.</returns>
+    public static bool IsSynced(this ItemPickupBase pickup)
+    {
+        var flag = GetSyncFlag(pickup);
+        return (SyncFlags & flag) == flag;
+    }
+
+    /// <summary>
+    /// Calculates a synchronization flag for the specified item pickup based on its network identifier.
+    /// </summary>
+    /// <param name="pickup">The item pickup instance for which to calculate the synchronization flag. This parameter cannot be null.</param>
+    /// <returns>A 32-bit unsigned integer representing the synchronization flag derived from the item's network identifier.</returns>
+    public static uint GetSyncFlag(this ItemPickupBase pickup)
+    {
+        return pickup.netId << 1;
+    }
 
     /// <summary>
     /// Gets the current inventory slot of an item.

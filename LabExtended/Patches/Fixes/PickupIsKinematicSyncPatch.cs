@@ -2,7 +2,7 @@
 
 using InventorySystem.Items.Pickups;
 
-using LabExtended.API;
+using LabExtended.Extensions;
 
 namespace LabExtended.Patches.Fixes
 {
@@ -19,7 +19,7 @@ namespace LabExtended.Patches.Fixes
                 && __instance.Pickup != null
                 && __instance.Rb != null 
                 && __instance.Rb.isKinematic 
-                && ExMap.FrozenPickups.Contains(__instance.Pickup))
+                && __instance.Pickup.IsSynced())
             {
                 __result = true;
                 return false;

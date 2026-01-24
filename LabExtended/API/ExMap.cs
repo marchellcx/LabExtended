@@ -36,6 +36,7 @@ using UnityEngine;
 
 using Utils;
 using Utils.Networking;
+
 using Random = UnityEngine.Random;
 
 namespace LabExtended.API;
@@ -61,11 +62,6 @@ public static class ExMap
     /// List of spawned pickups.
     /// </summary>
     public static List<ItemPickupBase> Pickups { get; } = new();
-
-    /// <summary>
-    /// List of frozen pickups.
-    /// </summary>
-    public static List<ItemPickupBase> FrozenPickups { get; } = new();
 
     /// <summary>
     /// List of locker chambers.
@@ -708,7 +704,6 @@ public static class ExMap
     private static void OnPickupDestroyed(ItemPickupBase pickup)
     {
         Pickups.Remove(pickup);
-        FrozenPickups.Remove(pickup);
 
         ExPlayer.AllPlayers.ForEach(p => p?.Inventory?.droppedItems?.Remove(pickup));
     }
@@ -722,12 +717,12 @@ public static class ExMap
     {
         if (phase is MapGenerationPhase.RoomCoordsRegistrations)
         {
-            FrozenPickups.Clear();
-
             Lockers.Clear();
 
             Chambers.Clear();
             ChamberToLocker.Clear();
+
+            ItemExtensions.SyncFlags = 0;
         }
     }
 
