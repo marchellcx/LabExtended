@@ -2,6 +2,7 @@
 
 using LabExtended.Commands.Utilities;
 using LabExtended.Commands.Attributes;
+using LabExtended.Commands.Interfaces;
 
 namespace LabExtended.Commands.Custom
 {
@@ -9,7 +10,7 @@ namespace LabExtended.Commands.Custom
     /// Represents a command that modifies the pitch of a player's voice chat using a specified multiplier.
     /// </summary>
     [Command("pitch", "Modifies the pitch of a player's voice chat.")]
-    public class PitchCommand : CommandBase
+    public class PitchCommand : CommandBase, IServerSideCommand
     {
         [CommandOverload("set", "Sets the pitch of a player's voice chat using a specified multiplier.", "pitch.set")]
         private void Set(
