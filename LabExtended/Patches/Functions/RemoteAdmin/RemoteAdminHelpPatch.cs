@@ -34,12 +34,12 @@ public static class RemoteAdminHelpPatch
                 {
                     if (player.IsHost)
                     {
-                        response = response.FormatTrueColorString(null, true, false);
+                        response = response.FormatTrueColorString(null, false, false);
 
                     }
                     else
                     {
-                        response = response.FormatTrueColorString(null, false, false);
+                        response = response.FormatTrueColorString(null, true, false);
                     }
                 }
                 else
@@ -110,11 +110,11 @@ public static class RemoteAdminHelpPatch
                 {
                     if (player.IsHost)
                     {
-                        response = response.FormatTrueColorString(null, true, false);
+                        response = response.FormatTrueColorString(null, false, false);
                     }
                     else
                     {
-                        response = response.FormatTrueColorString(null, false, false);
+                        response = response.FormatTrueColorString(null, true, false);
                     }
                 }
                 else
