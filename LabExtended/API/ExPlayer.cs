@@ -74,6 +74,8 @@ using InventorySystem.Items.Firearms.ShotEvents;
 using LabExtended.Core;
 
 using PlayerStatsSystem;
+using LabApi.Features.Permissions;
+using System.Text.RegularExpressions;
 
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
 #pragma warning disable CS8604 // Possible null reference argument.
@@ -1146,6 +1148,61 @@ public class ExPlayer : Player, IDisposable
     /// </summary>
     public string UserIdType => UserIdHelper.GetIdType(UserId);
 
+    public bool HasPermission(string permission)
+    {
+        if (string.IsNullOrEmpty(permission))
+            return false;
+
+        if (!IsOnlineAndVerified)
+            return false;
+
+        if (ApiLoader.ApiConfig.HostPermissions && IsHost)
+            return true;
+
+        permission = permission
+            .Trim()
+            .TrimEnd('.');
+
+        if (!ApiLoader.ApiConfig.RegexPermissions)
+            return PermissionsManager.HasPermissions(this, permission);
+
+        var permissions = PermissionsManager.GetPermissions(this);
+
+        if (permissions.Length < 1)
+            return false;
+
+        var pattern = Regex.Escape(permission)
+            .Replace(@"\*", ".*")          // * matches any characters (including none)
+            .Replace(@"\.", @"\.");        // Ensure dots are literal
+
+        // If the original didn't end with *, add $ to match end of string
+        // This prevents "settings*" from matching "settings.something.extra"
+        if (!permission.EndsWith("*"))
+            pattern += "$";
+
+        // If the original didn't start with *, add ^ to match start
+        if (!permission.StartsWith("*"))
+            pattern = "^" + pattern;
+
+        var regex = new Regex(pattern, RegexOptions.Compiled);
+
+        for (var x = 0; x < permissions.Length; x++)
+        {
+            var ownedPermission = permissions[x];
+
+            if (string.IsNullOrEmpty(ownedPermission))
+                continue;
+
+            if (ownedPermission == permission)
+                return true;
+
+            if (regex.IsMatch(ownedPermission))
+                return true;
+        }
+
+        return false;
+    }
+
     /// <summary>
     /// Disintegrates the player, applying a particle disrupter effect and dealing instant lethal damage.
     /// </summary>
@@ -1280,8 +1337,7 @@ public class ExPlayer : Player, IDisposable
 
         if (IsServer)
         {
-            ServerConsole.AddLog(content.ToString(), success ? ConsoleColor.Green
-                                                                : ConsoleColor.Red);
+            ServerConsole.AddLog(content.ToString(), success ? ConsoleColor.Green : ConsoleColor.Red);
             return true;
         }
 
@@ -1291,7 +1347,7 @@ public class ExPlayer : Player, IDisposable
         var str = content.ToString();
 
         if (tag?.Length > 0)
-            str = string.Concat(tag, "#", str);
+            str = string.Concat(tag.ToUpper(), "#", str);
 
         ReferenceHub.queryProcessor.SendToClient(str, success, show, string.Empty);
         return true;

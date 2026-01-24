@@ -4,7 +4,7 @@ using HarmonyLib;
 
 using LabExtended.Core;
 
-namespace LabExtended.Patches.Fixes
+namespace LabExtended.Patches.Fixes.LabAPI
 {
     /// <summary>
     /// Provides a fix to prevent the local player from being incorrectly rejected due to authentication timeouts during
@@ -19,7 +19,7 @@ namespace LabExtended.Patches.Fixes
                 && (__instance.isLocalPlayer
                     || __instance.connectionToClient.address == "localhost"))
             {
-                ApiLog.Debug("LabExtended", "Attempted to reject authentification of the local player!");
+                ApiLog.Error("LabExtended", "Attempted to reject authentification of the local player!");
 
                 __instance.UserId = "ID_Dedicated";
 

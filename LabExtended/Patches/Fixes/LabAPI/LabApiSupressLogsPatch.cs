@@ -2,10 +2,9 @@
 
 using InventorySystem.Items.Pickups;
 
-using LabApi.Features.Console;
 using LabApi.Features.Wrappers;
 
-namespace LabExtended.Patches.Fixes
+namespace LabExtended.Patches.Fixes.LabAPI
 {
     /// <summary>
     /// Supresses certain logs from the LabAPI that are deemed unnecessary or overly verbose.

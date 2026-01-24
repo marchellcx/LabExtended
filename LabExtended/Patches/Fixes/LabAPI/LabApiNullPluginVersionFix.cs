@@ -8,7 +8,7 @@ using LabExtended.Extensions;
 
 using System.Reflection;
 
-namespace LabExtended.Patches.Fixes
+namespace LabExtended.Patches.Fixes.LabAPI
 {
     /// <summary>
     /// Fixes the server hanging on startup when a plugin with a null RequiredApiVersion is present.

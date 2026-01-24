@@ -20,6 +20,19 @@ namespace LabExtended.Core.Configs
         /// </summary>
         [Description("Whether or not the SCP-2536 should be prevented from spawning.")]
         public bool Scp2536Disabled { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the host player (server console) has permission to execute all
+        /// commands.
+        /// </summary>
+        [Description("Whether or not the host player (server console) should be able to execute all commands.")]
+        public bool HostPermissions { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether regular expression patterns are used to match permissions.
+        /// </summary>
+        [Description("Whether or not to use a regex pattern to match permissions.")]
+        public bool RegexPermissions { get; set; } = true;
         
         /// <summary>
         /// Gets or sets the configuration settings for file storage.

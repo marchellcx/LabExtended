@@ -38,8 +38,6 @@ using LabExtended.API.Containers;
 
 using LabExtended.Commands.Utilities;
 using LabExtended.Commands.Parameters;
-
-using LabExtended.Patches.Fixes;
 using LabExtended.Patches.Functions;
 
 using LabExtended.Patches.Events.Scp049;
@@ -51,6 +49,7 @@ using LabExtended.Utilities.Firearms;
 using LabExtended.Core.Storage;
 
 using Version = System.Version;
+using LabExtended.Patches.Fixes.LabAPI;
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 #pragma warning disable CS8764 // Nullability of return type doesn't match overridden member (possibly because of nullability attributes).

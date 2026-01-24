@@ -231,7 +231,7 @@ public static class CommandManager
 
             ev.IsAllowed = false;
 
-            if (command.Permission != null && !player.HasPermissions(command.Permission))
+            if (command.Permission != null && !player.HasPermission(command.Permission))
             {
                 var response =
                     CommandResponseFormatter.FormatMissingPermissionsFailure(command.Permission, command.Name,
