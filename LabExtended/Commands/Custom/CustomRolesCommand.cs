@@ -1,11 +1,10 @@
-﻿using LabApi.Features.Permissions;
-using LabApi.Features.Wrappers;
-using LabExtended.API;
+﻿using LabExtended.API;
 using LabExtended.API.Custom.Roles;
+
 using LabExtended.Commands.Attributes;
 using LabExtended.Commands.Interfaces;
 
-namespace LabExtended.Commands.Custom.CustomRoles
+namespace LabExtended.Commands.Custom
 {
     /// <summary>
     /// Provides functionality for managing custom roles using server-side commands.
@@ -54,7 +53,7 @@ namespace LabExtended.Commands.Custom.CustomRoles
                 return;
             }
 
-            if (!Sender.HasAnyPermission("customrole.set.all", $"customrole.set.{roleId}"))
+            if (!Sender.HasPermission($"customrole.set.{roleId}"))
             {
                 Fail($"You do not have permission to set this custom role.");
                 return;
@@ -80,6 +79,12 @@ namespace LabExtended.Commands.Custom.CustomRoles
             if (target.Role.CustomRole is null)
             {
                 Fail($"Player {target.ToLogString()} does not have any active custom roles.");
+                return;
+            }
+
+            if (!Sender.HasPermission($"customrole.remove.{target.Role.CustomRole.Id}"))
+            {
+                Fail("You do not have permission to remove this custom role.");
                 return;
             }
 

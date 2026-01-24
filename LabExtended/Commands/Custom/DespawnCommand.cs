@@ -1,4 +1,5 @@
 ﻿using LabExtended.API;
+
 using LabExtended.Utilities;
 using LabExtended.Extensions;
 
@@ -6,6 +7,8 @@ using LabExtended.Commands.Attributes;
 using LabExtended.Commands.Interfaces;
 
 using Mirror;
+
+using UnityEngine;
 
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
@@ -60,8 +63,13 @@ public class DespawnCommand : CommandBase, IRemoteAdminCommand
                 return;
             }
 
-            player.IsGodModeEnabled = false;
-            player.Kill($"Killed by {Sender.Nickname}");
+            if (!Sender.HasPermission("despawn.player"))
+            {
+                Fail("You do not have permission to despawn players.");
+                return;
+            }
+
+            player.Disintegrate(Vector3.up * 10f, true);
             
             Ok($"Killed player \"{player.Nickname} ({player.UserId})\".");
         }

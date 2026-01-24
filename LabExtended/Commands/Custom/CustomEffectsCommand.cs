@@ -1,9 +1,10 @@
 ﻿using LabExtended.API;
 using LabExtended.API.Custom.Effects;
+
 using LabExtended.Commands.Attributes;
 using LabExtended.Commands.Interfaces;
 
-namespace LabExtended.Commands.Custom.CustomEffects;
+namespace LabExtended.Commands.Custom;
 
 /// <summary>
 /// Provides server-side commands for listing, enabling, disabling, and clearing custom effects on players.
@@ -76,6 +77,12 @@ public class CustomEffectsCommand : CommandBase, IServerSideCommand
             return;
         }
 
+        if (!Sender.HasPermission($"customeffect.enable.{effectType.Name}"))
+        {
+            Fail("You do not have permission to enable this custom effect.");
+            return;
+        }
+
         var player = target ?? Sender;
 
         if (!player.Effects.CustomEffects.TryGetValue(effectType, out var effect))
@@ -110,6 +117,12 @@ public class CustomEffectsCommand : CommandBase, IServerSideCommand
         if (!CustomPlayerEffect.TryGetEffect(effectName, false, true, out var effectType))
         {
             Fail($"Unknown effect: \"{effectName}\".\nUse \"customeffect list\" to get a list of available effects.");
+            return;
+        }
+
+        if (!Sender.HasPermission($"customeffect.disable.{effectType.Name}"))
+        {
+            Fail("You do not have permission to enable this custom effect.");
             return;
         }
 

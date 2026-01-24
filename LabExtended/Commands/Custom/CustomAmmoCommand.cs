@@ -34,6 +34,12 @@ public class CustomAmmoCommand : CommandBase, IServerSideCommand
         [CommandParameter("Amount", "Amount to set.")] int amount,
         [CommandParameter("Targets", "The target players.")] List<ExPlayer> players)
     {
+        if (!Sender.HasPermission($"customammo.set.{ammoId}"))
+        {
+            Fail("You do not have permission to set this type of custom ammo.");
+            return;
+        }
+
         this.ForEachExecute(players, player =>
         {
             player.Ammo.SetCustomAmmo(ammoId, amount);
@@ -47,6 +53,12 @@ public class CustomAmmoCommand : CommandBase, IServerSideCommand
         [CommandParameter("Amount", "Amount to add.")] int amount,
         [CommandParameter("Targets", "The target players.")] List<ExPlayer> players)
     {
+        if (!Sender.HasPermission($"customammo.add.{ammoId}"))
+        {
+            Fail("You do not have permission to set this type of custom ammo.");
+            return;
+        }
+
         this.ForEachExecute(players, player =>
         {
             var newAmmo = player.Ammo.AddCustomAmmo(ammoId, amount);
@@ -60,6 +72,12 @@ public class CustomAmmoCommand : CommandBase, IServerSideCommand
         [CommandParameter("Amount", "Amount to remove.")] int amount,
         [CommandParameter("Targets", "The target players.")] List<ExPlayer> players)
     {
+        if (!Sender.HasPermission($"customammo.remove.{ammoId}"))
+        {
+            Fail("You do not have permission to remove this type of custom ammo.");
+            return;
+        }
+
         this.ForEachExecute(players, player =>
         {
             var newAmmo = player.Ammo.RemoveCustomAmmo(ammoId, amount);

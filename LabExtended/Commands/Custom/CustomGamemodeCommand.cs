@@ -4,7 +4,7 @@ using LabExtended.API.Custom.Gamemodes;
 using LabExtended.Commands.Attributes;
 using LabExtended.Commands.Interfaces;
 
-namespace LabExtended.Commands.Custom.CustomGamemodes
+namespace LabExtended.Commands.Custom
 {
     /// <summary>
     /// Represents a command handler for managing the Custom Gamemode API.
@@ -94,6 +94,12 @@ namespace LabExtended.Commands.Custom.CustomGamemodes
                 return;
             }
 
+            if (!Sender.HasPermission($"customgamemode.enable.{gamemode.Id}"))
+            {
+                Fail("You do not have permission to enable this gamemode.");
+                return;
+            }
+
             if (!gamemode.Enable())
             {
                 if (gamemode.IsActive)
@@ -143,6 +149,12 @@ namespace LabExtended.Commands.Custom.CustomGamemodes
                     return;
                 }
 
+                if (!Sender.HasPermission($"customgamemode.disable.{gamemode.Id}"))
+                {
+                    Fail($"You do not have permission to disable gamemode &1{gamemode.Id}&r.");
+                    return;
+                }
+
                 if (!gamemode.Disable())
                 {
                     Fail($"Gamemode '{gamemode.Id}' could not be disabled.");
@@ -153,6 +165,12 @@ namespace LabExtended.Commands.Custom.CustomGamemodes
             }
             else
             {
+                if (!Sender.HasPermission("customgamemode.disable.all"))
+                {
+                    Fail("You do not have permission to disable all gamemodes.");
+                    return;
+                }
+
                 var active = CustomGamemode.GetActive();
 
                 if (active.Count < 1)

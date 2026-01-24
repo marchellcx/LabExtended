@@ -4,7 +4,7 @@ using LabExtended.Commands.Interfaces;
 using LabExtended.Commands.Parameters;
 using LabExtended.Commands.Parameters.Parsers;
 
-namespace LabExtended.Commands.Custom.Enum;
+namespace LabExtended.Commands.Custom;
 
 /// <summary>
 /// Displays all enum values.
@@ -45,14 +45,14 @@ public class EnumCommand : CommandBase, IAllCommand
             x.AppendLine($"Enum \"{enumParser.Type.FullName}\":");
 
             if (enumParser.SupportsBitFlags)
-                x.AppendLine($"- Supports flags");
+                x.AppendLine($"&6- Supports flags&r");
 
             for (var i = 0; i < enumParser.Values.Count; i++)
             {
                 var value = enumParser.Values[i];
-                var numeric = Convert.ChangeType(value, System.Enum.GetUnderlyingType(enumParser.Type));
+                var numeric = Convert.ChangeType(value, Enum.GetUnderlyingType(enumParser.Type));
 
-                x.AppendLine($"[{numeric}] {value}");
+                x.AppendLine($"&3[{numeric}]&r &1{value}&r");
             }
         });
     }

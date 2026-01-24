@@ -1,12 +1,13 @@
 ﻿using InventorySystem;
 using InventorySystem.Items;
 using InventorySystem.Items.Pickups;
-using LabApi.Features.Permissions;
+
 using LabExtended.API;
 using LabExtended.API.Custom.Items;
 
 using LabExtended.Commands.Attributes;
 using LabExtended.Commands.Interfaces;
+
 using LabExtended.Core.Pooling.Pools;
 
 using LabExtended.Extensions;
@@ -196,6 +197,12 @@ namespace LabExtended.Commands.Custom.CustomItems
 
             if (itemSerial == 0)
             {
+                if (!Sender.HasPermission("customitem.destroy.all"))
+                {
+                    Fail($"You do not have permission to destroy all custom item instances.");
+                    return;
+                }
+
                 Ok(x =>
                 {
                     x.AppendLine();
@@ -210,6 +217,12 @@ namespace LabExtended.Commands.Custom.CustomItems
                 {
                     if (CustomItem.IsCustomItem(item.ItemSerial, out var customItem))
                     {
+                        if (!Sender.HasPermission($"customitem.destroy.{customItem.Id}"))
+                        {
+                            Fail($"You do not have permission to destroy instances of this custom item.");
+                            return;
+                        }
+
                         if (customItem.DestroyItem(item))
                         {
                             Ok($"Destroyed item instance '{itemSerial}' ({item.ItemTypeId}) ({customItem.Id} / {customItem.Name}).");
@@ -228,6 +241,12 @@ namespace LabExtended.Commands.Custom.CustomItems
                 {
                     if (CustomItem.IsCustomItem(pickup.Info.Serial, out var customItem))
                     {
+                        if (!Sender.HasPermission($"customitem.destroy.{customItem.Id}"))
+                        {
+                            Fail($"You do not have permission to destroy instances of this custom item.");
+                            return;
+                        }
+
                         if (customItem.DestroyItem(pickup))
                         {
                             Ok($"Destroyed pickup instance '{itemSerial}' ({pickup.Info.ItemId}) ({customItem.Id} / {customItem.Name}).");
@@ -272,7 +291,7 @@ namespace LabExtended.Commands.Custom.CustomItems
                 return;
             }
 
-            if (!Sender.HasAnyPermission("customitem.give.all", $"customitem.give.{itemId}"))
+            if (!Sender.HasPermission($"customitem.give.{itemId}"))
             {
                 Fail($"You do not have permission to give this custom item.");
                 return;
@@ -310,7 +329,7 @@ namespace LabExtended.Commands.Custom.CustomItems
                 return;
             }
 
-            if (!Sender.HasAnyPermission("customitem.spawn.all", $"customitem.spawn.{itemId}"))
+            if (!Sender.HasPermission($"customitem.spawn.{itemId}"))
             {
                 Fail($"You do not have permission to give this custom item.");
                 return;

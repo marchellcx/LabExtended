@@ -21,7 +21,7 @@ public partial class ViewCommand
 
             foreach (var pair in PrefabList.AllPrefabs)
             {
-                x.AppendLine($"[{pair.Key}] {pair.Value.GameObject.name}");
+                x.AppendLine($"&1[{pair.Key}]&r &3{pair.Value.GameObject.name}&r");
             }
         });
     }

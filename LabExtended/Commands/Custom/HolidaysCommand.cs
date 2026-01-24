@@ -1,9 +1,8 @@
 ﻿using LabExtended.API;
-
 using LabExtended.Commands.Attributes;
 using LabExtended.Commands.Interfaces;
 
-namespace LabExtended.Commands.Custom.Holidays
+namespace LabExtended.Commands.Custom
 {
     /*
     /// <summary>

@@ -8,9 +8,10 @@ using LabExtended.Commands.Attributes;
 using LabExtended.Commands.Interfaces;
 
 using LabExtended.Extensions;
+
 using LabExtended.Utilities.Firearms;
 
-namespace LabExtended.Commands.Custom.Attachments;
+namespace LabExtended.Commands.Custom;
 
 /// <summary>
 /// Views and modifies attachments.

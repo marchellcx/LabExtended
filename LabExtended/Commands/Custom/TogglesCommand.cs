@@ -1,12 +1,11 @@
 ﻿using LabExtended.API;
 using LabExtended.API.Containers;
-
 using LabExtended.Commands.Attributes;
 using LabExtended.Commands.Interfaces;
 
 using LabExtended.Extensions;
 
-namespace LabExtended.Commands.Custom.Toggles;
+namespace LabExtended.Commands.Custom;
 
 /// <summary>
 /// Used to get / set player switches.
@@ -36,6 +35,12 @@ public class TogglesCommand : CommandBase, IServerSideCommand
         if (prop.PropertyType != typeof(bool))
         {
             Fail($"Only boolean properties can be changed via commands.");
+            return;
+        }
+
+        if (!Sender.HasPermission("toggles.set." + prop.Name.ToLowerInvariant()))
+        {
+            Fail($"You do not have permission to set the \"{prop.Name}\" property.");
             return;
         }
 

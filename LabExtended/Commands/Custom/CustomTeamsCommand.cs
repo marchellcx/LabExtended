@@ -1,5 +1,3 @@
-using LabApi.Features.Permissions;
-
 using LabExtended.API.Custom.Teams;
 
 using LabExtended.Commands.Attributes;
@@ -9,7 +7,7 @@ using LabExtended.Extensions;
 
 using UnityEngine;
 
-namespace LabExtended.Commands.Custom.CustomTeams;
+namespace LabExtended.Commands.Custom;
 
 /// <summary>
 /// Provides server-side commands for managing custom teams and their active waves using the CustomTeams API.
@@ -72,7 +70,8 @@ public class CustomTeamsCommand : CommandBase, IServerSideCommand
             
             foreach (var instance in instances)
             {
-                x.AppendLine($"- {instance.Id}: Remaining players: {instance.AlivePlayers.Count} (spawned {Mathf.CeilToInt(instance.PassedTime)} seconds ago)");
+                x.AppendLine($"- {instance.Id}: Remaining players: {instance.AlivePlayers.Count} " +
+                    $"(spawned {Mathf.CeilToInt(instance.PassedTime)} seconds ago)");
             }
         });
     }
@@ -113,7 +112,7 @@ public class CustomTeamsCommand : CommandBase, IServerSideCommand
             x.AppendLine($"ID: {instance.Id}");
             x.AppendLine($"Spawned At: {DateTime.Now.ToLocalTime().Subtract(TimeSpan.FromSeconds(instance.PassedTime)).ToString("HH:mm:ss zz")}");
             x.AppendLine($"Active For: {Mathf.CeilToInt(instance.PassedTime)} seconds");
-            x.AppendLine($"Is By Timer: {instance.IsByTimer}");
+            x.AppendLine($"Is By Timer: {instance.IsByTimer}");     
             
             x.AppendLine($"Alive Players ({instance.AlivePlayers.Count}):");
 
@@ -154,7 +153,7 @@ public class CustomTeamsCommand : CommandBase, IServerSideCommand
             return;
         }
 
-        if (!Sender.HasAnyPermission("customteam.spawn.all", $"customteam.spawn.{handler.Name}"))
+        if (!Sender.HasPermission($"customteam.spawn.{handler.Name}"))
         {
             Fail($"You do not have permission to spawn this custom team.");
             return;
@@ -187,6 +186,12 @@ public class CustomTeamsCommand : CommandBase, IServerSideCommand
         if (!CustomTeamRegistry.TryGet(name, out CustomTeamHandler handler))
         {
             Fail($"Could not find custom team '{name}'");
+            return;
+        }
+
+        if (!Sender.HasPermission($"customteam.despawn.{handler.Name}"))
+        {
+            Fail($"You do not have permission to despawn this custom team.");
             return;
         }
 
