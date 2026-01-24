@@ -21,6 +21,8 @@ namespace LabExtended.Extensions;
 /// </summary>
 public static class ItemExtensions
 {
+    private static float? syncTime;
+
     /// <summary>
     /// A dictionary that contains all item prefabs.
     /// </summary>
@@ -35,6 +37,8 @@ public static class ItemExtensions
     /// Gets or sets the synchronizated network ID flags for item pickups.
     /// </summary>
     public static uint SyncFlags { get; set; } = 0;
+
+    public static float SyncTime => syncTime ?? 0f;
 
     /// <summary>
     /// Reloads item prefabs.
@@ -299,6 +303,8 @@ public static class ItemExtensions
         if (pickupStandardPhysics.Rb == null)
             return false;
 
+        syncTime ??= itemPickupBase.syncInterval;
+
         if (!pickupStandardPhysics.Rb.isKinematic)
         {
             pickupStandardPhysics.Rb.isKinematic = true;
@@ -306,7 +312,8 @@ public static class ItemExtensions
 
             pickupStandardPhysics.ClientFrozen = true;
 
-            ExMap.FrozenPickups.AddUnique(itemPickupBase);
+            itemPickupBase.syncInterval = 0f;
+            itemPickupBase.SetSynced(true);
         }
 
         return true;
@@ -330,7 +337,9 @@ public static class ItemExtensions
 
         pickupStandardPhysics.ClientFrozen = false;
 
-        ExMap.FrozenPickups.Remove(itemPickupBase);
+        itemPickupBase.syncInterval = SyncTime;
+        itemPickupBase.SetSynced(false);
+
         return true;
     }
 

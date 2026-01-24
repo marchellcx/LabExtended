@@ -23,10 +23,8 @@ using LabExtended.API;
 
 using LabExtended.API.Custom.Roles;
 using LabExtended.API.Custom.Items;
+using LabExtended.API.Custom.Teams;
 using LabExtended.API.Custom.Effects;
-using LabExtended.API.Custom.Gamemodes;
-
-using LabExtended.API.CustomTeams;
 
 using LabExtended.API.RemoteAdmin;
 using LabExtended.API.RemoteAdmin.Actions;

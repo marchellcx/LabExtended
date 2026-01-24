@@ -1,3 +1,5 @@
+using LabExtended.API.Custom.Teams.Enums;
+
 using LabExtended.Core.Pooling.Pools;
 
 using NorthwoodLib.Pools;

@@ -1,6 +1,6 @@
 using LabApi.Features.Permissions;
-using LabApi.Features.Wrappers;
-using LabExtended.API.CustomTeams;
+
+using LabExtended.API.Custom.Teams;
 
 using LabExtended.Commands.Attributes;
 using LabExtended.Commands.Interfaces;
