@@ -1,9 +1,8 @@
 ﻿using LabExtended.API.Custom.Roles;
-using LabExtended.API.CustomTeams;
+using LabExtended.API.Custom.Teams;
 
 using LabExtended.Extensions;
 
-using LabExtended.Utilities;
 using LabExtended.Utilities.Values;
 
 using PlayerRoles;
@@ -14,6 +13,7 @@ using PlayerRoles.PlayableScps;
 using PlayerRoles.Subroutines;
 
 using PlayerRoles.PlayableScps.HumeShield;
+
 using PlayerRoles.PlayableScps.Scp049;
 using PlayerRoles.PlayableScps.Scp079;
 using PlayerRoles.PlayableScps.Scp096;

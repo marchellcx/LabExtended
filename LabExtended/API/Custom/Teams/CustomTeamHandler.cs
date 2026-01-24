@@ -5,7 +5,7 @@ using LabExtended.Events;
 
 using PlayerRoles;
 
-namespace LabExtended.API.CustomTeams;
+namespace LabExtended.API.Custom.Teams;
 
 /// <summary>
 /// Base class for <see cref="CustomTeamHandler{TInstance}"/>, exists to provide internal methods.

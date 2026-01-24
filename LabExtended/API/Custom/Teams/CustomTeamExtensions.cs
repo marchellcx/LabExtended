@@ -1,4 +1,4 @@
-namespace LabExtended.API.CustomTeams;
+namespace LabExtended.API.Custom.Teams;
 
 /// <summary>
 /// Extensions targeting the Custom Teams API.

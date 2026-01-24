@@ -1,4 +1,4 @@
-namespace LabExtended.API.CustomTeams;
+namespace LabExtended.API.Custom.Teams.Enums;
 
 /// <summary>
 /// Describes reasons for team spawn failures.

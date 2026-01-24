@@ -4,7 +4,7 @@ using LabExtended.Attributes;
 using LabExtended.Extensions;
 using LabExtended.Utilities;
 
-namespace LabExtended.API.CustomTeams;
+namespace LabExtended.API.Custom.Teams;
 
 // There may be a lot of bugs in this API, I was literally falling asleep while writing this ..
 

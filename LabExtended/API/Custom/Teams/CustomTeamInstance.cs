@@ -6,7 +6,7 @@ using PlayerRoles;
 
 using UnityEngine;
 
-namespace LabExtended.API.CustomTeams;
+namespace LabExtended.API.Custom.Teams;
 
 /// <summary>
 /// A generic version of <see cref="CustomTeamInstance"/>.

@@ -1,4 +1,4 @@
-namespace LabExtended.API.CustomTeams;
+namespace LabExtended.API.Custom.Teams.Enums;
 
 /// <summary>
 /// Contains information about a spawned wave.

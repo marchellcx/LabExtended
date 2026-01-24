@@ -1,3 +1,4 @@
+using LabExtended.API.Custom.Teams.Enums;
 using LabExtended.Events;
 
 using LabExtended.Utilities;
@@ -9,7 +10,7 @@ using UnityEngine;
 
 using Random = UnityEngine.Random;
 
-namespace LabExtended.API.CustomTeams;
+namespace LabExtended.API.Custom.Teams;
 
 /// <summary>
 /// Base class for custom team wave timers.
