@@ -33,7 +33,22 @@ namespace LabExtended.Core.Configs
         /// </summary>
         [Description("Whether or not to use a regex pattern to match permissions.")]
         public bool RegexPermissions { get; set; } = true;
-        
+
+        /// <summary>
+        /// Gets or sets a value indicating whether permission requirements are ignored.
+        /// </summary>
+        [Description("Whether or not to ignore permission requirements..")]
+        public bool OverridePermissions { get; set; } = false;
+
+        /// <summary>
+        /// Gets or sets a list of IPs that should be overriden by the player's token request IP.'
+        /// </summary>
+        [Description("Sets a list of IPs that should be overriden by the player's token request IP.")]
+        public List<string> TokenIpOverride { get; set; } = new()
+        {
+
+        };
+
         /// <summary>
         /// Gets or sets the configuration settings for file storage.
         /// </summary>

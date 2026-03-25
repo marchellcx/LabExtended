@@ -74,7 +74,24 @@ namespace LabExtended.Events
                     player.PersistentStorage.Lifes++;
                 }
             }
-            
+
+            if (player.Connection != null
+                && player.ConnectionToClient != null
+                && !string.IsNullOrWhiteSpace(player.ConnectionToClient.address)
+                && ApiLoader.ApiConfig?.TokenIpOverride?.Count > 0
+                && ApiLoader.ApiConfig.TokenIpOverride.Contains(player.ConnectionToClient.address)
+                && player.ReferenceHub.authManager != null
+                && player.ReferenceHub.authManager.AuthenticationResponse.AuthToken != null
+                && !string.IsNullOrEmpty(player.ReferenceHub.authManager.AuthenticationResponse.AuthToken.RequestIp))
+            {
+                player.ConnectionToClient.IpOverride =
+                    player.ReferenceHub.authManager.AuthenticationResponse.AuthToken.RequestIp;
+                player.ReferenceHub.queryProcessor._ipAddress = player.ConnectionToClient.IpOverride;
+                
+                ApiLog.Debug("LabExtended", $"Overriden IP of &1{player.UserId}&r to &3{player.ConnectionToClient.address}&r" +
+                                            $" (&6{player.ConnectionToClient.OriginalIpAddress}&r)");
+            }
+
             ApiLog.Info("LabExtended",
                 $"Player &3{player.Nickname}&r (&6{player.UserId}&r) &2joined&r from &3{player.IpAddress} ({player.CountryCode})&r!");
             

@@ -73,6 +73,15 @@ namespace LabExtended.API.Settings.Entries.Buttons
                 return TimeSpan.FromMilliseconds(Time.realtimeSinceStartup - LastTriggerTime.Value);
             }
         }
+
+        /// <summary>
+        /// Gets or sets the text of the button.
+        /// </summary>
+        public string Text
+        {
+            get => Base.ButtonText;
+            set => Base.ButtonText = value;
+        }
         
         /// <summary>
         /// Gets or sets the required duration, in seconds, that the button must be held to trigger successfully.

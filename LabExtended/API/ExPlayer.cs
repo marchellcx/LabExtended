@@ -465,6 +465,8 @@ public class ExPlayer : Player, IDisposable
         => Get(n => n.Role.Type == role);
     #endregion
 
+    private string? cInfoRejectionReason;
+
     internal StringBuilder? infoBuilder;
     internal string? infoProperty;
 
@@ -1158,10 +1160,10 @@ public class ExPlayer : Player, IDisposable
         if (string.IsNullOrEmpty(permission))
             return false;
 
-        if (!IsOnlineAndVerified)
+        if (ReferenceHub == null)
             return false;
 
-        if (ApiLoader.ApiConfig.HostPermissions && IsHost)
+        if (ApiLoader.ApiConfig.HostPermissions && (ReferenceHub.isLocalPlayer || (host?.ReferenceHub != null && this == host)))
             return true;
 
         permission = permission
@@ -1171,12 +1173,12 @@ public class ExPlayer : Player, IDisposable
         if (!ApiLoader.ApiConfig.RegexPermissions)
             return PermissionsManager.HasPermissions(this, permission);
 
-        if (HasPermission($"-{permission}"))
-            return false;
-
         var permissions = PermissionsManager.GetPermissions(this);
 
         if (permissions.Length < 1)
+            return ApiLoader.ApiConfig.OverridePermissions;
+
+        if (permissions.Contains($"-{permission}"))
             return false;
 
         var pattern = Regex.Escape(permission)
@@ -1193,6 +1195,7 @@ public class ExPlayer : Player, IDisposable
             pattern = "^" + pattern;
 
         var regex = new Regex(pattern, RegexOptions.Compiled);
+        var negative = false;
 
         for (var x = 0; x < permissions.Length; x++)
         {
@@ -1201,14 +1204,17 @@ public class ExPlayer : Player, IDisposable
             if (string.IsNullOrEmpty(ownedPermission))
                 continue;
 
+            if (ownedPermission == $"-{permission}")
+                negative = true;
+
             if (ownedPermission == permission)
                 return true;
 
             if (regex.IsMatch(ownedPermission))
-                return true;
+                return !negative;
         }
 
-        return false;
+        return ApiLoader.ApiConfig.OverridePermissions;
     }
 
     /// <summary>
@@ -1598,7 +1604,10 @@ public class ExPlayer : Player, IDisposable
             || !HasEnabledCustomInfo 
             || !IsVerified 
             || ReferenceHub == null)
+        {
+            cInfoRejectionReason = null;
             return;
+        }
 
         infoBuilder.Clear();
 
@@ -1611,7 +1620,10 @@ public class ExPlayer : Player, IDisposable
         ExPlayerEvents.OnRefreshingCustomInfo(this, infoBuilder);
 
         if (infoBuilder.Length == 0)
+        {
+            cInfoRejectionReason = null;
             return;
+        }
 
         while (infoBuilder[infoBuilder.Length - 1] == '\n')
             infoBuilder.Remove(infoBuilder.Length - 1, 1);
@@ -1619,16 +1631,26 @@ public class ExPlayer : Player, IDisposable
         var customInfo = infoBuilder.ToString();
 
         if (NetworkBehaviour.SyncVarEqual(customInfo, ref ReferenceHub.nicknameSync._customPlayerInfoString))
+        {
+            cInfoRejectionReason = null;
             return;
+        }
 
         if (!NicknameSync.ValidateCustomInfo(customInfo, out var rejectionText))
         {
+            if (cInfoRejectionReason != null && cInfoRejectionReason == rejectionText)
+                return;
+
+            cInfoRejectionReason = rejectionText;
+
             ApiLog.Warn("LabExtended", $"CustomInfo of &3{ToLogString()}&r was &1REJECTED&r! (&3{rejectionText}&r)");
             return;
         }
 
         ReferenceHub.nicknameSync._customPlayerInfoString = customInfo;
         ReferenceHub.nicknameSync.syncVarDirtyBits |= 2UL;
+
+        cInfoRejectionReason = null;
     }
 
     private void RefreshModifiers()
