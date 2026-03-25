@@ -1,4 +1,5 @@
-﻿using CentralAuth;
+﻿using System.Collections.Concurrent;
+using CentralAuth;
 
 using CommandSystem;
 
@@ -83,9 +84,9 @@ namespace LabExtended.API;
 /// </summary>
 public class ExPlayer : Player, IDisposable
 {
+    internal static volatile ConcurrentDictionary<string, string> preauthData = new();
+    
     internal static PlayerUpdateComponent playerUpdate = PlayerUpdateComponent.Create();
-
-    internal static Dictionary<string, string> preauthData = new(byte.MaxValue);
     internal static ExPlayer? host;
 
     /// <summary>
@@ -524,10 +525,10 @@ public class ExPlayer : Player, IDisposable
         Toggles = toggles ?? throw new ArgumentNullException(nameof(toggles));
 
         if (referenceHub.connectionToClient != null &&
-            LiteNetLib4MirrorServer.Peers.TryPeekIndex(referenceHub.connectionToClient.connectionId, out var peer))
+            LiteNetLib4MirrorServer.Peers.TryGetValue(referenceHub.connectionToClient.connectionId, out var peer))
             Peer = peer;
         else if (referenceHub.connectionToServer != null &&
-                 LiteNetLib4MirrorServer.Peers.TryPeekIndex(referenceHub.connectionToServer.connectionId, out peer))
+                 LiteNetLib4MirrorServer.Peers.TryGetValue(referenceHub.connectionToServer.connectionId, out peer))
             Peer = peer;
 
         infoBuilder = StringBuilderPool.Shared.Rent();
@@ -1515,7 +1516,7 @@ public class ExPlayer : Player, IDisposable
             Players.Remove(this);
 
         if (!string.IsNullOrWhiteSpace(UserId))
-            preauthData.Remove(UserId);
+            preauthData.TryRemove(UserId, out _);
 
         AllPlayers.ForEach(ply =>
         {

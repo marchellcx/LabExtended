@@ -166,14 +166,14 @@ namespace LabExtended.Events
 
         private static void HandleRoleChange(PlayerChangedRoleEventArgs args)
             => OnRoleChanged.InvokeSafe(args);
-        
+
         private static void HandlePlayerAuth(PlayerPreAuthenticatingEventArgs ev)
-            => ExPlayer.preauthData[ev.UserId] = ev.Region;
+            => ExPlayer.preauthData.TryAdd(ev.UserId, ev.Region);
         
         private static void HandleRoundWaiting()
         {
             ExPlayer.playerUpdate.Clear();
-            ExPlayer.preauthData.Clear();
+            ExPlayer.preauthData.Clear(); 
 
             // No reason not to reset the NPC connection ID
             DummyNetworkConnection._idGenerator = ushort.MaxValue;
