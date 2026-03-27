@@ -26,6 +26,11 @@ namespace LabExtended.Events.Player
         /// Gets or sets the new value of the movement speed limiter.
         /// </summary>
         public float MovementSpeedLimiter { get; set; }
+        
+        /// <summary>
+        /// Gets or sets the new value of the sprint speed multiplier.
+        /// </summary>
+        public float SprintSpeedMultiplier { get; set; }
 
         /// <summary>
         /// Initializes a new instance of the PlayerRefreshingModifiersEventArgs class with the specified player and
@@ -35,13 +40,16 @@ namespace LabExtended.Events.Player
         /// <param name="staminaUsage">The new multiplier to be applied to the player's stamina usage after the refresh.</param>
         /// <param name="movementSpeed">The new multiplier to be applied to the player's movement speed after the refresh.</param>
         /// <param name="speedLimit">The new value limiting the player's movement speed after the refresh.</param>
-        public PlayerRefreshingModifiersEventArgs(ExPlayer player, float staminaUsage, float movementSpeed, float speedLimit)
+        /// <param name="sprintSpeed">The new multiplier to be applied to the player's sprint speed after the refresh.</param>'
+        public PlayerRefreshingModifiersEventArgs(ExPlayer player, float staminaUsage, float movementSpeed,
+            float speedLimit, float sprintSpeed)
         {
             Player = player;
 
             StaminaUsageMultiplier = staminaUsage;
             MovementSpeedMultiplier = movementSpeed;
             MovementSpeedLimiter = speedLimit;
+            SprintSpeedMultiplier = sprintSpeed;
         }
     }
 }

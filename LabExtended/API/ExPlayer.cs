@@ -912,6 +912,11 @@ public class ExPlayer : Player, IDisposable
     /// Gets or sets the player's forced speed multiplier.
     /// </summary>
     public float? FakeSpeedMultiplier { get; set; }
+    
+    /// <summary>
+    /// Gets or sets the player's forced sprint speed multiplier.
+    /// </summary>
+    public float? FakeSprintSpeedMultiplier { get; set; }
 
     /// <summary>
     /// Gets or sets the player's forced stamina usage multiplier.
@@ -1663,6 +1668,7 @@ public class ExPlayer : Player, IDisposable
         inventory._movementMultiplier = 1f;
         inventory._movementLimiter = float.MaxValue;
 
+        inventory._sprintMultiplier = 1f;
         inventory._sprintingDisabled = false;
 
         foreach (var pair in inventory.UserInventory.Items)
@@ -1682,18 +1688,24 @@ public class ExPlayer : Player, IDisposable
                 inventory._movementLimiter = Mathf.Min(inventory._movementLimiter, movementSpeedModifier.MovementSpeedLimit);
                 inventory._movementMultiplier *= movementSpeedModifier.MovementSpeedMultiplier;
             }
+            
+            if (mobilityController is ISprintSpeedModifier sprintSpeedModifier
+                && sprintSpeedModifier.SprintModifierActive)
+                inventory._sprintMultiplier *= sprintSpeedModifier.SprintSpeedMultiplier;
         }
 
         var refreshingEventArgs = new PlayerRefreshingModifiersEventArgs(this, 
             FakeStaminaUsageMultiplier ?? inventory._staminaModifier,
             FakeSpeedMultiplier ?? inventory._movementMultiplier,
-            FakeSpeedLimiter ?? inventory._movementLimiter);
+            FakeSpeedLimiter ?? inventory._movementLimiter,
+            FakeSprintSpeedMultiplier ?? inventory._sprintMultiplier);
 
         ExPlayerEvents.OnRefreshingModifiers(refreshingEventArgs);
 
         inventory.Network_syncStaminaModifier = refreshingEventArgs.StaminaUsageMultiplier;
         inventory.Network_syncMovementMultiplier = refreshingEventArgs.MovementSpeedMultiplier;
         inventory.Network_syncMovementLimiter = refreshingEventArgs.MovementSpeedLimiter;
+        inventory.Network_syncStaminaModifier = refreshingEventArgs.SprintSpeedMultiplier;
     }
 
     private void UpdateCustomRole()
