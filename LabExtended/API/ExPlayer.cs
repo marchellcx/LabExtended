@@ -1661,6 +1661,9 @@ public class ExPlayer : Player, IDisposable
 
     private void RefreshModifiers()
     {
+        if (ApiLoader.ApiConfig == null || ApiLoader.ApiConfig.DisableCustomModifiers)
+            return;
+        
         var inventory = ReferenceHub.inventory;
 
         inventory._staminaModifier = 1f;
@@ -1705,7 +1708,7 @@ public class ExPlayer : Player, IDisposable
         inventory.Network_syncStaminaModifier = refreshingEventArgs.StaminaUsageMultiplier;
         inventory.Network_syncMovementMultiplier = refreshingEventArgs.MovementSpeedMultiplier;
         inventory.Network_syncMovementLimiter = refreshingEventArgs.MovementSpeedLimiter;
-        inventory.Network_syncStaminaModifier = refreshingEventArgs.SprintSpeedMultiplier;
+        inventory.Network_syncSprintMultiplier = refreshingEventArgs.SprintSpeedMultiplier;
     }
 
     private void UpdateCustomRole()

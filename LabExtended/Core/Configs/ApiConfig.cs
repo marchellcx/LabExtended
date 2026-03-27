@@ -39,6 +39,12 @@ namespace LabExtended.Core.Configs
         /// </summary>
         [Description("Whether or not to ignore permission requirements..")]
         public bool OverridePermissions { get; set; } = false;
+        
+        /// <summary>
+        /// Gets or sets a value indicating whether custom modifiers are disabled.
+        /// </summary>
+        [Description("Whether or not to disable custom modifiers.")]
+        public bool DisableCustomModifiers { get; set; }
 
         /// <summary>
         /// Gets or sets a list of IPs that should be overriden by the player's token request IP.'

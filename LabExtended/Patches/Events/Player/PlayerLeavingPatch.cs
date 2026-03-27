@@ -19,18 +19,17 @@ public static class PlayerLeavingPatch
     {
         LiteNetLib4MirrorTransport.Singleton.Events.Enqueue(delegate
         {
+            ExPlayer? player = ExPlayer.Get(peer);
+        
+            if (player?.ReferenceHub != null)
+                ExPlayerEvents.OnLeaving((new(player, disconnectinfo.Reason is DisconnectReason.Timeout, disconnectinfo)));
+            
             LiteNetLib4MirrorCore.LastDisconnectError = disconnectinfo.SocketErrorCode;
             LiteNetLib4MirrorCore.LastDisconnectReason = disconnectinfo.Reason;
             
             LiteNetLib4MirrorTransport.Singleton.OnServerDisconnected(peer.Id + 1);
-
-            if (LiteNetLib4MirrorServer.Peers.TryRemove(peer.Id + 1, out var netPeer))
-            {
-                ExPlayer? player = ExPlayer.Get(peer);
-        
-                if (player?.ReferenceHub != null)
-                    ExPlayerEvents.OnLeaving((new(player, disconnectinfo is { Reason: DisconnectReason.Timeout }, disconnectinfo)));
-            }
+            
+            LiteNetLib4MirrorServer.Peers.TryRemove(peer.Id + 1, out _);
         });
         
         return false;

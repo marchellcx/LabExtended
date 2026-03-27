@@ -75,21 +75,26 @@ namespace LabExtended.Events
                 }
             }
 
-            if (player.Connection != null
-                && player.ConnectionToClient != null
-                && !string.IsNullOrWhiteSpace(player.ConnectionToClient.address)
-                && ApiLoader.ApiConfig?.TokenIpOverride?.Count > 0
-                && ApiLoader.ApiConfig.TokenIpOverride.Contains(player.ConnectionToClient.address)
-                && player.ReferenceHub.authManager != null
-                && player.ReferenceHub.authManager.AuthenticationResponse.AuthToken != null
-                && !string.IsNullOrEmpty(player.ReferenceHub.authManager.AuthenticationResponse.AuthToken.RequestIp))
+            if (player.Connection != null && player.ConnectionToClient != null)
             {
-                player.ConnectionToClient.IpOverride =
-                    player.ReferenceHub.authManager.AuthenticationResponse.AuthToken.RequestIp;
-                player.ReferenceHub.queryProcessor._ipAddress = player.ConnectionToClient.IpOverride;
-                
-                ApiLog.Debug("LabExtended", $"Overriden IP of &1{player.UserId}&r to &3{player.ConnectionToClient.address}&r" +
-                                            $" (&6{player.ConnectionToClient.OriginalIpAddress}&r)");
+                if (!string.IsNullOrWhiteSpace(player.ConnectionToClient.address)
+                    && ApiLoader.ApiConfig?.TokenIpOverride?.Count > 0
+                    && ApiLoader.ApiConfig.TokenIpOverride.Contains(player.ConnectionToClient.address)
+                    && player.ReferenceHub.authManager != null
+                    && player.ReferenceHub.authManager.AuthenticationResponse.AuthToken != null
+                    && !string.IsNullOrEmpty(player.ReferenceHub.authManager.AuthenticationResponse.AuthToken.RequestIp))
+                {
+                    player.ConnectionToClient.IpOverride = player.ReferenceHub.authManager.AuthenticationResponse.AuthToken.RequestIp;
+                    player.ReferenceHub.queryProcessor._ipAddress = player.ConnectionToClient.IpOverride;
+
+                    ApiLog.Debug("LabExtended",
+                        $"Overriden IP of &1{player.UserId}&r to &3{player.ConnectionToClient.address}&r" +
+                        $" (&6{player.ConnectionToClient.OriginalIpAddress}&r)");
+                }
+                else
+                {
+                    player.ConnectionToClient.IpOverride = player.ConnectionToClient.address;
+                }
             }
 
             ApiLog.Info("LabExtended",

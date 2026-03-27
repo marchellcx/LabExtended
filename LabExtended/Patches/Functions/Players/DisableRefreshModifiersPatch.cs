@@ -2,6 +2,8 @@
 
 using InventorySystem;
 
+using LabExtended.Core;
+
 namespace LabExtended.Patches.Functions.Players
 {
     /// <summary>
@@ -11,6 +13,6 @@ namespace LabExtended.Patches.Functions.Players
     {
         [HarmonyPatch(typeof(Inventory), nameof(Inventory.RefreshModifiers))]
         private static bool Prefix(Inventory __instance)
-            => false;
+            => ApiLoader.ApiConfig == null || ApiLoader.ApiConfig.DisableCustomModifiers;
     }
 }
