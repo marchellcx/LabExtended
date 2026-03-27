@@ -1,11 +1,7 @@
 ﻿using HarmonyLib;
 
 using LabExtended.API;
-using LabExtended.Extensions;
-using LabExtended.Attributes;
-
 using LabExtended.Events;
-using LabExtended.Events.Player;
 
 using LiteNetLib;
 
@@ -21,17 +17,22 @@ public static class PlayerLeavingPatch
     [HarmonyPatch(typeof(LiteNetLib4MirrorServer), nameof(LiteNetLib4MirrorServer.OnPeerDisconnected))]
     private static bool Prefix(NetPeer peer, DisconnectInfo disconnectinfo)
     {
-        ExPlayer? player = null;
+        LiteNetLib4MirrorTransport.Singleton.Events.Enqueue(delegate
+        {
+            LiteNetLib4MirrorCore.LastDisconnectError = disconnectinfo.SocketErrorCode;
+            LiteNetLib4MirrorCore.LastDisconnectReason = disconnectinfo.Reason;
+            
+            LiteNetLib4MirrorTransport.Singleton.OnServerDisconnected(peer.Id + 1);
 
-        if ((player = ExPlayer.Get(peer)) is null)
-            return true;
-
-        ExPlayerEvents.OnLeaving(new(player, disconnectinfo is { Reason: DisconnectReason.Timeout }, disconnectinfo));
-
-        LiteNetLib4MirrorCore.LastDisconnectError = disconnectinfo.SocketErrorCode;
-        LiteNetLib4MirrorCore.LastDisconnectReason = disconnectinfo.Reason;
-
-        LiteNetLib4MirrorTransport.Singleton.OnServerDisconnected.InvokeSafe(peer.Id + 1);
+            if (LiteNetLib4MirrorServer.Peers.TryRemove(peer.Id + 1, out var netPeer))
+            {
+                ExPlayer? player = ExPlayer.Get(peer);
+        
+                if (player?.ReferenceHub != null)
+                    ExPlayerEvents.OnLeaving((new(player, disconnectinfo is { Reason: DisconnectReason.Timeout }, disconnectinfo)));
+            }
+        });
+        
         return false;
     }
 }
