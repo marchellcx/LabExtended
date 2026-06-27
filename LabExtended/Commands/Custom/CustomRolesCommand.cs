@@ -53,7 +53,7 @@ namespace LabExtended.Commands.Custom
                 return;
             }
 
-            if (!Sender.HasPermission($"customrole.set.{roleId}"))
+            if (!Sender.RegexPermission($"customrole.set.{roleId}"))
             {
                 Fail($"You do not have permission to set this custom role.");
                 return;
@@ -82,7 +82,7 @@ namespace LabExtended.Commands.Custom
                 return;
             }
 
-            if (!Sender.HasPermission($"customrole.remove.{target.Role.CustomRole.Id}"))
+            if (!Sender.RegexPermission($"customrole.remove.{target.Role.CustomRole.Id}"))
             {
                 Fail("You do not have permission to remove this custom role.");
                 return;

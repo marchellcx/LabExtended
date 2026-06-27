@@ -1,4 +1,5 @@
-﻿using LabApi.Features.Enums;
+﻿using GameCore;
+using LabApi.Features.Enums;
 using LabApi.Events.Arguments.ServerEvents;
 
 using NorthwoodLib.Pools;
@@ -29,7 +30,9 @@ internal static class CommandResponseFormatter
         }
         else
         {
-            if (args.CommandType is CommandType.Console)
+            if (args.CommandType is CommandType.Console 
+                || args.Sender is ConsoleCommandSender
+                    || ((args.Sender as PlayerCommandSender)?.ReferenceHub?.IsHost ?? false))
             {
                 if (TrueColorResponses)
                 {
@@ -93,7 +96,7 @@ internal static class CommandResponseFormatter
         {
             if (trueColor)
             {
-                if (ctx.Type is CommandType.Console)
+                if (ctx.Type is CommandType.Console || (ctx.Sender?.ReferenceHub != null && ctx.Sender.IsHost))
                 {
                     x.Append(ctx.Response.Content.FormatTrueColorString("6", false, false));
                 }
@@ -111,7 +114,7 @@ internal static class CommandResponseFormatter
             }
             else
             {
-                if (ctx.Type is CommandType.Console)
+                if (ctx.Type is CommandType.Console || (ctx.Sender?.ReferenceHub != null && ctx.Sender.IsHost))
                 {
                     x.Append(ctx.Response.Content.SanitizeTrueColorString());
                 }
@@ -147,11 +150,11 @@ internal static class CommandResponseFormatter
         });
     }
 
-    internal static string FormatMissingPermissionsFailure(string requiredPermission, string commandName, CommandType type)
+    internal static string FormatMissingPermissionsFailure(string requiredPermission, string commandName, bool isHost)
     {
         return StringBuilderPool.Shared.BuildString(x =>
         {
-            if (type is CommandType.Console)
+            if (isHost)
             {
                 x.Append("&0[");
                 x.Append(commandName.ToUpperInvariant());

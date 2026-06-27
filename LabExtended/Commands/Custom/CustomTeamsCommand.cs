@@ -153,7 +153,7 @@ public class CustomTeamsCommand : CommandBase, IServerSideCommand
             return;
         }
 
-        if (!Sender.HasPermission($"customteam.spawn.{handler.Name}"))
+        if (!Sender.RegexPermission($"customteam.spawn.{handler.Name}"))
         {
             Fail($"You do not have permission to spawn this custom team.");
             return;
@@ -189,7 +189,7 @@ public class CustomTeamsCommand : CommandBase, IServerSideCommand
             return;
         }
 
-        if (!Sender.HasPermission($"customteam.despawn.{handler.Name}"))
+        if (!Sender.RegexPermission($"customteam.despawn.{handler.Name}"))
         {
             Fail($"You do not have permission to despawn this custom team.");
             return;

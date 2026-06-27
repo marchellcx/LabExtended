@@ -1,8 +1,8 @@
 ﻿using System.Reflection;
-
+using GameCore;
 using LabApi.Events.Arguments.ServerEvents;
 using LabApi.Events.Handlers;
-
+using LabApi.Features.Enums;
 using LabApi.Features.Permissions;
 
 using LabExtended.Commands.Runners;
@@ -19,6 +19,7 @@ using LabExtended.Core;
 using LabExtended.Extensions;
 
 using NorthwoodLib.Pools;
+using RemoteAdmin;
 
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
 #pragma warning disable CS8604 // Possible null reference argument.
@@ -231,11 +232,12 @@ public static class CommandManager
 
             ev.IsAllowed = false;
 
-            if (command.Permission != null && !player.HasPermission(command.Permission))
+            if (command.Permission != null && !player.RegexPermission(command.Permission))
             {
                 var response =
                     CommandResponseFormatter.FormatMissingPermissionsFailure(command.Permission, command.Name,
-                        ev.CommandType);
+                        ev.CommandType is CommandType.Console || ev.Sender is ConsoleCommandSender 
+                                                              || ((ev.Sender as PlayerCommandSender)?.ReferenceHub?.IsHost ?? false));
                 
                 ev.WriteError(response, "red");
                 
@@ -266,7 +268,8 @@ public static class CommandManager
             {
                 var response =
                     CommandResponseFormatter.FormatMissingPermissionsFailure(overload.Permission, $"{command.Name} {overload.Name}",
-                        ev.CommandType);
+                        ev.CommandType is CommandType.Console || ev.Sender is ConsoleCommandSender 
+                                                              || ((ev.Sender as PlayerCommandSender)?.ReferenceHub?.IsHost ?? false));
 
                 ev.WriteError(response, "red");
 

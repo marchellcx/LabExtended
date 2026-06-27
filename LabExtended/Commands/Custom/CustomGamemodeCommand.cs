@@ -94,7 +94,7 @@ namespace LabExtended.Commands.Custom
                 return;
             }
 
-            if (!Sender.HasPermission($"customgamemode.enable.{gamemode.Id}"))
+            if (!Sender.RegexPermission($"customgamemode.enable.{gamemode.Id}"))
             {
                 Fail("You do not have permission to enable this gamemode.");
                 return;
@@ -149,7 +149,7 @@ namespace LabExtended.Commands.Custom
                     return;
                 }
 
-                if (!Sender.HasPermission($"customgamemode.disable.{gamemode.Id}"))
+                if (!Sender.RegexPermission($"customgamemode.disable.{gamemode.Id}"))
                 {
                     Fail($"You do not have permission to disable gamemode &1{gamemode.Id}&r.");
                     return;
@@ -165,7 +165,7 @@ namespace LabExtended.Commands.Custom
             }
             else
             {
-                if (!Sender.HasPermission("customgamemode.disable.all"))
+                if (!Sender.RegexPermission("customgamemode.disable.all"))
                 {
                     Fail("You do not have permission to disable all gamemodes.");
                     return;

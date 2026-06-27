@@ -63,7 +63,7 @@ public class DespawnCommand : CommandBase, IRemoteAdminCommand
                 return;
             }
 
-            if (!Sender.HasPermission("despawn.player"))
+            if (!Sender.RegexPermission("despawn.player"))
             {
                 Fail("You do not have permission to despawn players.");
                 return;

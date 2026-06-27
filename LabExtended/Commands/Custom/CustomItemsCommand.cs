@@ -197,7 +197,7 @@ namespace LabExtended.Commands.Custom.CustomItems
 
             if (itemSerial == 0)
             {
-                if (!Sender.HasPermission("customitem.destroy.all"))
+                if (!Sender.RegexPermission("customitem.destroy.all"))
                 {
                     Fail($"You do not have permission to destroy all custom item instances.");
                     return;
@@ -217,7 +217,7 @@ namespace LabExtended.Commands.Custom.CustomItems
                 {
                     if (CustomItem.IsCustomItem(item.ItemSerial, out var customItem))
                     {
-                        if (!Sender.HasPermission($"customitem.destroy.{customItem.Id}"))
+                        if (!Sender.RegexPermission($"customitem.destroy.{customItem.Id}"))
                         {
                             Fail($"You do not have permission to destroy instances of this custom item.");
                             return;
@@ -241,7 +241,7 @@ namespace LabExtended.Commands.Custom.CustomItems
                 {
                     if (CustomItem.IsCustomItem(pickup.Info.Serial, out var customItem))
                     {
-                        if (!Sender.HasPermission($"customitem.destroy.{customItem.Id}"))
+                        if (!Sender.RegexPermission($"customitem.destroy.{customItem.Id}"))
                         {
                             Fail($"You do not have permission to destroy instances of this custom item.");
                             return;
@@ -291,7 +291,7 @@ namespace LabExtended.Commands.Custom.CustomItems
                 return;
             }
 
-            if (!Sender.HasPermission($"customitem.give.{itemId}"))
+            if (!Sender.RegexPermission($"customitem.give.{itemId}"))
             {
                 Fail($"You do not have permission to give this custom item.");
                 return;
@@ -329,7 +329,7 @@ namespace LabExtended.Commands.Custom.CustomItems
                 return;
             }
 
-            if (!Sender.HasPermission($"customitem.spawn.{itemId}"))
+            if (!Sender.RegexPermission($"customitem.spawn.{itemId}"))
             {
                 Fail($"You do not have permission to give this custom item.");
                 return;

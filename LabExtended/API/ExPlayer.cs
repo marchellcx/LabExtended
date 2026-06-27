@@ -1161,66 +1161,115 @@ public class ExPlayer : Player, IDisposable
     /// <param name="permission">The permission to check, which must be a non-empty string. It can include wildcard characters such as '*' for
     /// pattern matching.</param>
     /// <returns>true if the user has the specified permission; otherwise, false.</returns>
-    public bool HasPermission(string permission)
+    public bool RegexPermission(string permission)
     {
-        if (string.IsNullOrEmpty(permission))
-            return false;
-
-        if (ReferenceHub == null)
-            return false;
-
-        if (ApiLoader.ApiConfig.HostPermissions && (ReferenceHub.isLocalPlayer || (host?.ReferenceHub != null && this == host)))
-            return true;
-
-        permission = permission
-            .Trim()
-            .TrimEnd('.');
-
-        if (!ApiLoader.ApiConfig.RegexPermissions)
-            return PermissionsManager.HasPermissions(this, permission);
-
-        var permissions = PermissionsManager.GetPermissions(this);
-
-        if (permissions.Length < 1)
-            return ApiLoader.ApiConfig.OverridePermissions;
-
-        if (permissions.Contains($"-{permission}"))
-            return false;
-
-        var pattern = Regex.Escape(permission)
-            .Replace(@"\*", ".*")          // * matches any characters (including none)
-            .Replace(@"\.", @"\.");        // Ensure dots are literal
-
-        // If the original didn't end with *, add $ to match end of string
-        // This prevents "settings*" from matching "settings.something.extra"
-        if (!permission.EndsWith("*"))
-            pattern += "$";
-
-        // If the original didn't start with *, add ^ to match start
-        if (!permission.StartsWith("*"))
-            pattern = "^" + pattern;
-
-        var regex = new Regex(pattern, RegexOptions.Compiled);
-        var negative = false;
-
-        for (var x = 0; x < permissions.Length; x++)
+        try
         {
-            var ownedPermission = permissions[x];
+            ApiLog.Debug("ExPlayer :: HasPermission",
+                $"Checking permission &1{permission ?? "null"}&r for: {ToLogString()}");
 
-            if (string.IsNullOrEmpty(ownedPermission))
-                continue;
+            if (string.IsNullOrEmpty(permission))
+            {
+                ApiLog.Debug("ExPlayer :: HasPermission", "Permission string is null or empty, returning false.");
+                return false;
+            }
 
-            if (ownedPermission == $"-{permission}")
-                negative = true;
+            if (ReferenceHub == null)
+            {
+                ApiLog.Debug("ExPlayer :: HasPermission", "ReferenceHub is null, cannot check permissions.");
+                return false;
+            }
 
-            if (ownedPermission == permission)
+            if (ApiLoader.ApiConfig.HostPermissions &&
+                (IsHost || ReferenceHub.isLocalPlayer || (host?.ReferenceHub != null && this == host)))
+            {
+                ApiLog.Debug("ExPlayer :: HasPermission",
+                    "Host permissions enabled and player is host, granting permission.");
                 return true;
+            }
 
-            if (regex.IsMatch(ownedPermission))
-                return !negative;
+            permission = permission
+                .Trim()
+                .TrimEnd('.');
+
+            if (!ApiLoader.ApiConfig.RegexPermissions)
+            {
+                ApiLog.Debug("ExPlayer :: HasPermission", "Regex permissions disabled, performing simple check.");
+                return ApiLoader.ApiConfig.OverridePermissions || PermissionsManager.HasPermissions(this, permission);
+            }
+
+            var permissions = PermissionsManager.GetPermissions(this);
+
+            if (permissions.Length < 1)
+            {
+                ApiLog.Debug("ExPlayer :: HasPermission",
+                    "No permissions found for player, returning default override value.");
+                return ApiLoader.ApiConfig.OverridePermissions;
+            }
+
+            if (permissions.Contains($"-{permission}"))
+            {
+                ApiLog.Debug("ExPlayer :: HasPermission",
+                    $"Found negative permission for &1{permission}&r, denying permission.");
+                return false;
+            }
+
+            var pattern = Regex.Escape(permission)
+                .Replace(@"\*", ".*") // * matches any characters (including none)
+                .Replace(@"\.", @"\."); // Ensure dots are literal
+
+            // If the original didn't end with *, add $ to match end of string
+            // This prevents "settings*" from matching "settings.something.extra"
+            if (!permission.EndsWith("*"))
+                pattern += "$";
+
+            // If the original didn't start with *, add ^ to match start
+            if (!permission.StartsWith("*"))
+                pattern = "^" + pattern;
+
+            var regex = new Regex(pattern, RegexOptions.Compiled);
+            var negative = false;
+
+            ApiLog.Debug("ExPlayer :: HasPermission", $"Checking permissions with regex pattern: &1{pattern}&r");
+
+            for (var x = 0; x < permissions.Length; x++)
+            {
+                var ownedPermission = permissions[x];
+
+                if (string.IsNullOrEmpty(ownedPermission))
+                    continue;
+
+                if (ownedPermission == $"-{permission}")
+                {
+                    ApiLog.Debug("ExPlayer :: HasPermission",
+                        $"Found exact negative permission for &1{permission}&r, denying permission.");
+                    negative = true;
+                }
+
+                if (ownedPermission == permission)
+                {
+                    ApiLog.Debug("ExPlayer :: HasPermission",
+                        $"Found exact permission for &1{permission}&r, granting permission.");
+                    return true;
+                }
+
+                if (regex.IsMatch(ownedPermission))
+                {
+                    ApiLog.Debug("ExPlayer :: HasPermission",
+                        $"Permission &1{ownedPermission}&r matches regex pattern for &1{permission}&r, granting permission: {!negative}.");
+                    return !negative;
+                }
+            }
+
+            ApiLog.Debug("ExPlayer :: HasPermission",
+                $"No matching permissions found for &1{permission}&r, returning default override value: {ApiLoader.ApiConfig.OverridePermissions}.");
+            return ApiLoader.ApiConfig.OverridePermissions;
         }
-
-        return ApiLoader.ApiConfig.OverridePermissions;
+        catch (Exception ex)
+        {
+            ApiLog.Error("LabExtended", $"Failed while checking permissions:\n{ex}");
+            return false;
+        }
     }
 
     /// <summary>

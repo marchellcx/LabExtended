@@ -17,7 +17,7 @@ namespace LabExtended.Commands.Custom
     /// players, or to restore their gravity to the default value. Gravity is represented as a three-dimensional vector,
     /// allowing for advanced control over player movement and physics. These commands are intended for use in
     /// server-side scenarios and require appropriate permissions.</remarks>
-    [Command("pitch", "Modifies a player's gravity.")]
+    [Command("gravity", "Modifies a player's gravity.")]
     public class GravityCommand : CommandBase, IServerSideCommand
     {
         [CommandOverload("set", "Sets the gravity of a player.", "gravity.set")]

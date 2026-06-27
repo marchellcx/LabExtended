@@ -34,16 +34,16 @@
 
     <ItemGroup>
       <Reference Include="Assembly-CSharp" Publicize="true">
-        <HintPath>$(LABEX_REFERENCES)\Assembly-CSharp.dll</HintPath>
+        <HintPath>$(LABEX_REFERENCES)\Assembly-CSharp-Publicized.dll</HintPath>
       </Reference>
       <Reference Include="Assembly-CSharp-firstpass" Publicize="true">
-        <HintPath>$(LABEX_REFERENCES)\Assembly-CSharp-firstpass.dll</HintPath>
+        <HintPath>$(LABEX_REFERENCES)\Assembly-CSharp-firstpass-Publicized.dll</HintPath>
       </Reference>
       <Reference Include="CommandSystem.Core" Publicize="true">
         <HintPath>$(LABEX_REFERENCES)\CommandSystem.Core.dll</HintPath>
       </Reference>
       <Reference Include="LabApi" Publicize="true">
-        <HintPath>$(LABEX_REFERENCES)\LabApi.dll</HintPath>
+        <HintPath>$(LABEX_REFERENCES)\LabApi-Publicized.dll</HintPath>
       </Reference>
       <Reference Include="Mirror" Publicize="true">
         <HintPath>$(LABEX_REFERENCES)\Mirror.dll</HintPath>
@@ -52,13 +52,13 @@
         <HintPath>$(LABEX_REFERENCES)\Mirror.Components.dll</HintPath>
       </Reference>
       <Reference Include="NorthwoodLib" Publicize="true">
-        <HintPath>$(LABEX_REFERENCES)\NorthwoodLib.dll</HintPath>
+        <HintPath>$(LABEX_REFERENCES)\NorthwoodLib-Publicized.dll</HintPath>
       </Reference>
       <Reference Include="Pooling" Publicize="true">
-        <HintPath>$(LABEX_REFERENCES)\Pooling.dll</HintPath>
+        <HintPath>$(LABEX_REFERENCES)\Pooling-Publicized.dll</HintPath>
       </Reference>
       <Reference Include="Snake" Publicize="true">
-        <HintPath>$(LABEX_REFERENCES)\Snake.dll</HintPath>
+        <HintPath>$(LABEX_REFERENCES)\Snake-Publicized.dll</HintPath>
       </Reference>
       <Reference Include="Unity.TextMeshPro">
         <HintPath>$(LABEX_REFERENCES)\Unity.TextMeshPro.dll</HintPath>

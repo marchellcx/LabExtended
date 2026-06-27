@@ -77,7 +77,7 @@ public class CustomEffectsCommand : CommandBase, IServerSideCommand
             return;
         }
 
-        if (!Sender.HasPermission($"customeffect.enable.{effectType.Name}"))
+        if (!Sender.RegexPermission($"customeffect.enable.{effectType.Name}"))
         {
             Fail("You do not have permission to enable this custom effect.");
             return;
@@ -120,7 +120,7 @@ public class CustomEffectsCommand : CommandBase, IServerSideCommand
             return;
         }
 
-        if (!Sender.HasPermission($"customeffect.disable.{effectType.Name}"))
+        if (!Sender.RegexPermission($"customeffect.disable.{effectType.Name}"))
         {
             Fail("You do not have permission to enable this custom effect.");
             return;
