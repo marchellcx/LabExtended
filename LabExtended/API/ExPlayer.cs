@@ -603,9 +603,12 @@ public class ExPlayer : Player, IDisposable
             Toggles.IsVisibleInRemoteAdmin = false;
         }
 
+        // just a little bit of trolling
         playerUpdate.OnUpdate += RefreshModifiers;
         playerUpdate.OnUpdate += RefreshCustomInfo;
+        
         playerUpdate.OnUpdate += UpdateCustomRole;
+        playerUpdate.OnUpdate += UpdateAbilities;
         
         InternalEvents.HandlePlayerJoin(this);
     }
@@ -725,8 +728,7 @@ public class ExPlayer : Player, IDisposable
     /// <summary>
     /// Gets a list of personal hint elements.
     /// </summary>
-    public HashSet<PersonalHintElement> HintElements { get; internal set; } =
-        HashSetPool<PersonalHintElement>.Shared.Rent();
+    public HashSet<PersonalHintElement> HintElements { get; private set; } = HashSetPool<PersonalHintElement>.Shared.Rent();
 
     /// <summary>
     /// Gets a read-only dictionary of custom abilities associated with the player,
@@ -1165,12 +1167,28 @@ public class ExPlayer : Player, IDisposable
         => type != null && Abilities.ContainsKey(type);
 
     /// <summary>
+    /// Determines whether a custom ability of the specified type is enabled for the player.
+    /// </summary>
+    /// <param name="type">The type of the custom ability to check.</param>
+    /// <returns><see langword="true"/> if the custom ability is enabled; otherwise, <see langword="false"/>.</returns>
+    public bool HasEnabledAbility(Type type)
+        => type != null && Abilities.TryGetValue(type, out var ability) && ability.IsEnabled;
+
+    /// <summary>
     /// Checks whether the player has a specific custom ability.
     /// </summary>
     /// <typeparam name="TAbility">The type of the custom ability to check for.</typeparam>
     /// <returns><see langword="true"/> if the player has the specified ability; otherwise, <see langword="false"/>.</returns>
     public bool HasAbility<TAbility>() where TAbility : CustomAbility
         => Abilities.ContainsKey(typeof(TAbility));
+
+    /// <summary>
+    /// Determines whether the player has an enabled ability of the specified type.
+    /// </summary>
+    /// <typeparam name="TAbility">The type of the ability to check for, which must inherit from <see cref="CustomAbility"/>.</typeparam>
+    /// <returns><see langword="true"/> if the ability of the specified type is found and enabled; otherwise, <see langword="false"/>.</returns>
+    public bool HasEnabledAbility<TAbility>() where TAbility : CustomAbility
+        => Abilities.TryGetValue(typeof(TAbility), out var ability) && ability.IsEnabled;
 
     /// <summary>
     /// Determines whether the player has a specific custom ability and retrieves it if present.
@@ -1190,13 +1208,45 @@ public class ExPlayer : Player, IDisposable
     }
 
     /// <summary>
+    /// Checks if the player has an enabled ability of the specified type and retrieves it if available.
+    /// </summary>
+    /// <typeparam name="TAbility">The specific type of <see cref="CustomAbility"/> to check for.</typeparam>
+    /// <param name="ability">When this method returns, contains the enabled <typeparamref name="TAbility"/> instance if found, otherwise <see langword="null"/>.</param>
+    /// <returns><see langword="true"/> if an enabled ability of type <typeparamref name="TAbility"/> is found; otherwise, <see langword="false"/>.</returns>
+    public bool HasEnabledAbility<TAbility>(out TAbility ability) where TAbility : CustomAbility
+    {
+        ability = null!;
+
+        if (!Abilities.TryGetValue(typeof(TAbility), out var customAbility))
+            return false;
+
+        if (!customAbility.IsEnabled)
+            return false;
+        
+        ability = (TAbility)customAbility;
+        return true;
+    }
+
+    /// <summary>
     /// Removes an ability of the specified type from the player if it exists.
     /// </summary>
     /// <typeparam name="TAbility">The type of the ability to remove, derived from <see cref="CustomAbility"/>.</typeparam>
     /// <returns><see langword="true"/> if the ability was removed successfully; otherwise, <see langword="false"/>.</returns>
     public bool RemoveAbility<TAbility>() where TAbility : CustomAbility
+        => RemoveAbility(typeof(TAbility));
+
+    /// <summary>
+    /// Removes a custom ability of the specified type from the player.
+    /// </summary>
+    /// <param name="type">The type of the custom ability to remove.</param>
+    /// <returns><see langword="true"/> if the ability was successfully removed; otherwise, <see langword="false"/>.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when the provided <paramref name="type"/> is <see langword="null"/>.</exception>
+    public bool RemoveAbility(Type type)
     {
-        if (!Abilities.TryGetValue(typeof(TAbility), out var customAbility))
+        if (type == null)
+            throw new ArgumentNullException(nameof(type));
+
+        if (!Abilities.TryGetValue(type, out var customAbility))
             return false;
         
         customAbility.Remove();
@@ -1204,15 +1254,62 @@ public class ExPlayer : Player, IDisposable
     }
 
     /// <summary>
-    /// Retrieves an ability of the specified type associated with the player.
+    /// Disables the specified custom ability for the player if it is currently enabled.
     /// </summary>
-    /// <typeparam name="TAbility">The type of the ability to retrieve, derived from <see cref="CustomAbility"/>.</typeparam>
-    /// <returns>The instance of the requested ability type.</returns>
-    /// <exception cref="KeyNotFoundException">Thrown when the player does not possess the specified ability.</exception>
-    public TAbility GetAbility<TAbility>() where TAbility : CustomAbility
+    /// <typeparam name="TAbility">The type of the custom ability to disable, derived from <see cref="CustomAbility"/>.</typeparam>
+    /// <returns><see langword="true"/> if the ability was successfully disabled; otherwise, <see langword="false"/>.</returns>
+    public bool DisableAbility<TAbility>() where TAbility : CustomAbility
+        => DisableAbility(typeof(TAbility));
+
+    /// <summary>
+    /// Disables the specified custom ability for the player.
+    /// </summary>
+    /// <param name="type">The type of the custom ability to disable.</param>
+    /// <returns><see langword="true"/> if the ability was successfully disabled; otherwise, <see langword="false"/>.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when the <paramref name="type"/> parameter is <see langword="null"/>.</exception
+    public bool DisableAbility(Type type)
+    {
+        if (type == null)
+            throw new ArgumentNullException(nameof(type));
+
+        if (!Abilities.TryGetValue(type, out var customAbility))
+            return false;
+
+        if (customAbility.IsEnabled)
+        {
+            customAbility.Disable();
+            return true;
+        }
+        
+        return false;
+    }
+
+    /// <summary>
+    /// Retrieves the custom ability of the specified type for the current player, if it exists.
+    /// </summary>
+    /// <typeparam name="TAbility">The type of the custom ability to retrieve. Must inherit from <see cref="CustomAbility"/>.</typeparam>
+    /// <returns>The custom ability of type <typeparamref name="TAbility"/> if found; otherwise, <see langword="null"/>.</returns>
+    public TAbility? GetAbility<TAbility>() where TAbility : CustomAbility
+    {
+        if (!customAbilities.TryGetValue(typeof(TAbility), out var customAbility))
+            return null;
+        
+        return (TAbility)customAbility;
+    }
+
+    /// <summary>
+    /// Retrieves an enabled instance of the specified ability type associated with this player, if available.
+    /// </summary>
+    /// <typeparam name="TAbility">The type of the ability to retrieve, which must inherit from <see cref="CustomAbility"/>.</typeparam>
+    /// <returns>The enabled ability of type <typeparamref name="TAbility"/> if it exists, otherwise <see langword="null"/>.</returns>
+    /// <exception cref="KeyNotFoundException">Thrown if the player does not have an ability of the specified type.</exception>
+    public TAbility? GetEnabledAbility<TAbility>() where TAbility : CustomAbility
     {
         if (!customAbilities.TryGetValue(typeof(TAbility), out var customAbility))
             throw new KeyNotFoundException($"Player {NetworkId} does not have the ability {typeof(TAbility).Name}");
+
+        if (!customAbility.IsEnabled)
+            return null;
         
         return (TAbility)customAbility;
     }
@@ -1263,6 +1360,12 @@ public class ExPlayer : Player, IDisposable
 
         ability.Player = this;
         ability.OnAdded();
+
+        if (ability.ShouldEnable())
+        {
+            ability.IsEnabled = true;
+            ability.OnEnabled();
+        }
 
         customAbility = ability;
         return true;
@@ -1611,9 +1714,19 @@ public class ExPlayer : Player, IDisposable
     /// <inheritdoc cref="IDisposable.Dispose"/>
     public void Dispose()
     {
+        if (customAbilities != null)
+        {
+            foreach (var kvp in customAbilities.ToDictionary())
+                kvp.Value.Remove();
+            
+            DictionaryPool<Type, CustomAbility>.Shared.Return(customAbilities);
+        }
+        
         playerUpdate.OnUpdate -= RefreshModifiers;
         playerUpdate.OnUpdate -= RefreshCustomInfo;
+        
         playerUpdate.OnUpdate -= UpdateCustomRole;
+        playerUpdate.OnUpdate -= UpdateAbilities;
 
         if (host != null && host == this)
             host = null;
@@ -1687,9 +1800,6 @@ public class ExPlayer : Player, IDisposable
 
         if (settingsMenuLookup != null)
             DictionaryPool<string, SettingsMenu>.Shared.Return(settingsMenuLookup);
-        
-        if (customAbilities != null)
-            DictionaryPool<Type, CustomAbility>.Shared.Return(customAbilities);
 
         if (removeNextFrame != null)
             ListPool<HintElement>.Shared.Return(removeNextFrame);
@@ -1734,43 +1844,51 @@ public class ExPlayer : Player, IDisposable
 
         if (infoProperty?.Length > 0)
             infoBuilder.AppendLine(infoProperty);
-        
-        Role.CustomRole?.OnBuildingInfo(this, ref Role.customRoleData);
 
-        ExPlayerEvents.OnRefreshingCustomInfo(this, infoBuilder);
-
-        if (infoBuilder.Length == 0)
+        try
         {
-            cInfoRejectionReason = null;
-            return;
-        }
+            Role.CustomRole?.OnBuildingInfo(this, ref Role.customRoleData);
 
-        while (infoBuilder[infoBuilder.Length - 1] == '\n')
-            infoBuilder.Remove(infoBuilder.Length - 1, 1);
+            ExPlayerEvents.OnRefreshingCustomInfo(this, infoBuilder);
 
-        var customInfo = infoBuilder.ToString();
-
-        if (NetworkBehaviour.SyncVarEqual(customInfo, ref ReferenceHub.nicknameSync._customPlayerInfoString))
-        {
-            cInfoRejectionReason = null;
-            return;
-        }
-
-        if (!NicknameSync.ValidateCustomInfo(customInfo, out var rejectionText))
-        {
-            if (cInfoRejectionReason != null && cInfoRejectionReason == rejectionText)
+            if (infoBuilder.Length == 0)
+            {
+                cInfoRejectionReason = null;
                 return;
+            }
 
-            cInfoRejectionReason = rejectionText;
+            while (infoBuilder[infoBuilder.Length - 1] == '\n')
+                infoBuilder.Remove(infoBuilder.Length - 1, 1);
 
-            ApiLog.Warn("LabExtended", $"CustomInfo of &3{ToLogString()}&r was &1REJECTED&r! (&3{rejectionText}&r)");
-            return;
+            var customInfo = infoBuilder.ToString();
+
+            if (NetworkBehaviour.SyncVarEqual(customInfo, ref ReferenceHub.nicknameSync._customPlayerInfoString))
+            {
+                cInfoRejectionReason = null;
+                return;
+            }
+
+            if (!NicknameSync.ValidateCustomInfo(customInfo, out var rejectionText))
+            {
+                if (cInfoRejectionReason != null && cInfoRejectionReason == rejectionText)
+                    return;
+
+                cInfoRejectionReason = rejectionText;
+
+                ApiLog.Warn("LabExtended",
+                    $"CustomInfo of &3{ToLogString()}&r was &1REJECTED&r! (&3{rejectionText}&r)");
+                return;
+            }
+
+            ReferenceHub.nicknameSync._customPlayerInfoString = customInfo;
+            ReferenceHub.nicknameSync.syncVarDirtyBits |= 2UL;
+
+            cInfoRejectionReason = null;
         }
-
-        ReferenceHub.nicknameSync._customPlayerInfoString = customInfo;
-        ReferenceHub.nicknameSync.syncVarDirtyBits |= 2UL;
-
-        cInfoRejectionReason = null;
+        catch (Exception ex)
+        {
+            ApiLog.Error($"Error while updating custom info of {ToLogString()}:\n{ex}");
+        }
     }
 
     private void RefreshModifiers()
@@ -1827,7 +1945,32 @@ public class ExPlayer : Player, IDisposable
 
     private void UpdateCustomRole()
     {
-        Role?.CustomRole?.Update(this, ref Role.customRoleData);
+        try
+        {
+            Role?.CustomRole?.Update(this, ref Role.customRoleData);
+        }
+        catch (Exception ex)
+        {
+            ApiLog.Error($"Error while updating custom role of {ToLogString()}:\n{ex}");
+        }
+    }
+
+    private void UpdateAbilities()
+    {
+        if (customAbilities?.Count > 0)
+        {
+            foreach (var kvp in customAbilities)
+            {
+                try
+                {
+                    kvp.Value.OnUpdate();
+                }
+                catch (Exception ex)
+                {
+                    ApiLog.Error($"Error while updating custom ability &3{kvp.Key.Name}&r of player {ToLogString()}!:\n{ex}");
+                }
+            }
+        }
     }
 
     private static ReferenceHub SpawnHiddenDummy(string nick)

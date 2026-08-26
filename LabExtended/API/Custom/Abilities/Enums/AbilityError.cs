@@ -24,4 +24,9 @@ public enum AbilityError
     /// Ability is being used.
     /// </summary>
     BeingUsed,
+    
+    /// <summary>
+    /// Other error.
+    /// </summary>
+    Other,
 }

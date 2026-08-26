@@ -15,7 +15,7 @@ public static class ApiVersion
     /// <summary>
     /// The minor version part.
     /// </summary>
-    public const int Minor = 3;
+    public const int Minor = 4;
 
     /// <summary>
     /// The build version part.
@@ -25,7 +25,7 @@ public static class ApiVersion
     /// <summary>
     /// The patch version part.
     /// </summary>
-    public const int Patch = 2;
+    public const int Patch = 0;
 
     /// <summary>
     /// Gets the loader's current version.
@@ -51,8 +51,7 @@ public static class ApiVersion
         if (!Compatibility.HasValue || Compatibility.Value.InRange(Game)) 
             return true;
 
-        ApiLog.Error("LabExtended",
-            $"Attempted to load for an unsupported game version (&1{Game}&r) - supported: &2{Compatibility.Value}&r");
+        ApiLog.Error("LabExtended", $"Attempted to load for an unsupported game version (&1{Game}&r) - supported: &2{Compatibility.Value}&r");
         return false;
     }
 }

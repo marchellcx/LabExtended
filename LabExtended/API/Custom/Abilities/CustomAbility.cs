@@ -1,8 +1,12 @@
-using LabApi.Events.Arguments.PlayerEvents;
+using System.Text;
+
 using LabApi.Events.Handlers;
+using LabApi.Events.Arguments.PlayerEvents;
 
 using LabExtended.API.Custom.Abilities.Enums;
 
+using LabExtended.Core;
+using LabExtended.Events;
 using LabExtended.Extensions;
 
 using NorthwoodLib.Pools;
@@ -16,12 +20,6 @@ namespace LabExtended.API.Custom.Abilities;
 /// <summary>
 /// Represents a base class for creating custom abilities.
 /// </summary>
-/// <remarks>
-/// CustomAbility provides the foundational behavior for extensions to implement
-/// in-game abilities, including configurations for cooldowns, durations, uses, and more.
-/// It works in conjunction with the <see cref="ExPlayer"/> and is designed to be
-/// extended by custom implementations.
-/// </remarks>
 public abstract class CustomAbility : CustomObject<CustomAbility>
 {
     /// <summary>
@@ -41,6 +39,16 @@ public abstract class CustomAbility : CustomObject<CustomAbility>
     /// A value of 0 or less indicates that the ability has no usage limit.
     /// </summary>
     public virtual int MaxUses { get; set; } = 0;
+    
+    /// <summary>
+    /// Determines whether the ability should be automatically added to the player when they join the game.
+    /// </summary>
+    public virtual bool AddOnJoin { get; set; }
+    
+    /// <summary>
+    /// Determines whether the ability should be automatically enabled when it is added to the player.
+    /// </summary>
+    public virtual bool EnableOnJoin { get; set; }
     
     /// <summary>
     /// Gets the player that owns the ability.
@@ -135,6 +143,12 @@ public abstract class CustomAbility : CustomObject<CustomAbility>
     public float RemainingCooldown { get; internal set; }
     
     /// <summary>
+    /// Whether or not the ability is enabled.
+    /// </summary>
+    [YamlIgnore]
+    public bool IsEnabled { get; internal set; }
+    
+    /// <summary>
     /// Whether or not the ability is being used.
     /// </summary>
     [YamlIgnore]
@@ -209,6 +223,82 @@ public abstract class CustomAbility : CustomObject<CustomAbility>
     }
 
     /// <summary>
+    /// Called when the ability is enabled by the player.
+    /// Override this method to define custom behavior or initialization logic
+    /// that should occur when the ability becomes active.
+    /// </summary>
+    public virtual void OnEnabled()
+    {
+        
+    }
+
+    /// <summary>
+    /// Called when the ability is disabled.
+    /// Override this method to define custom behavior or logic that should execute
+    /// when the ability is no longer active or has been explicitly turned off.
+    /// </summary>
+    public virtual void OnDisabled()
+    {
+        if (IsBeingUsed)
+        {
+            Cancel(false, false);
+        }
+    }
+
+    /// <summary>
+    /// Determines whether the ability should be enabled automatically when it is added to the player.
+    /// Override this method to define custom conditions or logic for enabling the ability.
+    /// </summary>
+    /// <returns>
+    /// A boolean value indicating whether the ability should be enabled.
+    /// Returns true to enable the ability automatically, or false to leave it disabled.
+    /// </returns>
+    public virtual bool ShouldEnable()
+    {
+        return false;
+    }
+
+    /// <summary>
+    /// Enables the ability, marking it as active.
+    /// </summary>
+    public void Enable()
+    {
+        if (IsEnabled)
+            return;
+
+        IsEnabled = true;
+
+        try
+        {
+            OnEnabled();
+        }
+        catch (Exception ex)
+        {
+            ApiLog.Error($"Caught an error while enabling ability ({Player.ToLogString()}):\n{ex}");
+        }
+    }
+
+    /// <summary>
+    /// Disables the ability if it is currently enabled.
+    /// </summary>
+    public void Disable()
+    {
+        if (!IsEnabled)
+            return;
+        
+        IsEnabled = false;
+
+        try
+        {
+            OnDisabled();
+        }
+        catch (Exception ex)
+        {
+            ApiLog.Error($"Caught an error while disabling ability ({Player.ToLogString()}):\n{ex}");
+        }
+    }
+
+    /// <summary>
     /// Removes the current ability from the associated player and resets its state.
     /// </summary>
     /// <remarks>
@@ -220,9 +310,18 @@ public abstract class CustomAbility : CustomObject<CustomAbility>
     {
         if (Player?.ReferenceHub != null)
         {
-            Player.customAbilities.Remove(GetType());
+            Disable();
             
-            OnRemoved();
+            Player.customAbilities.Remove(GetType());
+
+            try
+            {
+                OnRemoved();
+            }
+            catch (Exception ex)
+            {
+                ApiLog.Error($"Caught an error while removing ability ({Player.ToLogString()}):\n{ex}");
+            }
 
             Player = null!;
 
@@ -231,6 +330,19 @@ public abstract class CustomAbility : CustomObject<CustomAbility>
 
             Uses = 0;
         }
+    }
+
+    /// <summary>
+    /// Prints the details of the ability to the provided StringBuilder.
+    /// This method can be overridden to customize the output of the ability details.
+    /// </summary>
+    /// <param name="builder">The StringBuilder object used to append the ability details.</param>
+    /// <returns>
+    /// True if the operation was successful and the details were appended; otherwise, false.
+    /// </returns>
+    public virtual bool Print(StringBuilder builder)
+    {
+        return false;
     }
 
     /// <summary>
@@ -307,13 +419,25 @@ public abstract class CustomAbility : CustomObject<CustomAbility>
 
         RemainingDuration = 0f;
     }
+
+    /// <summary>
+    /// Determines whether the ability can currently be used, considering factors
+    /// such as active cooldowns, usage limits, and other custom conditions.
+    /// Override this method to implement custom logic for assessing whether the
+    /// ability is usable at a given moment.
+    /// </summary>
+    /// <returns>True if the ability can be used; otherwise, false.</returns>
+    public virtual bool CanUse()
+    {
+        return true;
+    }
     
     /// <summary>
     /// Attempts to use the ability, considering its current state and restrictions such as cooldown and usage limits.
     /// </summary>
     /// <param name="force">Indicates whether the ability should be forcibly used, bypassing certain restrictions like cooldown and active usage.</param>
     /// <returns>An <see cref="AbilityError"/> value representing the result of the attempt, such as success or a specific error condition.</returns>
-    public AbilityError TryUse(bool force)
+    public virtual AbilityError TryUse(bool force)
     {
         if (!force)
         {
@@ -325,11 +449,23 @@ public abstract class CustomAbility : CustomObject<CustomAbility>
             
             if (IsInCooldown)
                 return AbilityError.InCooldown;
+
+            if (!CanUse())
+                return AbilityError.Other;
         }
 
         if (IsBeingUsed)
-            Cancel(false, false);
-        
+        {
+            try
+            {
+                Cancel(false, false);
+            }
+            catch (Exception ex)
+            {
+                ApiLog.Error($"Caught an error while cancelling ability use ({Player.ToLogString()}):\n{ex}");
+            }
+        }
+
         Uses++;
         
         LastUse = Time.realtimeSinceStartup;
@@ -339,25 +475,53 @@ public abstract class CustomAbility : CustomObject<CustomAbility>
         
         if (IsInstant)
         {
-            OnUsed();
+            try
+            {
+                OnUsed();
+            }
+            catch (Exception ex)
+            {
+                ApiLog.Error($"Caught an error while handling instant ability use ({Player.ToLogString()}):\n{ex}");
+            }
 
             if (Cooldown > 0f)
             {
                 RemainingCooldown = Cooldown;
-                
-                OnEnteredCooldown();
+
+                try
+                {
+                    OnEnteredCooldown();
+                }
+                catch (Exception ex)
+                {
+                    ApiLog.Error($"Caught an error while handling ability cooldown start ({Player.ToLogString()}):\n{ex}");
+                }
             }
 
             if (Uses == MaxUses)
             {
-                OnRanOutOfUses();
+                try
+                {
+                    OnRanOutOfUses();
+                }
+                catch (Exception ex)
+                {
+                    ApiLog.Error($"Caught an error while handling ability usage limit ({Player.ToLogString()}):\n{ex}");
+                }
             }
         }
         else
         {
             RemainingDuration = Duration;
-            
-            OnStartedUsing();
+
+            try
+            {
+                OnStartedUsing();
+            }
+            catch (Exception ex)
+            {
+                ApiLog.Error($"Caught an error while handling ability usage start ({Player.ToLogString()}):\n{ex}");
+            }
         }
         
         return AbilityError.None;
@@ -376,22 +540,45 @@ public abstract class CustomAbility : CustomObject<CustomAbility>
 
         RemainingDuration = 0f;
         RemainingCooldown = 0f;
-        
-        OnCancelled();
+
+        try
+        {
+            OnCancelled();
+        }
+        catch (Exception ex)
+        {
+            ApiLog.Error($"Caught an error while cancelling ability ({Player.ToLogString()}):\n{ex}");
+        }
 
         if (applyCooldown && Cooldown > 0f)
         {
             RemainingCooldown = Cooldown;
-            
-            OnEnteredCooldown();
+
+            try
+            {
+                OnEnteredCooldown();
+            }
+            catch (Exception ex)
+            {
+                ApiLog.Error($"Caught an error while entering ability cooldown ({Player.ToLogString()}):\n{ex}");
+            }
         }
 
         if (countUse)
         {
             Uses++;
-            
+
             if (Uses == MaxUses)
-                OnRanOutOfUses();
+            {
+                try
+                {
+                    OnRanOutOfUses();
+                }
+                catch (Exception ex)
+                {
+                    ApiLog.Error($"Caught an error while handling ability usage limit ({Player.ToLogString()}):\n{ex}");
+                }
+            }
         }
 
         return true;
@@ -417,6 +604,14 @@ public abstract class CustomAbility : CustomObject<CustomAbility>
     /// Invoked when the ability runs out of uses.
     /// </summary>
     public virtual void OnRanOutOfUses()
+    {
+        
+    }
+    
+    /// <summary>
+    /// Gets called when the ability is used.
+    /// </summary>
+    public virtual void OnUsed()
     {
         
     }
@@ -463,14 +658,6 @@ public abstract class CustomAbility : CustomObject<CustomAbility>
     }
 
     /// <summary>
-    /// Gets called when the ability is used.
-    /// </summary>
-    public virtual void OnUsed()
-    {
-        
-    }
-
-    /// <summary>
     /// Updates the state of the ability. Handles the progression of duration while the ability is being used,
     /// the cooldown period after the ability is finished, and the transitions between these states.
     /// </summary>
@@ -484,40 +671,82 @@ public abstract class CustomAbility : CustomObject<CustomAbility>
     /// </remarks>
     public virtual void OnUpdate()
     {
-        if (IsBeingUsed)
+        if (IsBeingUsed && Player?.ReferenceHub != null)
         {
             RemainingDuration -= Time.deltaTime;
-            
-            OnUsingUpdate();
+
+            try
+            {
+                OnUsingUpdate();
+            }
+            catch (Exception ex)
+            {
+                ApiLog.Error($"Caught an error while updating ability ({Player.ToLogString()}):\n{ex}");
+            }
 
             if (RemainingDuration <= 0f)
             {
-                OnFinishedUsing();
+                try
+                {
+                    OnFinishedUsing();
+                }
+                catch (Exception ex)
+                {
+                    ApiLog.Error($"Caught an error while finishing ability ({Player.ToLogString()}):\n{ex}");
+                }
 
                 if (Cooldown > 0f)
                 {
                     RemainingCooldown = Cooldown;
-                    
-                    OnEnteredCooldown();
+
+                    try
+                    {
+                        OnEnteredCooldown();
+                    }
+                    catch (Exception ex)
+                    {
+                        ApiLog.Error($"Caught an error while entering ability cooldown ({Player.ToLogString()}):\n{ex}");
+                    }
                 }
 
-                if (IsOutOfUses)
+                if (Uses == MaxUses)
                 {
-                    OnRanOutOfUses();
+                    try
+                    {
+                        OnRanOutOfUses();
+                    }
+                    catch (Exception ex)
+                    {
+                        ApiLog.Error($"Caught an error while handling ability usage limit ({Player.ToLogString()}):\n{ex}");
+                    }
                 }
             }
         }
         else
         {
-            if (RemainingCooldown > 0f)
+            if (RemainingCooldown > 0f && Player?.ReferenceHub != null)
             {
                 RemainingCooldown -= Time.deltaTime;
 
-                OnCooldownUpdate();
-                
+                try
+                {
+                    OnCooldownUpdate();
+                }
+                catch (Exception ex)
+                {
+                    ApiLog.Error($"Caught an error while updating ability in cooldown ({Player.ToLogString()}):\n{ex}");
+                }
+
                 if (RemainingCooldown <= 0f)
                 {
-                    OnExitedCooldown();
+                    try
+                    {
+                        OnExitedCooldown();
+                    }
+                    catch (Exception ex)
+                    {
+                        ApiLog.Error($"Caught an error while handling ability cooldown expiration ({Player.ToLogString()}):\n{ex}");
+                    }
                 }
             }
         }
@@ -557,8 +786,31 @@ public abstract class CustomAbility : CustomObject<CustomAbility>
             kvp.Value.OnChangedRole(args);
     }
 
+    private static void _OnVerified(ExPlayer player)
+    {
+        foreach (var kvp in RegisteredObjects)
+        {
+            if (kvp.Value.AddOnJoin)
+            {
+                if (player.AddAbility(kvp.Value.GetType(), out var customAbility))
+                {
+                    if (kvp.Value.EnableOnJoin && !customAbility.IsEnabled)
+                    {
+                        customAbility.Enable();
+                    }
+                }
+                else
+                {
+                    ApiLog.Warn($"Ability &1{kvp.Key}&r could not be added to player {player.ToLogString()}");
+                }
+            }
+        }
+    }
+
     internal static void Initialize()
     {
         PlayerEvents.ChangedRole += _OnChangedRole;   
+        
+        ExPlayerEvents.Verified += _OnVerified;
     }
 }
