@@ -1,7 +1,7 @@
 ﻿using LabExtended.Commands.Attributes;
 using LabExtended.Commands.Interfaces;
 
-namespace LabExtended.Commands.Custom.TextToy;
+namespace LabExtended.Commands.Custom.Text;
 
 /// <summary>
 /// Provides server-side commands for managing Text Toys.

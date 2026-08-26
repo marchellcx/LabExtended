@@ -1,5 +1,4 @@
 ﻿using GameCore;
-
 using LabExtended.Commands.Attributes;
 
 namespace LabExtended.Commands.Custom.Reload;
@@ -24,6 +23,6 @@ public partial class ReloadCommand
         
         ServerStatic.PermissionsHandler = new PermissionsHandler(ref ServerStatic.RolesConfig, ref ServerStatic.SharedGroupsConfig, ref ServerStatic.SharedGroupsMembersConfig);
         
-        Ok($"Reloaded game configuration.");
+        Ok("Reloaded game configuration.");
     }
 }

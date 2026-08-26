@@ -137,8 +137,15 @@ namespace LabExtended.API.Custom.Items
             return thrownProjectile;
         }
 
-        /// <inheritdoc/>
-        public override ItemPickupBase SpawnItem(Vector3 position, Quaternion? rotation, object? pickupData = null)
+        /// <summary>
+        /// Spawns and activates a projectile in the game world at the specified position and rotation, utilizing a predefined projectile template.
+        /// </summary>
+        /// <param name="position">The world-space position where the projectile will be spawned.</param>
+        /// <param name="rotation">The rotation to apply to the spawned projectile. If null, the default identity rotation is used.</param>
+        /// <param name="pickupData">Optional context or metadata associated with the spawned projectile. Can be used for additional gameplay or tracking purposes.</param>
+        /// <returns>A ThrownProjectile instance representing the newly created and activated projectile.</returns>
+        /// <exception cref="Exception">Thrown if the projectile template cannot be retrieved or is invalid for the specified item type.</exception>
+        public ThrownProjectile SpawnActiveProjectile(Vector3 position, Quaternion? rotation, object? pickupData = null)
         {
             if (!PickupType.TryGetItemPrefab<ThrowableItem>(out var throwableProjectileTemplate)
                 || throwableProjectileTemplate == null || throwableProjectileTemplate.Projectile == null)

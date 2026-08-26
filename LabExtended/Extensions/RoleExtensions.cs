@@ -216,27 +216,32 @@ public static class RoleExtensions
     /// </summary>
     public static bool IsEnemy(this RoleTypeId role, RoleTypeId otherRole)
     {
-        if (role == otherRole)
-            return false;
-
-        if (role is RoleTypeId.Tutorial || otherRole is RoleTypeId.Tutorial)
-            return false;
-
-        if (!otherRole.IsAlive() || !role.IsAlive())
-            return false;
-
-        if (role.GetTeam() == otherRole.GetTeam())
-            return false;
-
-        if ((role.IsNtf() && otherRole.IsChaos()) || (role.IsChaos() || otherRole.IsNtf()))
-            return true;
-
-        if (role.IsScp(true) || otherRole.IsScp(true))
-            return true;
-
-        if ((role is RoleTypeId.ClassD && (otherRole.IsNtf() || otherRole is RoleTypeId.FacilityGuard))
-            || (otherRole is RoleTypeId.ClassD && (role.IsNtf() || role is RoleTypeId.FacilityGuard)))
-            return true;
+        switch (role)
+        {
+            case RoleTypeId.ClassD:
+            case RoleTypeId.ChaosRifleman:
+            case RoleTypeId.ChaosRepressor:
+            case RoleTypeId.ChaosMarauder:
+            case RoleTypeId.ChaosConscript:
+                return otherRole is RoleTypeId.Scientist
+                    or RoleTypeId.NtfCaptain
+                    or RoleTypeId.NtfPrivate
+                    or RoleTypeId.NtfSergeant
+                    or RoleTypeId.NtfSpecialist
+                    or RoleTypeId.FacilityGuard || otherRole.IsScp(true);
+            
+            case RoleTypeId.Scientist:
+            case RoleTypeId.FacilityGuard:
+            case RoleTypeId.NtfSpecialist:
+            case RoleTypeId.NtfSergeant:
+            case RoleTypeId.NtfPrivate:
+            case RoleTypeId.NtfCaptain:
+                return otherRole is RoleTypeId.ChaosRifleman 
+                    or RoleTypeId.ChaosRepressor 
+                    or RoleTypeId.ChaosMarauder 
+                    or RoleTypeId.ChaosConscript
+                    or RoleTypeId.ClassD || otherRole.IsScp(true);
+        }
 
         return false;
     }

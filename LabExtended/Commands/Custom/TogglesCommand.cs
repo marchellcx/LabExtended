@@ -85,7 +85,7 @@ public class TogglesCommand : CommandBase, IServerSideCommand
             return;
         }
 
-        if (!Sender.RegexPermission("toggles.set." + prop.Name.ToLowerInvariant()))
+        if (!Sender.CheckPermission("toggles.set." + prop.Name.ToLowerInvariant()))
         {
             Fail($"You do not have permission to set the \"{prop.Name}\" property.");
             return;

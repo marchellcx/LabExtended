@@ -232,7 +232,7 @@ public static class CommandManager
 
             ev.IsAllowed = false;
 
-            if (command.Permission != null && !player.RegexPermission(command.Permission))
+            if (!ApiLoader.ApiConfig.OverridePermissions && command.Permission != null && !player.CheckPermission(command.Permission))
             {
                 var response =
                     CommandResponseFormatter.FormatMissingPermissionsFailure(command.Permission, command.Name,
@@ -264,7 +264,7 @@ public static class CommandManager
                 overload = command.DefaultOverload;
             }
 
-            if (overload.Permission != null && !player.HasPermissions(overload.Permission))
+            if (!ApiLoader.ApiConfig.OverridePermissions && overload.Permission != null && !player.HasPermissions(overload.Permission))
             {
                 var response =
                     CommandResponseFormatter.FormatMissingPermissionsFailure(overload.Permission, $"{command.Name} {overload.Name}",

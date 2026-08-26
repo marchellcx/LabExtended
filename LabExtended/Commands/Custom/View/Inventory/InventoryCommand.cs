@@ -1,11 +1,9 @@
 using InventorySystem.Items;
 using InventorySystem.Items.Firearms;
 using InventorySystem.Items.Firearms.Modules;
-
 using LabExtended.API;
-
-using LabExtended.Extensions;
 using LabExtended.Commands.Attributes;
+using LabExtended.Extensions;
 using LabExtended.Utilities.Firearms;
 
 namespace LabExtended.Commands.Custom.View;

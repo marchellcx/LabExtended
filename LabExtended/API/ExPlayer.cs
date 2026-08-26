@@ -32,7 +32,6 @@ using LabExtended.API.Settings.Menus;
 using LabExtended.Commands.Interfaces;
 
 using LabExtended.Core;
-using LabExtended.Core.Storage;
 using LabExtended.Core.Pooling.Pools;
 
 using LabExtended.Events;
@@ -62,7 +61,6 @@ using RemoteAdmin.Communication;
 
 using System.Text;
 using System.Reflection;
-using System.Text.RegularExpressions;
 
 using UnityEngine;
 
@@ -74,6 +72,10 @@ using InventorySystem.Items.Firearms;
 using InventorySystem.Items.Firearms.Modules;
 using InventorySystem.Items.Firearms.ShotEvents;
 
+using LabExtended.API.Custom.Abilities;
+
+using LabExtended.Core.Configs;
+
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
 #pragma warning disable CS8604 // Possible null reference argument.
 
@@ -84,6 +86,8 @@ namespace LabExtended.API;
 /// </summary>
 public class ExPlayer : Player, IDisposable
 {
+    private static char[] permissionsSplit = ['.'];
+    
     internal static volatile ConcurrentDictionary<string, string> preauthData = new();
     
     internal static PlayerUpdateComponent playerUpdate = PlayerUpdateComponent.Create();
@@ -476,14 +480,13 @@ public class ExPlayer : Player, IDisposable
 
     internal ICommandRunner? activeRunner;
 
-    internal Dictionary<Assembly, ServerSpecificSettingBase[]>?
-        settingsByAssembly = DictionaryPool<Assembly, ServerSpecificSettingBase[]>.Shared.Rent();
+    internal Dictionary<Assembly, ServerSpecificSettingBase[]>? settingsByAssembly = DictionaryPool<Assembly, ServerSpecificSettingBase[]>.Shared.Rent();
 
     internal Dictionary<string, SettingsMenu>? settingsMenuLookup = DictionaryPool<string, SettingsMenu>.Shared.Rent();
     internal Dictionary<string, SettingsEntry>? settingsIdLookup = DictionaryPool<string, SettingsEntry>.Shared.Rent();
 
-    internal Dictionary<int, SettingsEntry>?
-        settingsAssignedIdLookup = DictionaryPool<int, SettingsEntry>.Shared.Rent();
+    internal Dictionary<int, SettingsEntry>? settingsAssignedIdLookup = DictionaryPool<int, SettingsEntry>.Shared.Rent();
+    internal Dictionary<Type, CustomAbility> customAbilities = DictionaryPool<Type, CustomAbility>.Shared.Rent();
     
     internal List<HintElement> removeNextFrame = ListPool<HintElement>.Shared.Rent();
 
@@ -678,12 +681,7 @@ public class ExPlayer : Player, IDisposable
     /// Gets the player's persistent storage. <i>(persistent until the next server restart)</i>
     /// </summary>
     public PlayerStorage PersistentStorage { get; internal set; }
-
-    /// <summary>
-    /// Gets the player's file storage. Will be null if disabled via config -or- if the player has Do Not Track active.
-    /// </summary>
-    public StorageInstance? FileStorage { get; internal set; }
-
+    
     /// <summary>
     /// Gets the player's toggles.
     /// </summary>
@@ -729,6 +727,12 @@ public class ExPlayer : Player, IDisposable
     /// </summary>
     public HashSet<PersonalHintElement> HintElements { get; internal set; } =
         HashSetPool<PersonalHintElement>.Shared.Rent();
+
+    /// <summary>
+    /// Gets a read-only dictionary of custom abilities associated with the player,
+    /// indexed by their respective types.
+    /// </summary>
+    public IReadOnlyDictionary<Type, CustomAbility> Abilities => customAbilities;
 
     /// <summary>
     /// Gets the currently spectated player.
@@ -1153,123 +1157,174 @@ public class ExPlayer : Player, IDisposable
     public string UserIdType => UserIdHelper.GetIdType(UserId);
 
     /// <summary>
-    /// Determines whether the current user has the specified permission.
+    /// Checks whether the player has the specified custom ability.
     /// </summary>
-    /// <remarks>The method first checks if the permission string is valid and if the user is online and
-    /// verified. It also considers host permissions and applies regex matching if configured. Wildcards are supported
-    /// for flexible permission checks.</remarks>
-    /// <param name="permission">The permission to check, which must be a non-empty string. It can include wildcard characters such as '*' for
-    /// pattern matching.</param>
-    /// <returns>true if the user has the specified permission; otherwise, false.</returns>
-    public bool RegexPermission(string permission)
+    /// <param name="type">The <see cref="Type"/> of the ability to check for.</param>
+    /// <returns><see langword="true"/> if the player has the specified ability; otherwise, <see langword="false"/>.</returns>
+    public bool HasAbility(Type type)
+        => type != null && Abilities.ContainsKey(type);
+
+    /// <summary>
+    /// Checks whether the player has a specific custom ability.
+    /// </summary>
+    /// <typeparam name="TAbility">The type of the custom ability to check for.</typeparam>
+    /// <returns><see langword="true"/> if the player has the specified ability; otherwise, <see langword="false"/>.</returns>
+    public bool HasAbility<TAbility>() where TAbility : CustomAbility
+        => Abilities.ContainsKey(typeof(TAbility));
+
+    /// <summary>
+    /// Determines whether the player has a specific custom ability and retrieves it if present.
+    /// </summary>
+    /// <typeparam name="TAbility">The type of the custom ability to check for.</typeparam>
+    /// <param name="ability">When this method returns, contains the custom ability of type <typeparamref name="TAbility"/> if it exists, otherwise <see langword="null"/>.</param>
+    /// <returns><see langword="true"/> if the player has the specified ability; otherwise, <see langword="false"/>.</returns>
+    public bool HasAbility<TAbility>(out TAbility ability) where TAbility : CustomAbility
+    {
+        ability = null!;
+
+        if (!Abilities.TryGetValue(typeof(TAbility), out var customAbility))
+            return false;
+        
+        ability = (TAbility)customAbility;
+        return true;
+    }
+
+    /// <summary>
+    /// Removes an ability of the specified type from the player if it exists.
+    /// </summary>
+    /// <typeparam name="TAbility">The type of the ability to remove, derived from <see cref="CustomAbility"/>.</typeparam>
+    /// <returns><see langword="true"/> if the ability was removed successfully; otherwise, <see langword="false"/>.</returns>
+    public bool RemoveAbility<TAbility>() where TAbility : CustomAbility
+    {
+        if (!Abilities.TryGetValue(typeof(TAbility), out var customAbility))
+            return false;
+        
+        customAbility.Remove();
+        return true;
+    }
+
+    /// <summary>
+    /// Retrieves an ability of the specified type associated with the player.
+    /// </summary>
+    /// <typeparam name="TAbility">The type of the ability to retrieve, derived from <see cref="CustomAbility"/>.</typeparam>
+    /// <returns>The instance of the requested ability type.</returns>
+    /// <exception cref="KeyNotFoundException">Thrown when the player does not possess the specified ability.</exception>
+    public TAbility GetAbility<TAbility>() where TAbility : CustomAbility
+    {
+        if (!customAbilities.TryGetValue(typeof(TAbility), out var customAbility))
+            throw new KeyNotFoundException($"Player {NetworkId} does not have the ability {typeof(TAbility).Name}");
+        
+        return (TAbility)customAbility;
+    }
+
+    /// <summary>
+    /// Attempts to add an ability of the specified type to the player.
+    /// </summary>
+    /// <typeparam name="TAbility">The type of the ability to add. Must derive from <see cref="CustomAbility"/>.</typeparam>
+    /// <param name="ability">The added ability instance if successful, otherwise <see langword="null"/>.</param>
+    /// <returns><see langword="true"/> if the ability was successfully added; otherwise, <see langword="false"/>.</returns>
+    public bool AddAbility<TAbility>(out TAbility ability) where TAbility : CustomAbility
+    {
+        ability = null!;
+
+        if (!AddAbility(typeof(TAbility), out var customAbility))
+            return false;
+        
+        ability = (TAbility)customAbility;
+        return true;
+    }
+
+    /// <summary>
+    /// Attempts to add a custom ability of the specified <see cref="Type"/> to the player.
+    /// </summary>
+    /// <param name="type">The <see cref="Type"/> of the custom ability to add.</param>
+    /// <param name="customAbility">
+    /// When this method returns, contains the added <see cref="CustomAbility"/> instance if the ability was successfully added,
+    /// or <see langword="null"/> if the addition was unsuccessful.
+    /// </param>
+    /// <returns>
+    /// <see langword="true"/> if the custom ability was successfully added; otherwise, <see langword="false"/>.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">Thrown if the <paramref name="type"/> parameter is <see langword="null"/>.</exception>
+    public bool AddAbility(Type type, out CustomAbility customAbility)
+    {
+        if (type == null)
+            throw new ArgumentNullException(nameof(type));
+
+        customAbility = null!;
+        
+        if (customAbilities.ContainsKey(type))
+            return false;
+        
+        if (Activator.CreateInstance(type, this) is not CustomAbility ability)
+            return false;
+        
+        customAbilities.Add(type, ability);
+
+        ability.Player = this;
+        ability.OnAdded();
+
+        customAbility = ability;
+        return true;
+    }
+
+    /// <summary>
+    /// Checks if the player has the specified permission.
+    /// </summary>
+    /// <param name="permission">The permission string to check.</param>
+    /// <returns>
+    /// <see langword="true"/> if the player has the given permission, or if specific conditions
+    /// such as being a host or having wildcard permissions are met; otherwise, <see langword="false"/>.
+    /// In case of an error during the check, the value of
+    /// <see cref="ApiConfig.OverridePermissions"/> is returned as a fallback.
+    /// </returns>
+    public bool CheckPermission(string permission)
     {
         try
         {
-            ApiLog.Debug("ExPlayer :: HasPermission",
-                $"Checking permission &1{permission ?? "null"}&r for: {ToLogString()}");
-
             if (string.IsNullOrEmpty(permission))
-            {
-                ApiLog.Debug("ExPlayer :: HasPermission", "Permission string is null or empty, returning false.");
                 return false;
-            }
 
             if (ReferenceHub == null)
-            {
-                ApiLog.Debug("ExPlayer :: HasPermission", "ReferenceHub is null, cannot check permissions.");
                 return false;
-            }
 
             if (ApiLoader.ApiConfig.HostPermissions &&
                 (IsHost || ReferenceHub.isLocalPlayer || (host?.ReferenceHub != null && this == host)))
-            {
-                ApiLog.Debug("ExPlayer :: HasPermission",
-                    "Host permissions enabled and player is host, granting permission.");
                 return true;
-            }
 
-            permission = permission
-                .Trim()
-                .TrimEnd('.');
+            if (this.HasPermission(permission))
+                return true;
 
-            if (!ApiLoader.ApiConfig.RegexPermissions)
-            {
-                ApiLog.Debug("ExPlayer :: HasPermission", "Regex permissions disabled, performing simple check.");
-                return ApiLoader.ApiConfig.OverridePermissions || PermissionsManager.HasPermissions(this, permission);
-            }
+            permission = permission.Trim();
 
-            var permissions = PermissionsManager.GetPermissions(this);
-
-            if (permissions.Length < 1)
-            {
-                ApiLog.Debug("ExPlayer :: HasPermission",
-                    "No permissions found for player, returning default override value.");
-                return ApiLoader.ApiConfig.OverridePermissions;
-            }
-
-            if (permissions.Contains($"-{permission}"))
-            {
-                ApiLog.Debug("ExPlayer :: HasPermission",
-                    $"Found negative permission for &1{permission}&r, denying permission.");
-                return false;
-            }
-
-            var pattern = Regex.Escape(permission)
-                .Replace(@"\*", ".*") // * matches any characters (including none)
-                .Replace(@"\.", @"\."); // Ensure dots are literal
-
-            // If the original didn't end with *, add $ to match end of string
-            // This prevents "settings*" from matching "settings.something.extra"
-            if (!permission.EndsWith("*"))
-                pattern += "$";
-
-            // If the original didn't start with *, add ^ to match start
-            if (!permission.StartsWith("*"))
-                pattern = "^" + pattern;
-
-            var regex = new Regex(pattern, RegexOptions.Compiled);
-            var negative = false;
-
-            ApiLog.Debug("ExPlayer :: HasPermission", $"Checking permissions with regex pattern: &1{pattern}&r");
+            var permissions = this.GetPermissions();
+            var segments = permission.Split(permissionsSplit, StringSplitOptions.RemoveEmptyEntries);
 
             for (var x = 0; x < permissions.Length; x++)
             {
-                var ownedPermission = permissions[x];
+                var provided = permissions[x];
 
-                if (string.IsNullOrEmpty(ownedPermission))
-                    continue;
-
-                if (ownedPermission == $"-{permission}")
-                {
-                    ApiLog.Debug("ExPlayer :: HasPermission",
-                        $"Found exact negative permission for &1{permission}&r, denying permission.");
-                    negative = true;
-                }
-
-                if (ownedPermission == permission)
-                {
-                    ApiLog.Debug("ExPlayer :: HasPermission",
-                        $"Found exact permission for &1{permission}&r, granting permission.");
+                if (provided is "*" or ".*")
                     return true;
-                }
 
-                if (regex.IsMatch(ownedPermission))
+                if (provided == permission)
+                    return true;
+
+                for (var y = 0; y < segments.Length; y++)
                 {
-                    ApiLog.Debug("ExPlayer :: HasPermission",
-                        $"Permission &1{ownedPermission}&r matches regex pattern for &1{permission}&r, granting permission: {!negative}.");
-                    return !negative;
+                    var segment = segments[y];
+
+                    if (provided == $"{segment}.*")
+                        return true;
                 }
             }
-
-            ApiLog.Debug("ExPlayer :: HasPermission",
-                $"No matching permissions found for &1{permission}&r, returning default override value: {ApiLoader.ApiConfig.OverridePermissions}.");
-            return ApiLoader.ApiConfig.OverridePermissions;
         }
         catch (Exception ex)
         {
             ApiLog.Error("LabExtended", $"Failed while checking permissions:\n{ex}");
-            return false;
         }
+
+        return ApiLoader.ApiConfig.OverridePermissions;
     }
 
     /// <summary>
@@ -1404,21 +1459,27 @@ public class ExPlayer : Player, IDisposable
         if (content is null)
             throw new ArgumentNullException(nameof(content));
 
+        var msg = content.ToString();
+        
         if (IsServer)
         {
-            ServerConsole.AddLog(content.ToString(), success ? ConsoleColor.Green : ConsoleColor.Red);
+            if (ApiLog.IsTrueColorEnabled)
+                msg = msg.FormatTrueColorString();
+            
+            ServerConsole.AddLog(msg, success ? ConsoleColor.Green : ConsoleColor.Red);
             return true;
         }
 
         if (!HasRemoteAdminAccess)
             return false;
 
-        var str = content.ToString();
+        if (ApiLog.IsTrueColorEnabled)
+            msg = msg.FormatTrueColorString("white", true);
 
         if (tag?.Length > 0)
-            str = string.Concat(tag.ToUpper(), "#", str);
+            msg = string.Concat(tag.ToUpper(), "#", msg);
 
-        ReferenceHub.queryProcessor.SendToClient(str, success, show, string.Empty);
+        ReferenceHub.queryProcessor.SendToClient(msg, success, show, string.Empty);
         return true;
     }
 
@@ -1626,6 +1687,9 @@ public class ExPlayer : Player, IDisposable
 
         if (settingsMenuLookup != null)
             DictionaryPool<string, SettingsMenu>.Shared.Return(settingsMenuLookup);
+        
+        if (customAbilities != null)
+            DictionaryPool<Type, CustomAbility>.Shared.Return(customAbilities);
 
         if (removeNextFrame != null)
             ListPool<HintElement>.Shared.Return(removeNextFrame);
@@ -1640,6 +1704,8 @@ public class ExPlayer : Player, IDisposable
         settingsIdLookup = null;
         settingsMenuLookup = null;
         settingsAssignedIdLookup = null;
+
+        customAbilities = null!;
 
         infoBuilder = null!;
         infoProperty = null;
@@ -1668,9 +1734,8 @@ public class ExPlayer : Player, IDisposable
 
         if (infoProperty?.Length > 0)
             infoBuilder.AppendLine(infoProperty);
-
-        if (Role.CustomRole != null)
-            Role.CustomRole.OnBuildingInfo(this, ref Role.customRoleData);
+        
+        Role.CustomRole?.OnBuildingInfo(this, ref Role.customRoleData);
 
         ExPlayerEvents.OnRefreshingCustomInfo(this, infoBuilder);
 
@@ -1762,10 +1827,7 @@ public class ExPlayer : Player, IDisposable
 
     private void UpdateCustomRole()
     {
-        if (Role?.CustomRole == null)
-            return;
-
-        Role.CustomRole.Update(this, ref Role.customRoleData);
+        Role?.CustomRole?.Update(this, ref Role.customRoleData);
     }
 
     private static ReferenceHub SpawnHiddenDummy(string nick)

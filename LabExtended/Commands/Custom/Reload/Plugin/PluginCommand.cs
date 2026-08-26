@@ -1,7 +1,5 @@
 ﻿using LabApi.Loader;
-
 using LabExtended.Commands.Attributes;
-
 using LabExtended.Core;
 using LabExtended.Extensions;
 

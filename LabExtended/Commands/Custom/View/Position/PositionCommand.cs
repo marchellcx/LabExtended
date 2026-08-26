@@ -1,11 +1,9 @@
 using LabExtended.Commands.Attributes;
-
 using MapGeneration;
-
 using PlayerRoles;
 using PlayerRoles.FirstPersonControl;
-
 using RelativePositioning;
+using UnityEngine;
 
 namespace LabExtended.Commands.Custom.View;
 
@@ -24,10 +22,10 @@ public partial class ViewCommand
         Ok(x =>
         {
             x.AppendLine();
-            x.AppendLine($"Transform Position: {Sender.Transform.position.ToPreciseString()}");
+            x.AppendLine($"Transform Position: {Misc.ToPreciseString((Vector3)Sender.Transform.position)}");
             x.AppendLine($"Transform Rotation: {Sender.Transform.rotation}");
 
-            x.AppendLine($"Camera Transform Position: {Sender.CameraTransform.position.ToPreciseString()}");
+            x.AppendLine($"Camera Transform Position: {Misc.ToPreciseString((Vector3)Sender.CameraTransform.position)}");
             x.AppendLine($"Camera Transform Rotation: {Sender.CameraTransform.rotation}");
 
             x.AppendLine($"Is Grounded: {Sender.Position.IsGrounded}");
@@ -36,7 +34,7 @@ public partial class ViewCommand
 
             if (groundPos.HasValue)
             {
-                x.AppendLine($"Ground Position: {groundPos.Value.ToPreciseString()}");
+                x.AppendLine($"Ground Position: {Misc.ToPreciseString((Vector3)groundPos.Value)}");
             }
             else
             {
@@ -51,7 +49,7 @@ public partial class ViewCommand
             }
             else
             {
-                if (Sender.Transform.position.TryGetRoom(out var curRoom))
+                if (RoomUtils.TryGetRoom(Sender.Transform.position, out var curRoom))
                 {
                     x.AppendLine($"Found Room: {curRoom.Name} ({curRoom.Shape}; {curRoom.Zone}; {curRoom.MainCoords})");
                     x.AppendLine($"Found Room Transform Local Position: {curRoom.transform.InverseTransformPoint(Sender.Transform.position)}");

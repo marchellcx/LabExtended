@@ -1,8 +1,10 @@
 ﻿using InventorySystem.Items.ThrowableProjectiles;
 
 using LabExtended.API;
-using LabExtended.Extensions;
+
 using LabExtended.Commands.Attributes;
+
+using LabExtended.Extensions;
 
 using UnityEngine;
 

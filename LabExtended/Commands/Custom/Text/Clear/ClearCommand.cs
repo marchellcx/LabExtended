@@ -1,7 +1,7 @@
 ﻿using LabExtended.API.Toys;
 using LabExtended.Commands.Attributes;
 
-namespace LabExtended.Commands.Custom.TextToy;
+namespace LabExtended.Commands.Custom.Text;
 
 public partial class TextCommand
 {

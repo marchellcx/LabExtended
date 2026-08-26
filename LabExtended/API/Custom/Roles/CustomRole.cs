@@ -7,7 +7,8 @@ using UnityEngine;
 using LabApi.Events.Handlers;
 using LabApi.Events.Arguments.PlayerEvents;
 
-using LabExtended.Core;
+using LabApi.Features.Extensions;
+
 using LabExtended.Utilities;
 using LabExtended.Extensions;
 
@@ -15,6 +16,7 @@ using LabExtended.API.Containers;
 using LabExtended.API.Custom.Items;
 
 using LabExtended.Core.Configs.Objects;
+using LabExtended.Events;
 
 using YamlDotNet.Serialization;
 
@@ -155,11 +157,38 @@ namespace LabExtended.API.Custom.Roles
         public virtual Dictionary<string, int> CustomAmmo { get; set; } = new();
         #endregion
 
+        private HashSet<ExPlayer> ignoreRoleChange = new();
+        
         /// <summary>
         /// Gets the read-only list of players currently assigned to this custom role.
         /// </summary>
         [YamlIgnore]
         public Dictionary<ExPlayer, object> Players { get; } = new();
+
+        /// <summary>
+        /// Invoked when the custom role is registered within the system. This method performs initialization tasks,
+        /// such as subscribing to relevant events to handle role-specific behaviors and state management.
+        /// </summary>
+        public override void OnRegistered()
+        {
+            base.OnRegistered();
+
+            ExPlayerEvents.Left += OnLeft;
+            ExRoundEvents.WaitingForPlayers += OnWaiting;
+        }
+
+        /// <summary>
+        /// Invoked when the custom role is unregistered from the system. This method is called to perform cleanup tasks,
+        /// such as unsubscribing from events to prevent memory leaks and ensuring that role-specific resources and
+        /// state changes are properly reset.
+        /// </summary>
+        public override void OnUnregistered()
+        {
+            base.OnUnregistered();
+            
+            ExPlayerEvents.Left -= OnLeft;
+            ExRoundEvents.WaitingForPlayers -= OnWaiting;
+        }
 
         /// <summary>
         /// Determines the role appearance that should be presented for a player from the perspective of a specific
@@ -294,13 +323,29 @@ namespace LabExtended.API.Custom.Roles
             if (player?.ReferenceHub == null)
                 return false;
 
-            player.Role.Set(Type, RoleChangeReason.RemoteAdmin, 
-                useSpawnpoint ? (ClearInventory || !addInventory
-                                    ? RoleSpawnFlags.UseSpawnpoint
-                                    : RoleSpawnFlags.All)
-                                : (ClearInventory || !addInventory
-                                    ? RoleSpawnFlags.None
-                                    : RoleSpawnFlags.AssignInventory));
+            ignoreRoleChange.Add(player);
+            
+            player.Role.CustomRole?.Remove(player);
+            player.Role.customRoleData = data;
+
+            if (player.Role.Type != Type)
+            {
+                player.Role.Set(Type, RoleChangeReason.RemoteAdmin,
+                    useSpawnpoint
+                        ? (ClearInventory || !addInventory
+                            ? RoleSpawnFlags.UseSpawnpoint
+                            : RoleSpawnFlags.All)
+                        : (ClearInventory || !addInventory
+                            ? RoleSpawnFlags.None
+                            : RoleSpawnFlags.AssignInventory));
+            }
+            else
+            {
+                if (useSpawnpoint && Type.TryGetRandomSpawnPoint(out var spawnPoint, out _))
+                {
+                    player.Position.Set(spawnPoint);
+                }
+            }
 
             void AddCustomItem(string customItem)
             {
@@ -367,6 +412,8 @@ namespace LabExtended.API.Custom.Roles
 
                 Effects.ForEach(effect => effect.Apply(player));
 
+                ignoreRoleChange.Remove(player);
+
                 OnSpawned(player, ref player.Role.customRoleData);
             }, 1);
 
@@ -415,6 +462,9 @@ namespace LabExtended.API.Custom.Roles
             if (args.Player is not ExPlayer player)
                 return;
 
+            if (ignoreRoleChange.Remove(player))
+                return;
+
             Remove(player);
         }
 
@@ -457,6 +507,12 @@ namespace LabExtended.API.Custom.Roles
         /// Gets called after this player has died.
         /// </summary>
         public virtual void OnDied(PlayerDeathEventArgs args, ref object? data) { }
+
+        private void OnWaiting()
+            => ignoreRoleChange.Clear();
+        
+        private void OnLeft(ExPlayer player)
+            => ignoreRoleChange.Remove(player);
         
         private static void _OnChangingRole(PlayerChangingRoleEventArgs args)
         {

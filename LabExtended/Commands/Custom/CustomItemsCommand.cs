@@ -1,22 +1,16 @@
 ﻿using InventorySystem;
 using InventorySystem.Items;
 using InventorySystem.Items.Pickups;
-
 using LabExtended.API;
 using LabExtended.API.Custom.Items;
-
 using LabExtended.Commands.Attributes;
 using LabExtended.Commands.Interfaces;
-
 using LabExtended.Core.Pooling.Pools;
-
 using LabExtended.Extensions;
-
 using MapGeneration;
-
 using UnityEngine;
 
-namespace LabExtended.Commands.Custom.CustomItems
+namespace LabExtended.Commands.Custom
 {
     /// <summary>
     /// Commands for managing custom items.
@@ -197,7 +191,7 @@ namespace LabExtended.Commands.Custom.CustomItems
 
             if (itemSerial == 0)
             {
-                if (!Sender.RegexPermission("customitem.destroy.all"))
+                if (!Sender.CheckPermission("customitem.destroy.all"))
                 {
                     Fail($"You do not have permission to destroy all custom item instances.");
                     return;
@@ -217,7 +211,7 @@ namespace LabExtended.Commands.Custom.CustomItems
                 {
                     if (CustomItem.IsCustomItem(item.ItemSerial, out var customItem))
                     {
-                        if (!Sender.RegexPermission($"customitem.destroy.{customItem.Id}"))
+                        if (!Sender.CheckPermission($"customitem.destroy.{customItem.Id}"))
                         {
                             Fail($"You do not have permission to destroy instances of this custom item.");
                             return;
@@ -241,7 +235,7 @@ namespace LabExtended.Commands.Custom.CustomItems
                 {
                     if (CustomItem.IsCustomItem(pickup.Info.Serial, out var customItem))
                     {
-                        if (!Sender.RegexPermission($"customitem.destroy.{customItem.Id}"))
+                        if (!Sender.CheckPermission($"customitem.destroy.{customItem.Id}"))
                         {
                             Fail($"You do not have permission to destroy instances of this custom item.");
                             return;
@@ -291,7 +285,7 @@ namespace LabExtended.Commands.Custom.CustomItems
                 return;
             }
 
-            if (!Sender.RegexPermission($"customitem.give.{itemId}"))
+            if (!Sender.CheckPermission($"customitem.give.{itemId}"))
             {
                 Fail($"You do not have permission to give this custom item.");
                 return;
@@ -329,7 +323,7 @@ namespace LabExtended.Commands.Custom.CustomItems
                 return;
             }
 
-            if (!Sender.RegexPermission($"customitem.spawn.{itemId}"))
+            if (!Sender.CheckPermission($"customitem.spawn.{itemId}"))
             {
                 Fail($"You do not have permission to give this custom item.");
                 return;

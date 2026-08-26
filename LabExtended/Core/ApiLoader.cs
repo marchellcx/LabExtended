@@ -33,7 +33,7 @@ using LabExtended.API.Toys;
 using LabExtended.API.Hints;
 using LabExtended.API.Settings;
 using LabExtended.API.Containers;
-
+using LabExtended.API.Custom.Abilities;
 using LabExtended.Commands.Utilities;
 using LabExtended.Commands.Parameters;
 using LabExtended.Patches.Functions;
@@ -44,9 +44,8 @@ using LabExtended.Patches.Events.Mirror;
 using LabExtended.Utilities.Unity;
 using LabExtended.Utilities.Firearms;
 
-using LabExtended.Core.Storage;
-
 using Version = System.Version;
+
 using LabExtended.Patches.Fixes.LabAPI;
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
@@ -270,8 +269,6 @@ public class ApiLoader : Plugin
 
         ReflectionUtils.Load();
 
-        StorageManager.Internal_Init();
-
         ApiLog.Info("LabExtended", "Loading finished!");
     }
 
@@ -334,6 +331,7 @@ public class ApiLoader : Plugin
             CustomItem.Internal_Init();
             CustomFirearm.Internal_Init();
             CustomProjectile.Internal_Init();
+            CustomAbility.Initialize();
 
             CustomTeamHandler.Internal_Init();
             CustomPlayerEffect.Internal_Init();

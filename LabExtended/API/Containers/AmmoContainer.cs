@@ -186,7 +186,7 @@ public class AmmoContainer
     {
         var droppedAmmo = new List<AmmoPickup>();
 
-        foreach (var ammo in Ammo.Keys)
+        foreach (var ammo in Ammo.Keys.ToList())
             droppedAmmo.AddRange(Inventory.ServerDropAmmo(ammo, ushort.MaxValue));
 
         return droppedAmmo;

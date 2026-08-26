@@ -1,19 +1,15 @@
 ﻿using LabExtended.API;
-
-using LabExtended.Utilities;
-using LabExtended.Extensions;
-
 using LabExtended.Commands.Attributes;
 using LabExtended.Commands.Interfaces;
-
+using LabExtended.Extensions;
+using LabExtended.Utilities;
 using Mirror;
-
 using UnityEngine;
 
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
-namespace LabExtended.Commands.Custom.Despawn;
+namespace LabExtended.Commands.Custom;
 
 /// <summary>
 /// Commands that help with despawning.
@@ -63,7 +59,7 @@ public class DespawnCommand : CommandBase, IRemoteAdminCommand
                 return;
             }
 
-            if (!Sender.RegexPermission("despawn.player"))
+            if (!Sender.CheckPermission("despawn.player"))
             {
                 Fail("You do not have permission to despawn players.");
                 return;

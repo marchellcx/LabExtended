@@ -1,8 +1,6 @@
 ﻿using InventorySystem.Items.Pickups;
-
 using LabExtended.API;
 using LabExtended.Commands.Attributes;
-
 using UnityEngine;
 
 namespace LabExtended.Commands.Custom.Spawn;

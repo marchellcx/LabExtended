@@ -1,9 +1,7 @@
 ﻿using LabExtended.Commands.Attributes;
 using LabExtended.Core.Pooling.Pools;
 using LabExtended.Extensions;
-
 using Mirror;
-
 using NorthwoodLib.Pools;
 
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member

@@ -500,6 +500,24 @@ namespace LabExtended.API.Custom.Items
         }
 
         /// <summary>
+        /// Adds an active custom item to the tracking system and invokes the appropriate event for its spawn.
+        /// </summary>
+        /// <param name="pickup">The <see cref="ItemPickupBase"/> instance representing the spawned custom item.</param>
+        /// <param name="pickupData">Optional additional data associated with the spawned item, or <see langword="null"/> if no additional data is provided.</param>
+        /// <exception cref="ArgumentNullException">Thrown when the <paramref name="pickup"/> parameter is <see langword="null"/>.</exception>
+        public virtual void AddActiveItem(ItemPickupBase pickup, object? pickupData = null)
+        {
+            if (pickup == null)
+                throw new ArgumentNullException(nameof(pickup));
+
+            var eventArgs = new CustomItemSpawnedEventArgs(this, pickup, pickupData);
+            
+            OnPickupSpawned(eventArgs);
+            
+            Internal_TrackPickup(pickup, pickupData);
+        }
+
+        /// <summary>
         /// Spawns a new item pickup at the specified position with the given rotation and associates it with optional
         /// pickup data.
         /// </summary>
@@ -604,6 +622,38 @@ namespace LabExtended.API.Custom.Items
                 target.Inventory.CurrentCustomItem = this;
 
             return item;
+        }
+
+        /// <summary>
+        /// Adds an item to the active custom items list, linking it to the specified custom item and optionally setting it
+        /// as the held item for its owner if requested.
+        /// </summary>
+        /// <param name="item">The base item to be added as an active custom item. This must not be null and must have a valid owner.</param>
+        /// <param name="itemData">Optional data associated with the item, which may provide additional context or configuration.</param>
+        /// <param name="setHeld">A boolean value indicating whether the item should be marked as held by its owner upon adding.</param>
+        /// <exception cref="ArgumentNullException">Thrown when the specified item is null.</exception>
+        /// <exception cref="InvalidOperationException">Thrown when the specified item is not owned by any player or the owner is invalid.</exception>
+        public virtual void AddActiveItem(ItemBase item, object? itemData = null, bool setHeld = false)
+        {
+            if (item == null)
+                throw new ArgumentNullException(nameof(item));
+
+            if (item.Owner == null)
+                throw new InvalidOperationException("Item is not owned");
+            
+            if (!ExPlayer.TryGet(item.Owner, out var target))
+                throw new InvalidOperationException("Item is not owned by a valid player");
+            
+            var eventArgs = new CustomItemAddedEventArgs(target, this, CustomItemAddReason.Added, item, itemData, null, null);
+
+            OnItemAdded(eventArgs);
+
+            Internal_TrackItem(item, target, eventArgs.AddedData);
+
+            target.Inventory.ownedCustomItems[item.ItemSerial] = this;
+
+            if (setHeld && target.Inventory.Select(item))
+                target.Inventory.CurrentCustomItem = this;
         }
 
         /// <summary>

@@ -14,8 +14,9 @@ using UnityEngine;
 using Interactables.Interobjects.DoorUtils;
 
 using LabApi.Features.Wrappers;
-using LabExtended.Attributes;
+
 using LabExtended.Events;
+
 using ElevatorDoor = Interactables.Interobjects.ElevatorDoor;
 
 namespace LabExtended.API

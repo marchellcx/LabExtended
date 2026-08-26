@@ -1,13 +1,10 @@
 ﻿using LabExtended.API;
-
 using LabExtended.Commands.Attributes;
 using LabExtended.Commands.Interfaces;
-
 using LabExtended.Utilities;
-
 using UnityEngine;
 
-namespace LabExtended.Commands.Custom.Performance;
+namespace LabExtended.Commands.Custom;
 
 /// <summary>
 /// Provides a command for displaying detailed performance statistics and running the profiler for a specified duration.

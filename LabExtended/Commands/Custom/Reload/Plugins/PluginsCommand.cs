@@ -1,5 +1,4 @@
 ﻿using LabApi.Loader;
-
 using LabExtended.Commands.Attributes;
 
 namespace LabExtended.Commands.Custom.Reload;
