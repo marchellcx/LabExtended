@@ -37,7 +37,7 @@ namespace LabExtended.Patches.Events.Mirror
             settingSyncVarEventArgs.dirtyBit = dirtyBit;
             settingSyncVarEventArgs.Identity = __instance.netIdentity;
 
-            if (!MirrorEvents.OnSettingSyncVar(settingSyncVarEventArgs) || settingSyncVarEventArgs.NewValue is null)
+            if (!MirrorEvents.OnSettingSyncVar(settingSyncVarEventArgs))
                 return false;
 
             var previousValue = field;
