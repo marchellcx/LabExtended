@@ -25,7 +25,7 @@ public static class ApiVersion
     /// <summary>
     /// The patch version part.
     /// </summary>
-    public const int Patch = 0;
+    public const int Patch = 1;
 
     /// <summary>
     /// Gets the loader's current version.
