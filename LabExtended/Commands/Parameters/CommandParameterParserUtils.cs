@@ -98,8 +98,11 @@ public static class CommandParameterParserUtils
         if (type.IsArray)
         {
             var elementType = type.GetElementType();
+
+            if (!TryGetParser(elementType, out var elementParser))
+                return false;
             
-            parser = new ArrayWrapperParser(parser, elementType);
+            parser = new ArrayWrapperParser(elementParser, elementType);
             
             Parsers.Add(type, parser);
             return true;
