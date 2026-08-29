@@ -15,6 +15,8 @@ using UnityEngine;
 
 using YamlDotNet.Serialization;
 
+using System.ComponentModel;
+
 namespace LabExtended.API.Custom.Abilities;
 
 /// <summary>
@@ -23,33 +25,58 @@ namespace LabExtended.API.Custom.Abilities;
 public abstract class CustomAbility : CustomObject<CustomAbility>
 {
     /// <summary>
+    /// Initializes a new instance of the <see cref="CustomAbility"/> class.
+    /// </summary>
+    public CustomAbility()
+    {
+        Name = GetType().Name.SpaceByUpperCase();
+    }
+
+    /// <summary>
     /// The active duration of the ability (in seconds).
     /// Determines how long the ability remains effective after activation.
     /// </summary>
+    [Description("The active duration of the ability (in seconds). Determines how long the ability remains effective after activation.")]
     public virtual float Duration { get; set; } = 0f;
 
     /// <summary>
     /// The cooldown period of the ability (in seconds).
     /// Represents the time required after using the ability before it can be activated again.
     /// </summary>
+    [Description("The cooldown period of the ability (in seconds). Represents the time required after using the ability before it can be activated again.")]
     public virtual float Cooldown { get; set; } = 0f;
 
     /// <summary>
     /// Specifies the maximum number of times the ability can be used.
     /// A value of 0 or less indicates that the ability has no usage limit.
     /// </summary>
+    [Description("Specifies the maximum number of times the ability can be used. A value of 0 or less indicates that the ability has no usage limit.")]
     public virtual int MaxUses { get; set; } = 0;
-    
+
     /// <summary>
     /// Determines whether the ability should be automatically added to the player when they join the game.
     /// </summary>
+    [Description("Determines whether the ability should be automatically added to the player when they join the game.")]
     public virtual bool AddOnJoin { get; set; }
     
     /// <summary>
     /// Determines whether the ability should be automatically enabled when it is added to the player.
     /// </summary>
+    [Description("Determines whether the ability should be automatically enabled when it is added to the player.")]
     public virtual bool EnableOnJoin { get; set; }
-    
+
+    /// <summary>
+    /// Gets or sets the display name of the ability. This name is used for identification and representation purposes.
+    /// </summary>
+    [Description("The display name of the ability. This name is used for identification and representation purposes.")]
+    public virtual string Name { get; set; }
+
+    /// <summary>
+    /// Gets or sets a brief description of the ability's functionality or purpose. This description provides additional context about what the ability does.
+    /// </summary>
+    [Description("A brief description of the ability's functionality or purpose.")]
+    public virtual string? Description { get; set; }
+
     /// <summary>
     /// Gets the player that owns the ability.
     /// </summary>
