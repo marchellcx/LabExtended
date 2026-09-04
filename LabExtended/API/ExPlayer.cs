@@ -1577,7 +1577,7 @@ public class ExPlayer : Player, IDisposable
             return false;
 
         if (ApiLog.IsTrueColorEnabled)
-            msg = msg.FormatTrueColorString("white", true);
+            msg = msg.FormatTrueColorString("7", true);
 
         if (tag?.Length > 0)
             msg = string.Concat(tag.ToUpper(), "#", msg);

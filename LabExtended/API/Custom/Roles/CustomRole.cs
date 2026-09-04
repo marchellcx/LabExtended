@@ -267,8 +267,7 @@ namespace LabExtended.API.Custom.Roles
             if (player?.ReferenceHub == null)
                 return false;
 
-            if (player.Role.CustomRole != null)
-                player.Role.CustomRole.Remove(player);
+            player.Role.CustomRole?.Remove(player);
 
             player.Role.CustomRole = this;
             player.Role.customRoleData = data;
@@ -324,9 +323,6 @@ namespace LabExtended.API.Custom.Roles
                 return false;
 
             ignoreRoleChange.Add(player);
-            
-            player.Role.CustomRole?.Remove(player);
-            player.Role.customRoleData = data;
 
             if (player.Role.Type != Type)
             {
@@ -414,7 +410,8 @@ namespace LabExtended.API.Custom.Roles
 
                 ignoreRoleChange.Remove(player);
 
-                OnSpawned(player, ref player.Role.customRoleData);
+                if (player.Role.CustomRole != null && player.Role.CustomRole == this)
+                    OnSpawned(player, ref player.Role.customRoleData);
             }, 1);
 
             return true;
