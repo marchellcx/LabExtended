@@ -2,6 +2,7 @@
 
 using HarmonyLib;
 
+using NiveraAPI.Commands.API;
 using LabExtended.Extensions;
 
 using NorthwoodLib.Pools;
@@ -9,8 +10,6 @@ using NorthwoodLib.Pools;
 using RemoteAdmin;
 
 namespace LabExtended.Patches.Functions.RemoteAdmin;
-
-using Commands;
 
 /// <summary>
 /// Used to insert commands from <see cref="CommandManager.Commands"/> into the Remote Admin panel.
@@ -76,45 +75,34 @@ public static class RemoteAdminCommandListPatch
         return false;
     }
 
-    private static void Parse(List<QueryProcessor.CommandData> commands, CommandData command, string commandRoot)
+    private static void Parse(List<QueryProcessor.CommandData> commands, CommandInfo<ExPlayer> command, string commandRoot)
     {
-        if (command.Path.Count > 1)
-        {
-            for (var i = 1; i < command.Path.Count; i++)
-            {
-                commandRoot += $"_{command.Path[i]}";
-            }
-        }
-        
-        if (command.DefaultOverload != null)
-            commands.Add(Parse(command, command.DefaultOverload, commandRoot));
+        commandRoot = string.Join("_", command.Name);
         
         foreach (var overload in command.Overloads)
             commands.Add(Parse(command, overload, commandRoot));
     }
 
-    private static QueryProcessor.CommandData Parse(CommandData command, CommandOverload overload, string commandRoot)
+    private static QueryProcessor.CommandData Parse(CommandInfo<ExPlayer> command, CommandOverload<ExPlayer> overload, string commandRoot)
     {
         var data = new QueryProcessor.CommandData();
 
-        data.Hidden = command.IsHidden;
+        data.Hidden = command.Flags.Contains("IsHidden");
         
-        if (command.DefaultOverload != null && overload == command.DefaultOverload)
+        if (overload.Name.Length < 1)
         {
             data.Command = commandRoot;
-            data.Description = command.Description;
+            data.Description = overload.Description;
         }
         else
         {
-            data.Command = string.Concat(commandRoot, "_", overload.Name.Replace(' ', '_'));
-            data.Description = string.IsNullOrWhiteSpace(overload.Description)
-                ? command.Description
-                : overload.Description;
+            data.Command = string.Concat(commandRoot, "_", string.Join("_", overload.Name));
+            data.Description = overload.Description;
         }
 
-        var usage = new string[overload.ParameterCount];
+        var usage = new string[overload.Parameters.Count];
 
-        for (var i = 0; i < overload.ParameterCount; i++)
+        for (var i = 0; i < overload.Parameters.Count; i++)
         {
             var parameter = overload.Parameters[i];
 
@@ -122,7 +110,7 @@ public static class RemoteAdminCommandListPatch
             var postfix = "]";
             var name = parameter.Name;
 
-            if (parameter.HasDefault)
+            if (parameter.IsOptional)
             {
                 prefix = "(";
                 postfix = ")";

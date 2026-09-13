@@ -1,6 +1,4 @@
-﻿using LabExtended.API;
-
-using PlayerRoles;
+﻿using PlayerRoles;
 
 namespace LabExtended.Events.Round
 {

@@ -2,8 +2,6 @@
 
 using LabApi.Features.Wrappers;
 
-using LabExtended.API;
-
 namespace LabExtended.Events.Player
 {
     /// <summary>

@@ -1,7 +1,5 @@
 ﻿using HarmonyLib;
 
-using LabExtended.API;
-
 using LabExtended.Core;
 using LabExtended.Extensions;
 

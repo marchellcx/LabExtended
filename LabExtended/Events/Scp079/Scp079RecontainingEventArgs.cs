@@ -1,6 +1,4 @@
-﻿using LabExtended.API;
-
-namespace LabExtended.Events.Scp079
+﻿namespace LabExtended.Events.Scp079
 {
     /// <summary>
     /// Gets called before SCP-079 is contained.

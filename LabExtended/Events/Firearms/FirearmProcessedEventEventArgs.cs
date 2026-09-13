@@ -2,8 +2,6 @@
 using InventorySystem.Items.Firearms.Modules;
 using InventorySystem.Items.Firearms.Modules.Misc;
 
-using LabExtended.API;
-
 namespace LabExtended.Events.Firearms;
 
 /// <summary>

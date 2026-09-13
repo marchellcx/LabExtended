@@ -2,8 +2,6 @@
 using CommandSystem.Commands.Shared;
 
 using HarmonyLib;
-
-using LabExtended.API;
 using LabExtended.Commands;
 using LabExtended.Commands.Utilities;
 

@@ -1,5 +1,3 @@
-using LabExtended.API;
-
 using PlayerRoles;
 
 namespace LabExtended.Events.Player;

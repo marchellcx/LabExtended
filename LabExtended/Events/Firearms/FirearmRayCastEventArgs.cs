@@ -1,7 +1,5 @@
 ﻿using InventorySystem.Items.Firearms;
 
-using LabExtended.API;
-
 using UnityEngine;
 
 namespace LabExtended.Events.Firearms;

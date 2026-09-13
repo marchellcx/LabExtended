@@ -1,10 +1,9 @@
 ﻿using CentralAuth;
 
 using HarmonyLib;
-
 using LabExtended.Core;
 
-namespace LabExtended.Patches.Fixes.LabAPI
+namespace LabExtended.Patches.Fixes
 {
     /// <summary>
     /// Provides a fix to prevent the local player from being incorrectly rejected due to authentication timeouts during

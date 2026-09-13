@@ -4,7 +4,6 @@ using InventorySystem.Items.Firearms;
 using InventorySystem.Items.Firearms.Attachments;
 using LabApi.Events.Arguments.PlayerEvents;
 using LabApi.Events.Handlers;
-using LabExtended.API;
 using LabExtended.Core;
 using LabExtended.Events;
 using LabExtended.Events.Player;

@@ -1,5 +1,4 @@
-﻿using LabExtended.API;
-using UserSettings.ServerSpecific;
+﻿using UserSettings.ServerSpecific;
 
 namespace LabExtended.Events.Player.Settings;
 

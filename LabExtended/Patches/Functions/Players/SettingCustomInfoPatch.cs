@@ -1,7 +1,5 @@
 ﻿using HarmonyLib;
 
-using LabExtended.API;
-
 namespace LabExtended.Patches.Functions.Players
 {
     /// <summary>

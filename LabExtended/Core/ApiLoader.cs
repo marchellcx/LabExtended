@@ -13,40 +13,40 @@ using LabExtended.Attributes;
 using LabExtended.Extensions;
 
 using LabExtended.Core.Configs;
-
-using LabExtended.Utilities;
 using LabExtended.Utilities.Update;
 
 using NorthwoodLib.Pools;
 
 using LabExtended.API;
 
-using LabExtended.API.Custom.Roles;
-using LabExtended.API.Custom.Items;
-using LabExtended.API.Custom.Teams;
-using LabExtended.API.Custom.Effects;
-
-using LabExtended.API.RemoteAdmin;
-using LabExtended.API.RemoteAdmin.Actions;
-
 using LabExtended.API.Toys;
-using LabExtended.API.Hints;
-using LabExtended.API.Settings;
-using LabExtended.API.Containers;
-using LabExtended.API.Custom.Abilities;
+
 using LabExtended.Commands.Utilities;
 using LabExtended.Commands.Parameters;
+
 using LabExtended.Patches.Functions;
 
 using LabExtended.Patches.Events.Scp049;
 using LabExtended.Patches.Events.Mirror;
-
-using LabExtended.Utilities.Unity;
 using LabExtended.Utilities.Firearms;
 
 using Version = System.Version;
 
 using LabExtended.Patches.Fixes.LabAPI;
+using NiveraAPI.IO.Configs;
+using Mirror;
+using LabApi.Features;
+using LabExtended.Custom.Items;
+using LabExtended.Custom.Abilities;
+using LabExtended.Custom.Teams;
+using LabExtended.Audio;
+using LabExtended.RemoteAdmin;
+using LabExtended.RemoteAdmin.Actions;
+using LabExtended.Custom.Effects;
+using LabExtended.Custom.Roles;
+using LabExtended.Hints;
+using LabExtended.Containers;
+using LabExtended.Settings;
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 #pragma warning disable CS8764 // Nullability of return type doesn't match overridden member (possibly because of nullability attributes).
@@ -73,49 +73,40 @@ public class ApiLoader : Plugin
     public const string LoadFinishedMessage = "[LOADER] Enabling all plugins";
 
     /// <summary>
+    /// Whether or not to disable all plugins once the server's process quits.
+    /// </summary>
+    [Config("misc", "disable-plugins-on-quit", "Whether or not to disable all plugins once the server's process quits.")]
+    public static bool DisablePluginsOnQuit = true;
+
+    /// <summary>
     /// Gets the loader's assembly.
     /// </summary>
     public static Assembly Assembly { get; } = typeof(ApiLoader).Assembly;
 
     /// <summary>
-    /// Gets the path to the LabExtended directory.
+    /// Gets the game assembly.
     /// </summary>
-    public static string DirectoryPath { get; private set; }
+    public static Assembly GameAssembly { get; } = typeof(ServerConsole).Assembly;
 
     /// <summary>
-    /// Gets the path to the base config file.
+    /// Gets the Mirror assembly.
     /// </summary>
-    public static string BaseConfigPath { get; private set; }
+    public static Assembly MirrorAssembly { get; } = typeof(NetworkBehaviour).Assembly;
 
     /// <summary>
-    /// Gets the path to the API config file.
+    /// Gets the LabAPI assembly.
     /// </summary>
-    public static string ApiConfigPath { get; private set; }
+    public static Assembly LabApiAssembly { get; } = typeof(LabApiProperties).Assembly;
 
     /// <summary>
-    /// Gets the base config singleton.
+    /// Gets the Harmony assembly.
     /// </summary>
-    public static BaseConfig BaseConfig { get; private set; }
-
-    /// <summary>
-    /// Gets the API config singleton.
-    /// </summary>
-    public static ApiConfig ApiConfig { get; private set; }
+    public static Assembly HarmonyAssembly { get; } = typeof(HarmonyLib.Harmony).Assembly;
 
     /// <summary>
     /// Gets the loader singleton.
     /// </summary>
     public static ApiLoader Loader { get; private set; }
-
-    /// <summary>
-    /// Gets the YAML-serialized string of <see cref="BaseConfig"/>.
-    /// </summary>
-    public static string SerializedBaseConfig => YamlConfigParser.Serializer.Serialize(BaseConfig ??= new());
-
-    /// <summary>
-    /// Gets the YAML-serialized string of <see cref="ApiConfig"/>.
-    /// </summary>
-    public static string SerializedApiConfig => YamlConfigParser.Serializer.Serialize(ApiConfig ??= new());
 
     /// <summary>
     /// Gets the loader's name.
@@ -167,42 +158,29 @@ public class ApiLoader : Plugin
     }
 
     /// <summary>
-    /// Loads both of loader's configs.
+    /// Gets all plugin assemblies that are currently loaded by LabAPI.
     /// </summary>
-    public static void LoadConfig()
+    /// <param name="predicate">A predicate to filter the plugins.</param>
+    /// <returns>An array of plugin assemblies.</returns>
+    public static Assembly[] GetPluginAssemblies(Predicate<Plugin>? predicate = null)
     {
-        try
-        {
-            if (!File.Exists(BaseConfigPath))
-                File.WriteAllText(BaseConfigPath!, SerializedBaseConfig);
-            else
-                BaseConfig = YamlConfigParser.Deserializer.Deserialize<BaseConfig>(File.ReadAllText(BaseConfigPath!));
+        var hashSet = HashSetPool<Assembly>.Shared.Rent();
 
-            if (!File.Exists(ApiConfigPath))
-                File.WriteAllText(ApiConfigPath!, SerializedApiConfig);
-            else
-                ApiConfig = YamlConfigParser.Deserializer.Deserialize<ApiConfig>(File.ReadAllText(ApiConfigPath!));
-        }
-        catch (Exception ex)
+        foreach (var kvp in PluginLoader.Plugins)
         {
-            ApiLog.Error("LabExtended", $"Failed to load config files due to an exception:\n{ex.ToColoredString()}");
-        }
-    }
+            if (kvp.Value == null)
+                continue;
 
-    /// <summary>
-    /// Saves both of loader's configs.
-    /// </summary>
-    public static void SaveConfig()
-    {
-        try
-        {
-            File.WriteAllText(BaseConfigPath, SerializedBaseConfig);
-            File.WriteAllText(ApiConfigPath, SerializedApiConfig);
+            if (predicate != null && !predicate(kvp.Key))
+                continue;
+
+            hashSet.Add(kvp.Value);
         }
-        catch (Exception ex)
-        {
-            ApiLog.Error("LabExtended", $"Failed to save config files due to an exception:\n{ex.ToColoredString()}");
-        }
+
+        var array = hashSet.ToArray();
+
+        HashSetPool<Assembly>.Shared.Return(hashSet);
+        return array;
     }
 
     // This method is invoked by the LogPatch when LabAPI logs it's "enabling all plugins" line.
@@ -277,19 +255,6 @@ public class ApiLoader : Plugin
     {
         ApiLog.Info("LabExtended", $"Loading version &1{ApiVersion.Version}&r ..");
 
-        DirectoryPath = Loader.GetConfigDirectory(StartupArgs.Args.Any(x => x.Contains("LabExGlobal"))).FullName;
-
-        BaseConfigPath = Path.Combine(DirectoryPath, "config.yml");
-        ApiConfigPath = Path.Combine(DirectoryPath, "api_config.yml");
-
-        if (!Directory.Exists(DirectoryPath))
-            Directory.CreateDirectory(DirectoryPath);
-
-        LoadConfig();
-        SaveConfig();
-
-        ApiLog.Info("LabExtended", "Config files have been loaded.");
-
         if (!ApiVersion.CheckCompatibility())
             return;
 
@@ -319,13 +284,11 @@ public class ApiLoader : Plugin
         }
         else
         {
-            PlayerLoopHelper.Internal_InitFirst();
+            UnityLoop.Internal_InitFirst();
             PlayerUpdateHelper.Internal_Init();
 
             ThreadUtils.Internal_Init();
-            TimingUtils.Internal_Init();
-
-            Camera.Internal_Init();
+            TimingDispatcher.Internal_Init();
 
             CustomRole.Initialize();
             CustomItem.Internal_Init();
@@ -365,7 +328,9 @@ public class ApiLoader : Plugin
 
             FirearmModuleCache.Internal_Init();
 
-            PlayerLoopHelper.Internal_InitLast(); // has to be last
+            AudioSettings.Initialize();
+
+            UnityLoop.Internal_InitLast(); // has to be last
         }
     }
 
@@ -381,7 +346,7 @@ public class ApiLoader : Plugin
     {
         ExServerEvents.Quitting -= Internal_Quit;
 
-        if (BaseConfig is null || !BaseConfig.UnloadPluginsOnQuit)
+        if (!DisablePluginsOnQuit)
             return;
 
         foreach (var plugin in PluginLoader.Plugins.Keys)

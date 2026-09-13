@@ -1,6 +1,4 @@
-﻿using LabExtended.API;
-
-namespace LabExtended.Events.Player.Settings;
+﻿namespace LabExtended.Events.Player.Settings;
 
 /// <summary>
 /// Gets called after a player closes their server settings tab.

@@ -4,8 +4,6 @@ using HarmonyLib;
 
 using LabApi.Events.Arguments.PlayerEvents;
 using LabApi.Events.Handlers;
-
-using LabExtended.API;
 using LabExtended.Utilities;
 
 using UnityEngine;

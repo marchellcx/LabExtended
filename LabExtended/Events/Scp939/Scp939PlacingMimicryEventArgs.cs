@@ -1,6 +1,4 @@
-﻿using LabExtended.API;
-
-using PlayerRoles.PlayableScps.Scp939;
+﻿using PlayerRoles.PlayableScps.Scp939;
 using PlayerRoles.PlayableScps.Scp939.Mimicry;
 
 using RelativePositioning;

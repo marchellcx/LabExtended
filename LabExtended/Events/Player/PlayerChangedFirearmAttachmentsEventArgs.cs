@@ -1,8 +1,6 @@
 ﻿using InventorySystem.Items.Firearms;
 using InventorySystem.Items.Firearms.Attachments;
 
-using LabExtended.API;
-
 namespace LabExtended.Events.Player;
 
 /// <summary>

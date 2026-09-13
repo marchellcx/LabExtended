@@ -3,8 +3,6 @@ using CommandSystem.Commands.RemoteAdmin;
 
 using HarmonyLib;
 
-using LabExtended.API;
-
 using LabExtended.Events;
 using LabExtended.Events.Player;
 

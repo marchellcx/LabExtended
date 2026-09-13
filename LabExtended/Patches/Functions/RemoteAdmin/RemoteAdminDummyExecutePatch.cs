@@ -2,10 +2,8 @@
 using CommandSystem.Commands.RemoteAdmin.Dummies;
 
 using HarmonyLib;
-using LabExtended.API;
-using LabExtended.API.RemoteAdmin.Actions;
 using LabExtended.Extensions;
-
+using LabExtended.RemoteAdmin.Actions;
 using NetworkManagerUtils.Dummies;
 
 using Utils;

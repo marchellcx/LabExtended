@@ -1,6 +1,4 @@
-﻿using LabExtended.API;
-
-namespace LabExtended.Events.Player.Snake;
+﻿namespace LabExtended.Events.Player.Snake;
 
 /// <summary>
 /// Gets called when a player starts playing the Snake minigame on their Chaos keycard.

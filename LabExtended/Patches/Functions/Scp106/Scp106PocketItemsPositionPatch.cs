@@ -1,8 +1,7 @@
 ﻿using HarmonyLib;
-
-using LabExtended.API;
-using LabExtended.API.Containers;
+using LabExtended.Containers;
 using LabExtended.Core;
+
 using MapGeneration;
 
 using PlayerRoles.FirstPersonControl;

@@ -1,12 +1,9 @@
 ﻿using HarmonyLib;
 
-using LabExtended.API;
-using LabExtended.API.RemoteAdmin;
-using LabExtended.API.RemoteAdmin.Enums;
-
 using LabExtended.Core;
 using LabExtended.Extensions;
-
+using LabExtended.RemoteAdmin;
+using LabExtended.RemoteAdmin.Enums;
 using NorthwoodLib.Pools;
 
 using RemoteAdmin;

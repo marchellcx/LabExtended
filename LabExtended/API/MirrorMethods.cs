@@ -3,6 +3,8 @@ using LabExtended.Extensions;
 
 using Mirror;
 
+using NiveraAPI.Extensions;
+
 using System.Reflection;
 using System.Reflection.Emit;
 
@@ -493,16 +495,16 @@ public static class MirrorMethods
     }
 
     /// <summary>
-    /// Gets a <see cref="SpawnMessage"/> for a specific identity.
+    /// Creates a <see cref="SpawnMessage"/> for the specified network identity.
     /// </summary>
     /// <param name="identity">The target network identity</param>
     /// <param name="customPos">Custom identity position</param>
     /// <param name="customScale">Custom identity scale</param>
     /// <param name="customRot">Custom identity rotation</param>
     /// <param name="payload">Custom spawn payload</param>
+    /// <param name="writeSyncVars">Whether to write sync variables</param>
     /// <returns>The created <see cref="SpawnMessage"/> instance</returns>
-    public static SpawnMessage GetSpawnMessage(this NetworkIdentity identity, Vector3? customPos = null,
-        Vector3? customScale = null, Quaternion? customRot = null, ArraySegment<byte>? payload = null)
+    public static SpawnMessage GetSpawnMessage(this NetworkIdentity identity, Vector3? customPos = null, Vector3? customScale = null, Quaternion? customRot = null, ArraySegment<byte>? payload = null, bool writeSyncVars = true)
     {
         var msg = new SpawnMessage
         {
@@ -521,8 +523,27 @@ public static class MirrorMethods
             scale = customScale ?? identity.transform.localScale
         };
 
-        if (payload.HasValue)
+        if (!writeSyncVars && payload.HasValue)
+        {
             msg.payload = payload.Value;
+        }
+        else if (writeSyncVars)
+        {
+            using (var ownerWriter = NetworkWriterPool.Get())
+            using (var observersWriter = NetworkWriterPool.Get())
+            {
+                identity.SerializeServer(true, ownerWriter, observersWriter);
+
+                if (ownerWriter.Position > 0) // we have to copy the buffer because we're not sure what the user is doing with the message after this, and we don't want to risk the buffer being modified after we send it.
+                    msg.payload = ownerWriter.buffer
+                        .CopyArray(0, ownerWriter.Position)
+                        .ToSegment(0, ownerWriter.Position);
+                else if (observersWriter.Position > 0)
+                    msg.payload = observersWriter.buffer
+                        .CopyArray(0, observersWriter.Position)
+                        .ToSegment(0, observersWriter.Position);
+            }
+        }
 
         return msg;
     }
@@ -1198,10 +1219,10 @@ public static class MirrorMethods
     {
         try
         {
-            sendSpawnMessage =
-                typeof(NetworkServer).FindMethod(x => x.Name == "SendSpawnMessage")
-                        .CreateDelegate(typeof(Action<NetworkIdentity, NetworkConnection>)) as
-                    Action<NetworkIdentity, NetworkConnection>;
+            sendSpawnMessage = typeof(NetworkServer).FindMethod(x => x.Name == "SendSpawnMessage")?.CreateDelegate(typeof(Action<NetworkIdentity, NetworkConnection>)) as Action<NetworkIdentity, NetworkConnection>;
+
+            if (sendSpawnMessage == null)
+                throw new Exception("Failed to find NetworkServer.SendSpawnMessage method");
 
             var assembly = typeof(ServerConsole).Assembly;
             var types = assembly.GetTypes();
@@ -1306,7 +1327,7 @@ public static class MirrorMethods
                 }
                 catch (Exception ex)
                 {
-                    ApiLog.Error("Mirror Methods", ex);
+                    ApiLog.Error("MirrorMethods", ex);
                 }
             }
             
@@ -1338,7 +1359,7 @@ public static class MirrorMethods
                 }
                 catch (Exception ex)
                 {
-                    ApiLog.Error("Mirror Methods", ex);
+                    ApiLog.Error("MirrorMethods", ex);
                 }
             }
             
@@ -1374,13 +1395,13 @@ public static class MirrorMethods
                 }
                 catch (Exception ex)
                 {
-                    ApiLog.Error("Mirror Methods", ex);
+                    ApiLog.Error("MirrorMethods", ex);
                 }
             }
         }
         catch (Exception ex)
         {
-            ApiLog.Error("Mirror Methods", ex);
+            ApiLog.Error("MirrorMethods", ex);
         }
 
         hasInitialized = true;

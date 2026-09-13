@@ -2,9 +2,7 @@
 
 using LabApi.Events.Arguments.PlayerEvents;
 using LabApi.Events.Handlers;
-
-using LabExtended.API;
-using LabExtended.API.Containers;
+using LabExtended.Containers;
 using LabExtended.Utilities;
 
 using PlayerRoles;

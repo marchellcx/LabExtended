@@ -6,8 +6,6 @@ using CentralAuth;
 using HarmonyLib;
 
 using LabApi.Events.Arguments.PlayerEvents;
-
-using LabExtended.API;
 using LabExtended.Events;
 using LabExtended.Extensions;
 

@@ -1,7 +1,5 @@
 ﻿using HarmonyLib;
 
-using LabExtended.API;
-
 using MapGeneration;
 
 using PlayerRoles.FirstPersonControl;
@@ -9,69 +7,78 @@ using PlayerRoles.PlayableScps.Scp079.Rewards;
 
 using UnityEngine;
 
-namespace LabExtended.Patches.Functions.Scp079Rewards
+namespace LabExtended.Patches.Functions.Scp079Rewards;
+
+/// <summary>
+/// Patch for <see cref="HumanBlockingRewards.CheckRoom(RoomIdentifier, Vector3)"/> to check if any humans are blocking the door for scps.
+/// </summary>
+public static class Scp079HumanBlockingPatch
 {
-    public static class Scp079HumanBlockingPatch
+    /// <summary>
+    /// Patch for <see cref="HumanBlockingRewards.CheckRoom(RoomIdentifier, Vector3)"/> to check if any humans are blocking the door for scps.
+    /// </summary>
+    /// <param name="room">The room to check.</param>
+    /// <param name="doorPos">The position of the door.</param>
+    /// <param name="__result">The result of the original method.</param>
+    /// <returns>Returns false to prevent the original method from executing if the conditions are not met.</returns>
+    [HarmonyPatch(typeof(HumanBlockingRewards), nameof(HumanBlockingRewards.CheckRoom))]
+    public static bool Prefix(RoomIdentifier room, Vector3 doorPos, ref bool __result)
     {
-        [HarmonyPatch(typeof(HumanBlockingRewards), nameof(HumanBlockingRewards.CheckRoom))]
-        public static bool Prefix(RoomIdentifier room, Vector3 doorPos, ref bool __result)
+        HumanBlockingRewards.RoomScps.Clear();
+        HumanBlockingRewards.RoomHumans.Clear();
+
+        var anyScps = false;
+        var anyHumans = false;
+
+        foreach (var player in ExPlayer.Players)
         {
-            HumanBlockingRewards.RoomScps.Clear();
-            HumanBlockingRewards.RoomHumans.Clear();
+            if (!player.Toggles.CanCountAs079ExpTarget)
+                continue;
 
-            var anyScps = false;
-            var anyHumans = false;
+            if (!player.Role.Is<IFpcRole>(out var fpcRole))
+                continue;
 
-            foreach (var player in ExPlayer.Players)
+            var plyRoom = fpcRole.FpcModule.Position.TryGetRoom(out var pRoom) ? pRoom : null;
+
+            if (plyRoom is null || plyRoom != room)
+                continue;
+
+            if (player.Role.IsScp)
             {
-                if (!player.Toggles.CanCountAs079ExpTarget)
-                    continue;
-
-                if (!player.Role.Is<IFpcRole>(out var fpcRole))
-                    continue;
-
-                var plyRoom = fpcRole.FpcModule.Position.TryGetRoom(out var pRoom) ? pRoom : null;
-
-                if (plyRoom is null || plyRoom != room)
-                    continue;
-
-                if (player.Role.IsScp)
-                {
-                    HumanBlockingRewards.RoomScps.Add(fpcRole.FpcModule);
-                    anyScps = true;
-                }
-                else
-                {
-                    HumanBlockingRewards.RoomHumans.Add(fpcRole.FpcModule);
-                    anyHumans = true;
-                }
+                HumanBlockingRewards.RoomScps.Add(fpcRole.FpcModule);
+                anyScps = true;
             }
-
-            if (!anyHumans || !anyScps)
-                return __result = false;
-
-            foreach (var module in HumanBlockingRewards.RoomScps)
+            else
             {
-                var direction = HumanBlockingRewards.NormalizeIgnoreY(module.Motor.MoveDirection.normalized);
-                var position = HumanBlockingRewards.NormalizeIgnoreY(doorPos - module.Position);
+                HumanBlockingRewards.RoomHumans.Add(fpcRole.FpcModule);
+                anyHumans = true;
+            }
+        }
 
-                if (Vector3.Dot(direction, position) >= 0.5f)
+        if (!anyHumans || !anyScps)
+            return __result = false;
+
+        foreach (var module in HumanBlockingRewards.RoomScps)
+        {
+            var direction = HumanBlockingRewards.NormalizeIgnoreY(module.Motor.MoveDirection.normalized);
+            var position = HumanBlockingRewards.NormalizeIgnoreY(doorPos - module.Position);
+
+            if (Vector3.Dot(direction, position) >= 0.5f)
+            {
+                foreach (var humanModule in HumanBlockingRewards.RoomHumans)
                 {
-                    foreach (var humanModule in HumanBlockingRewards.RoomHumans)
-                    {
-                        var humanDirection = humanModule.Position - module.Position;
+                    var humanDirection = humanModule.Position - module.Position;
 
-                        if (humanDirection.sqrMagnitude <= 400f && Vector3.Dot(direction, HumanBlockingRewards.NormalizeIgnoreY(humanDirection)) >= 0.5f)
-                        {
-                            __result = true;
-                            return false;
-                        }
+                    if (humanDirection.sqrMagnitude <= 400f && Vector3.Dot(direction, HumanBlockingRewards.NormalizeIgnoreY(humanDirection)) >= 0.5f)
+                    {
+                        __result = true;
+                        return false;
                     }
                 }
             }
-
-            __result = false;
-            return false;
         }
+
+        __result = false;
+        return false;
     }
 }

@@ -4,8 +4,6 @@ using InventorySystem;
 using InventorySystem.Items;
 
 using LabApi.Features.Wrappers;
-
-using LabExtended.API;
 using LabExtended.Core;
 
 using LabExtended.Events;

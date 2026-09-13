@@ -3,9 +3,6 @@
 using LabApi.Events.Arguments.PlayerEvents;
 using LabApi.Events.Handlers;
 
-using LabExtended.API;
-using LabExtended.API.Containers;
-
 using LabExtended.Core;
 using LabExtended.Utilities;
 using LabExtended.Extensions;
@@ -16,6 +13,7 @@ using Mirror;
 
 using PlayerRoles;
 using PlayerRoles.FirstPersonControl.NetworkMessages;
+using LabExtended.Containers;
 
 namespace LabExtended.Patches.Events.Player;
 

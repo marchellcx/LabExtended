@@ -1,6 +1,4 @@
 ﻿using HarmonyLib;
-
-using LabExtended.API;
 using LabExtended.Events;
 
 using LiteNetLib;

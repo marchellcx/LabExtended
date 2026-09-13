@@ -1,6 +1,4 @@
-﻿using LabExtended.API;
-
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace LabExtended.Events.Player
 {

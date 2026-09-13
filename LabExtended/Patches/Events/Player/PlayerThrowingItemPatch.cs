@@ -6,9 +6,6 @@ using LabApi.Events.Arguments.PlayerEvents;
 using LabApi.Events.Handlers;
 
 using LabApi.Features.Wrappers;
-
-using LabExtended.API;
-using LabExtended.API.Custom.Items;
 using LabExtended.API.Custom.Items.Events;
 
 using LabExtended.Extensions;
@@ -19,6 +16,7 @@ using PlayerRoles.FirstPersonControl;
 using UnityEngine;
 
 using PlayerThrowingItemEventArgs = LabExtended.Events.Player.PlayerThrowingItemEventArgs;
+using LabExtended.Custom.Items;
 
 namespace LabExtended.Patches.Events.Player;
 

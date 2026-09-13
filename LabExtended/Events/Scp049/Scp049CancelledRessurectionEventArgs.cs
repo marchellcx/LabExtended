@@ -1,6 +1,4 @@
-﻿using LabExtended.API;
-
-namespace LabExtended.Events.Scp049
+﻿namespace LabExtended.Events.Scp049
 {
     /// <summary>
     /// Gets called after SCP-049 cancels it's Resurrection ability.

@@ -3,14 +3,11 @@
 using LabApi.Events.Arguments.Scp939Events;
 using LabApi.Events.Handlers;
 
-using LabExtended.API;
-using LabExtended.Events;
-
 using Mirror;
 
+using PlayerRoles;
 using PlayerRoles.FirstPersonControl;
 using PlayerRoles.PlayableScps.Scp939;
-using PlayerRoles;
 
 using RelativePositioning;
 
@@ -21,7 +18,7 @@ using Utils.Networking;
 namespace LabExtended.Patches.Functions.Scp939;
 
 /// <summary>
-/// Implements the <see cref="ExScp939Events.Lunging"/> event.
+/// Patches the <see cref="Scp939LungeAbility.ServerProcessCmd"/> method to add custom behavior for the lunge ability of SCP-939.
 /// </summary>
 public static class Scp939LungePatch
 {

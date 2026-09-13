@@ -17,10 +17,9 @@ using InventorySystem.Items.ThrowableProjectiles;
 
 using InventorySystem.Items.ToggleableLights.Flashlight;
 using InventorySystem.Items.ToggleableLights.Lantern;
-
-using LabExtended.API.Custom.Items;
 using LabExtended.Extensions;
 using LabExtended.Core;
+using LabExtended.Custom.Items;
 
 namespace LabExtended.Patches.Functions.Items;
 

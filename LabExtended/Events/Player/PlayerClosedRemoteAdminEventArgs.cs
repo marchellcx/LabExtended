@@ -1,6 +1,4 @@
-﻿using LabExtended.API;
-
-namespace LabExtended.Events.Player
+﻿namespace LabExtended.Events.Player
 {
     /// <summary>
     /// Gets called after the player stops sending player list requests, which means that they closed their Remote Admin panel.

@@ -1,4 +1,4 @@
-﻿using LabExtended.API.Settings.Entries;
+﻿using LabExtended.Settings.Entries;
 
 namespace LabExtended.Events.Player.Settings
 {

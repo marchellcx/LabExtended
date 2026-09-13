@@ -1,6 +1,4 @@
 ﻿using GameObjectPools;
-
-using LabExtended.API;
 using LabExtended.Core;
 
 using PlayerRoles;

@@ -1,7 +1,5 @@
 ﻿using InventorySystem.Items.Pickups;
 
-using LabExtended.API;
-
 using UnityEngine;
 
 namespace LabExtended.Events.Map;

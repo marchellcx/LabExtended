@@ -1,6 +1,5 @@
-﻿using LabExtended.API;
-using LabExtended.API.Settings.Menus;
-using LabExtended.API.Settings.Entries;
+﻿using LabExtended.Settings.Entries;
+using LabExtended.Settings.Menus;
 
 namespace LabExtended.Events.Player.Settings
 {

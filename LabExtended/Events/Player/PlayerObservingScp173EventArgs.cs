@@ -1,6 +1,4 @@
-﻿using LabExtended.API;
-
-using PlayerRoles.PlayableScps;
+﻿using PlayerRoles.PlayableScps;
 using PlayerRoles.PlayableScps.Scp173;
 
 namespace LabExtended.Events.Player

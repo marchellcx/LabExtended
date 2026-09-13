@@ -1,6 +1,4 @@
-﻿using LabExtended.API;
-
-using LabExtended.Core;
+﻿using LabExtended.Core;
 using LabExtended.Utilities;
 
 using Mirror;
@@ -14,8 +12,7 @@ using HarmonyLib;
 
 using LabApi.Events.Arguments.PlayerEvents;
 using LabApi.Events.Handlers;
-
-using LabExtended.API.Custom.Voice.Threading;
+using LabExtended.Custom.Voice.Threading;
 
 namespace LabExtended.Patches.Functions.Players
 {

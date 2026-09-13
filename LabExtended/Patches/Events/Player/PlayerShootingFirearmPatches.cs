@@ -3,8 +3,6 @@
 using InventorySystem.Items.Firearms.Modules;
 using InventorySystem.Items.Firearms.Modules.Misc;
 
-using LabExtended.API;
-
 using LabExtended.Events;
 using LabExtended.Events.Player;
 using LabExtended.Events.Firearms;

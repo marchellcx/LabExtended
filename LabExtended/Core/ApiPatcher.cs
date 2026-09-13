@@ -2,6 +2,8 @@
 
 using LabExtended.Extensions;
 
+using NiveraAPI.IO.Configs;
+
 using System.Diagnostics;
 using System.Reflection;
 
@@ -14,6 +16,12 @@ namespace LabExtended.Core;
 /// </summary>
 public static class ApiPatcher
 {
+    /// <summary>
+    /// Gets or sets a list of disabled Harmony patches.
+    /// </summary>
+    [Config("patches", "disabled-patches", "A list of disabled Harmony patches.")]
+    public static List<string> DisabledPatches { get; set; } = new();
+
     internal static int labExPatchCountOffset = 0;
 
     /// <summary>
@@ -56,7 +64,6 @@ public static class ApiPatcher
             Stopwatch.Restart();
 
             var types = assembly.GetTypes();
-            var config = ApiLoader.ApiConfig?.PatchSection;
             var patches = new List<Tuple<MethodInfo, MethodBase>>();
 
             foreach (var type in types)
@@ -69,10 +76,10 @@ public static class ApiPatcher
                     if (!method.HasAttribute<HarmonyPatch>(out var harmonyPatch))
                         continue;
 
-                    if (config != null && config.DisabledPatches.Contains($"{method.DeclaringType.Name}.*"))
+                    if (DisabledPatches.Contains($"{method.DeclaringType.Name}.*"))
                         continue;
 
-                    if (config != null && config.DisabledPatches.Contains($"{method.DeclaringType.Name}.{method.Name}"))
+                    if (DisabledPatches.Contains($"{method.DeclaringType.Name}.{method.Name}"))
                         continue;
 
                     var isPrefix = method.HasAttribute<HarmonyPrefix>() || method.Name.Contains("Prefix");
@@ -82,8 +89,7 @@ public static class ApiPatcher
 
                     if (!isPrefix && !isPostfix && !isFinalizer && !isTranspiler)
                     {
-                        ApiLog.Warn("API Patcher",
-                            $"Invalid patch method: &1{method.DeclaringType.Name}.{method.Name}&r");
+                        ApiLog.Warn("API Patcher", $"Invalid patch method: &1{method.DeclaringType.Name}.{method.Name}&r");
                         continue;
                     }
 
@@ -93,8 +99,7 @@ public static class ApiPatcher
 
                         if (targetMethod is null)
                         {
-                            ApiLog.Warn("API Patcher",
-                                $"Could not find target method of patch &1{method.GetMemberName()}&r");
+                            ApiLog.Warn("API Patcher", $"Could not find target method of patch &1{method.GetMemberName()}&r");
                             continue;
                         }
 
@@ -112,14 +117,12 @@ public static class ApiPatcher
                         }
                         else
                         {
-                            ApiLog.Error("API Patcher",
-                                $"Failed to patch method &1{targetMethod?.Name ?? "null"}&r with &1{method.DeclaringType.Name}.{method.Name}&r!");
+                            ApiLog.Error("API Patcher", $"Failed to patch method &1{targetMethod?.Name ?? "null"}&r with &1{method.DeclaringType.Name}.{method.Name}&r!");
                         }
                     }
                     catch (Exception ex)
                     {
-                        ApiLog.Error("API Patcher",
-                            $"Failed while attempting to apply patch &1{method.DeclaringType.Name}.{method.Name}&r:\n{ex.ToColoredString()}");
+                        ApiLog.Error("API Patcher", $"Failed while attempting to apply patch &1{method.DeclaringType.Name}.{method.Name}&r:\n{ex.ToColoredString()}");
                     }
                 }
             }
@@ -136,8 +139,7 @@ public static class ApiPatcher
             if (assembly == ApiLoader.Assembly)
                 totalCount += labExPatchCountOffset;
 
-            ApiLog.Info("API Patcher",
-                $"&6[&r&2{assembly.GetName().Name}&r&6]&r Applied &1{totalCount}&r patches in &3{Stopwatch.Elapsed}&r!");
+            ApiLog.Info("API Patcher", $"&6[&r&2{assembly.GetName().Name}&r&6]&r Applied &1{totalCount}&r patches in &3{Stopwatch.Elapsed}&r!");
         }
         catch (Exception ex)
         {

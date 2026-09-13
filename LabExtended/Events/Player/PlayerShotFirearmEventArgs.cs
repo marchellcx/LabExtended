@@ -1,8 +1,6 @@
 ﻿using InventorySystem.Items.Firearms;
 using InventorySystem.Items.Firearms.Modules.Misc;
 
-using LabExtended.API;
-
 using UnityEngine;
 
 namespace LabExtended.Events.Player;

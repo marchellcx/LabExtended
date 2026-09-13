@@ -5,11 +5,9 @@ using LabApi.Features.Stores;
 using Mirror;
 
 using LabApi.Features.Wrappers;
-
-using LabExtended.API;
 using LabExtended.Events;
 
-using static LabExtended.API.Containers.SwitchContainer;
+using static LabExtended.Containers.SwitchContainer;
 
 namespace LabExtended.Patches.Functions.Players;
 

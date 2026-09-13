@@ -2,8 +2,6 @@
 
 using InventorySystem.Items.Usables.Scp330;
 
-using LabExtended.API;
-
 using LabExtended.Events;
 using LabExtended.Events.Player;
 

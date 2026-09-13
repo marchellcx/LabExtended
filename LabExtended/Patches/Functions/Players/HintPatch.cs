@@ -1,9 +1,7 @@
 ﻿using HarmonyLib;
 
 using Hints;
-
-using LabExtended.API;
-using LabExtended.API.Hints;
+using LabExtended.Hints;
 
 #pragma warning disable CS8604 // Possible null reference argument.
 

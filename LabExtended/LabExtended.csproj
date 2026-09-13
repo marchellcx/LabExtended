@@ -28,8 +28,10 @@
       <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.3" PrivateAssets="all" />
       <PackageReference Include="Lib.Harmony" Version="2.4.2" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+      <PackageReference Include="SecretLabNAudio.Core" Version="2.1.0" />
       <PackageReference Include="System.Drawing.Common" Version="10.0.1" />
       <PackageReference Include="System.Drawing.Primitives" Version="4.3.0" />
+      <PackageReference Include="YoutubeDLSharp" Version="1.2.0" />
     </ItemGroup>
 
     <ItemGroup>
@@ -50,6 +52,9 @@
       </Reference>
       <Reference Include="Mirror.Components">
         <HintPath>$(LABEX_REFERENCES)\Mirror.Components.dll</HintPath>
+      </Reference>
+      <Reference Include="NiveraAPI">
+        <HintPath>..\..\..\plugin_refs\NiveraAPI.dll</HintPath>
       </Reference>
       <Reference Include="NorthwoodLib" Publicize="true">
         <HintPath>$(LABEX_REFERENCES)\NorthwoodLib-Publicized.dll</HintPath>

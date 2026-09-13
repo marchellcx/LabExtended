@@ -1,7 +1,5 @@
 ﻿using InventorySystem.Items.Usables.Scp330;
 
-using LabExtended.API;
-
 namespace LabExtended.Events.Player
 {
     /// <summary>

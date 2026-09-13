@@ -3,8 +3,6 @@
 using InventorySystem.Items.Autosync;
 using InventorySystem.Items.Keycards;
 using InventorySystem.Items.Keycards.Snake;
-
-using LabExtended.API;
 using LabExtended.Core;
 using LabExtended.Events;
 

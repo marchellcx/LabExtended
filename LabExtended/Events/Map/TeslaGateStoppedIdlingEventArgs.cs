@@ -8,13 +8,13 @@
         /// <summary>
         /// Gets the tesla gate that stopped idling.
         /// </summary>
-        public API.ExTeslaGate Gate { get; }
+        public ExTeslaGate Gate { get; }
 
         /// <summary>
         /// Creates a new <see cref="TeslaGateStoppedIdlingEventArgs"/> instance.
         /// </summary>
         /// <param name="gate">The gate that stopped idling.</param>
-        public TeslaGateStoppedIdlingEventArgs(API.ExTeslaGate gate)
+        public TeslaGateStoppedIdlingEventArgs(ExTeslaGate gate)
         {
             Gate = gate;
         }

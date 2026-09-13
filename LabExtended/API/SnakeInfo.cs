@@ -1,5 +1,4 @@
 ﻿using InventorySystem.Items.Keycards;
-using LabExtended.Core;
 using UnityEngine;
 
 namespace LabExtended.API;

@@ -2,13 +2,13 @@
 
 using LabApi.Events.Arguments.Scp079Events;
 using LabApi.Events.Handlers;
-
-using LabExtended.API;
 using LabExtended.Extensions;
 
 using MapGeneration;
 
 using Mirror;
+
+using NiveraAPI.Extensions;
 
 using PlayerRoles.PlayableScps.Scp079;
 
@@ -16,6 +16,12 @@ namespace LabExtended.Patches.Functions.Scp079;
 
 public static class Scp079TeslaAbilityPatch
 {
+    /// <summary>
+    /// Patch for Scp079TeslaAbility.ServerProcessCmd to add event handling and custom logic for using Tesla gates.
+    /// </summary>
+    /// <param name="__instance">The instance of the Scp079TeslaAbility.</param>
+    /// <param name="reader">The network reader containing the command data.</param>
+    /// <returns>Returns false to prevent the original method from executing.</returns>
     [HarmonyPatch(typeof(Scp079TeslaAbility), nameof(Scp079TeslaAbility.ServerProcessCmd))]
     public static bool Prefix(Scp079TeslaAbility __instance, NetworkReader reader)
     {
@@ -28,7 +34,7 @@ public static class Scp079TeslaAbilityPatch
             return false;
 
         if (!ExTeslaGate.Lookup.TryGetFirst(
-                x => RoomUtils.CompareCoords(x.Value.Position, camera.Position), out var gate))
+                x => RoomUtils.CompareCoords(x.Value.Transform.position, camera.Position), out var gate))
             return false;
 
         if (gate.Value.IsDisabled)

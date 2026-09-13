@@ -2,8 +2,6 @@ using HarmonyLib;
 
 using InventorySystem;
 using InventorySystem.Disarming;
-
-using LabExtended.API;
 using LabExtended.Extensions;
 
 #pragma warning disable CS8604 // Possible null reference argument.

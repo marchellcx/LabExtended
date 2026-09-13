@@ -1,6 +1,4 @@
-﻿using LabExtended.API;
-using LabExtended.API.Custom.Voice;
-
+﻿using LabExtended.Custom.Voice;
 using LabExtended.Extensions;
 
 using VoiceChat.Networking;

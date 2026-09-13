@@ -3,15 +3,13 @@
 using Interactables.Interobjects.DoorUtils;
 
 using LabApi.Features.Wrappers;
-
 using LabExtended.Events;
 using LabExtended.Events.Map;
-
 using MapGeneration.Distributors;
 
 using UnityEngine;
 
-namespace LabExtended.Patches.Events
+namespace LabExtended.Patches.Events.Map
 {
     public static class SpawningStructurePatch
     {

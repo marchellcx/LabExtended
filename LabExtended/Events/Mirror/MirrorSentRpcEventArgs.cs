@@ -1,6 +1,4 @@
-﻿using LabExtended.API;
-
-using Mirror;
+﻿using Mirror;
 
 namespace LabExtended.Events.Mirror
 {

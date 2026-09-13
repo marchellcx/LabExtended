@@ -1,6 +1,4 @@
-﻿using LabExtended.API;
-
-namespace LabExtended.Events.Player.Snake;
+﻿namespace LabExtended.Events.Player.Snake;
 
 /// <summary>
 /// Gets called when a player's snake minigame ends with a game-over.

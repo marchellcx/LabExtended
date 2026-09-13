@@ -1,8 +1,5 @@
 ﻿using HarmonyLib;
-
-using LabExtended.API;
-using LabExtended.API.Containers;
-
+using LabExtended.Containers;
 using LabExtended.Events;
 using LabExtended.Events.Player;
 

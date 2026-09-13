@@ -1,11 +1,9 @@
 using System.Reflection;
 
 using HarmonyLib;
-
-using LabExtended.API;
 using LabExtended.Core;
 using LabExtended.Events;
-
+using NiveraAPI.Extensions;
 using VoiceChat.Networking;
 
 namespace LabExtended.Extensions;

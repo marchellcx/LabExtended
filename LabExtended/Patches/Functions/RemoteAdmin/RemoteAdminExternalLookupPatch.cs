@@ -2,11 +2,8 @@
 using CommandSystem.Commands.RemoteAdmin;
 
 using HarmonyLib;
-
-using LabExtended.API;
-using LabExtended.API.RemoteAdmin;
-using LabExtended.API.RemoteAdmin.Enums;
-
+using LabExtended.RemoteAdmin;
+using LabExtended.RemoteAdmin.Enums;
 using MEC;
 
 using RemoteAdmin;

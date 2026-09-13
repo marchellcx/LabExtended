@@ -1,6 +1,6 @@
 ﻿using LabExtended.API;
 
-namespace LabExtended.Events.Player;
+namespace LabExtended.Events.Player.Snake;
 
 /// <summary>
 /// Base class for all Snake events

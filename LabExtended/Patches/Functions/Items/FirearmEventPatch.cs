@@ -3,8 +3,6 @@
 using InventorySystem.Items.Firearms.Modules;
 using InventorySystem.Items.Firearms.Modules.Misc;
 
-using LabExtended.API;
-
 using LabExtended.Core;
 using LabExtended.Extensions;
 

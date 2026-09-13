@@ -1,6 +1,4 @@
-﻿using LabExtended.API;
-
-namespace LabExtended.Events.Player
+﻿namespace LabExtended.Events.Player
 {
     /// <summary>
     /// Gets called before a player changes status of the lobby lock.

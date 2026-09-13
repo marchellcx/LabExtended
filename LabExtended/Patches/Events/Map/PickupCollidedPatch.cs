@@ -2,8 +2,6 @@
 
 using InventorySystem.Items.Pickups;
 
-using LabExtended.API;
-
 using LabExtended.Events;
 using LabExtended.Events.Map;
 using LabExtended.Patches.Functions.Items;

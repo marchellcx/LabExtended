@@ -11,231 +11,249 @@ using LabExtended.Core;
 using LabExtended.Extensions;
 
 using NetworkManagerUtils.Dummies;
+using NiveraAPI.IO.Configs;
 
 #pragma warning disable CS8620 // Argument cannot be used for parameter due to differences in the nullability of reference types.
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
 #pragma warning disable CS8604 // Possible null reference argument.
 
-namespace LabExtended.Events
+namespace LabExtended.Events;
+
+internal static class InternalEvents
 {
-    internal static class InternalEvents
+    /// <summary>
+    /// Gets or sets a list of IPs that should be overriden by the player's token request IP.
+    /// </summary>
+    [Config("misc", "token-ip-override", "Sets a list of IPs that should be overriden by the player's token request IP.")]
+    public static List<string> TokenIpOverride = new();
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to disable Round Lock when the player who enabled it leaves the server.
+    /// </summary>
+    [Config("misc", "disable-round-lock-on-leave", "Whether or not to disable Round Lock when the player who enabled it leaves.")]
+    public static bool DisableRoundLockOnLeave = true;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to disable Lobby Lock when the player who enabled it leaves the server.
+    /// </summary>
+    [Config("misc", "disable-lobby-lock-on-leave", "Whether or not to disable Lobby Lock when the player who enabled it leaves.")]
+    public static bool DisableLobbyLockOnLeave = true;
+
+    internal static event Action? OnRoundRestart;
+    internal static event Action? OnRoundWaiting;
+    internal static event Action? OnRoundStarted;
+    internal static event Action? OnRoundEnded;
+
+    internal static event Action<ExPlayer>? OnPlayerVerified; 
+    internal static event Action<ExPlayer>? OnPlayerJoined;
+    internal static event Action<ExPlayer>? OnPlayerLeft;
+
+    internal static event Action<ExPlayer>? OnHostJoined;
+    internal static event Action<ExPlayer>? OnHostLeft; 
+    
+    internal static event Action<PlayerChangedRoleEventArgs>? OnRoleChanged;
+    internal static event Action<PlayerSpawningEventArgs>? OnSpawning;
+
+    internal static void HandlePlayerVerified(ExPlayer player)
     {
-        internal static event Action? OnRoundRestart;
-        internal static event Action? OnRoundWaiting;
-        internal static event Action? OnRoundStarted;
-        internal static event Action? OnRoundEnded;
-
-        internal static event Action<ExPlayer>? OnPlayerVerified; 
-        internal static event Action<ExPlayer>? OnPlayerJoined;
-        internal static event Action<ExPlayer>? OnPlayerLeft;
-
-        internal static event Action<ExPlayer>? OnHostJoined;
-        internal static event Action<ExPlayer>? OnHostLeft; 
-        
-        internal static event Action<PlayerChangedRoleEventArgs>? OnRoleChanged;
-        internal static event Action<PlayerSpawningEventArgs>? OnSpawning;
-
-        internal static void HandlePlayerVerified(ExPlayer player)
+        if (player.IsServer)
         {
-            if (player.IsServer)
-            {
-                ExPlayerEvents.OnHostVerified(player);
-                return;
-            }
-            
-            OnPlayerVerified.InvokeSafe(player);
-            
-            if (player.IsNpc)
-            {
-                ExPlayerEvents.OnNpcVerified(player);
-                return;
-            }
+            ExPlayerEvents.OnHostVerified(player);
+            return;
+        }
+        
+        OnPlayerVerified.InvokeSafe(player);
+        
+        if (player.IsNpc)
+        {
+            ExPlayerEvents.OnNpcVerified(player);
+            return;
+        }
 
-            if (!string.IsNullOrWhiteSpace(player.UserId))
-            {
-                if (string.IsNullOrWhiteSpace(player.CountryCode) &&
-                    ExPlayer.preauthData.TryGetValue(player.UserId, out var region))
-                    player.CountryCode = region;
+        if (!string.IsNullOrWhiteSpace(player.UserId))
+        {
+            if (string.IsNullOrWhiteSpace(player.CountryCode) &&
+                ExPlayer.preauthData.TryGetValue(player.UserId, out var region))
+                player.CountryCode = region;
 
-                if (player.PersistentStorage is null)
+            if (player.PersistentStorage is null)
+            {
+                if (PlayerStorage._persistentStorage.TryGetValue(player.UserId, out var persistentStorage))
                 {
-                    if (PlayerStorage._persistentStorage.TryGetValue(player.UserId, out var persistentStorage))
-                    {
-                        persistentStorage.Player = player;
-                        
-                        player.PersistentStorage = persistentStorage;
-                    }
-                    else
-                    {
-                        player.PersistentStorage = new(true, player);
-                    }
-            
-                    player.PersistentStorage.JoinTime = DateTime.Now;
-                    player.PersistentStorage.Lifes++;
-                }
-            }
-
-            if (player.Connection != null && player.ConnectionToClient != null)
-            {
-                if (!string.IsNullOrWhiteSpace(player.ConnectionToClient.address)
-                    && ApiLoader.ApiConfig?.TokenIpOverride?.Count > 0
-                    && ApiLoader.ApiConfig.TokenIpOverride.Contains(player.ConnectionToClient.address)
-                    && player.ReferenceHub.authManager != null
-                    && player.ReferenceHub.authManager.AuthenticationResponse.AuthToken != null
-                    && !string.IsNullOrEmpty(player.ReferenceHub.authManager.AuthenticationResponse.AuthToken.RequestIp))
-                {
-                    player.ConnectionToClient.IpOverride = player.ReferenceHub.authManager.AuthenticationResponse.AuthToken.RequestIp;
-                    player.ReferenceHub.queryProcessor._ipAddress = player.ConnectionToClient.IpOverride;
-
-                    ApiLog.Debug("LabExtended",
-                        $"Overriden IP of &1{player.UserId}&r to &3{player.ConnectionToClient.address}&r" +
-                        $" (&6{player.ConnectionToClient.OriginalIpAddress}&r)");
+                    persistentStorage.Player = player;
+                    
+                    player.PersistentStorage = persistentStorage;
                 }
                 else
                 {
-                    player.ConnectionToClient.IpOverride = player.ConnectionToClient.address;
+                    player.PersistentStorage = new(true, player);
                 }
-            }
-
-            ApiLog.Info("LabExtended",
-                $"Player &3{player.Nickname}&r (&6{player.UserId}&r) &2joined&r from &3{player.IpAddress} ({player.CountryCode})&r!");
-            
-            ExPlayerEvents.OnVerified(player);
-        }
-
-        internal static void HandlePlayerJoin(ExPlayer player)
-        {
-            if (!player.IsServer)
-            {
-                OnPlayerJoined.InvokeSafe(player);
-            }
-            else
-            {
-                OnHostJoined.InvokeSafe(player);
-
-                ExPlayerEvents.OnHostJoined(player);
-            }
-
-            if (!player.IsNpc)
-            {
-                ExPlayerEvents.OnJoined(player);
-            }
-            else
-            {
-                ExPlayerEvents.OnNpcJoined(player);
-            }
-        }
-
-        internal static void HandlePlayerLeave(ExPlayer? player)
-        {
-            if (ExRound.State is RoundState.InProgress || ExRound.State is RoundState.WaitingForPlayers)
-            {
-                if (ApiLoader.BaseConfig.DisableRoundLockOnLeave && ExRound.IsRoundLocked 
-                                                                 && ExRound.RoundLock.Player != null && ExRound.RoundLock.Player == player)
-                {
-                    ExRound.IsRoundLocked = false;
-                    ApiLog.Warn("Round API", $"Round Lock disabled - the player who enabled it (&3{player.Nickname}&r &6{player.UserId}&r) left the server.");
-                }
-
-                if (ApiLoader.BaseConfig.DisableLobbyLockOnLeave && ExRound.IsLobbyLocked
-                                                                 && ExRound.RoundLock.Player != null && ExRound.RoundLock.Player == player)
-                {
-                    ExRound.IsLobbyLocked = false;
-                    ApiLog.Warn("Round API", $"Lobby Lock disabled - the player who enabled it (&3{player.Nickname}&r &6{player.UserId}&r) left the server.");
-                }
-            }
-
-            if (player is { IsServer: false, IsNpc: false, IsVerified: true })
-            {
-                ApiLog.Info("LabExtended",
-                    $"Player &3{player.Nickname}&r (&3{player.UserId}&r) &1left&r from &3{player.IpAddress}&r!");
-                
-                OnPlayerLeft.InvokeSafe(player);
-
-                ExPlayerEvents.OnLeft(player);
-            }
-            else if (player.IsServer)
-            {
-                OnHostLeft.InvokeSafe(player);
-
-                ExPlayerEvents.OnHostLeft(player);
-            }
-            else if (player.IsNpc)
-            {
-                ExPlayerEvents.OnNpcLeft(player);
-            }
-        }
-
-        private static void HandleSpawning(PlayerSpawningEventArgs args)
-            => OnSpawning.InvokeSafe(args);
-
-        private static void HandleRoleChange(PlayerChangedRoleEventArgs args)
-            => OnRoleChanged.InvokeSafe(args);
-
-        private static void HandlePlayerAuth(PlayerPreAuthenticatingEventArgs ev)
-            => ExPlayer.preauthData.TryAdd(ev.UserId, ev.Region);
         
-        private static void HandleRoundWaiting()
-        {
-            ExPlayer.playerUpdate.Clear();
-            ExPlayer.preauthData.Clear(); 
-
-            // No reason not to reset the NPC connection ID
-            DummyNetworkConnection._idGenerator = ushort.MaxValue;
-
-            OnRoundWaiting.InvokeSafe();
-            
-            ExRoundEvents.OnWaitingForPlayers();
+                player.PersistentStorage.JoinTime = DateTime.Now;
+                player.PersistentStorage.Lifes++;
+            }
         }
 
-        private static void HandleRoundRestart()
+        if (player.Connection != null && player.ConnectionToClient != null)
         {
-            ExRound.State = RoundState.Restarting;
-            
-            OnRoundRestart.InvokeSafe();
-            
-            ExRoundEvents.OnRestarting();
+            if (!string.IsNullOrWhiteSpace(player.ConnectionToClient.address)
+                && TokenIpOverride?.Count > 0
+                && TokenIpOverride.Contains(player.ConnectionToClient.address)
+                && player.ReferenceHub.authManager != null
+                && player.ReferenceHub.authManager.AuthenticationResponse.AuthToken != null
+                && !string.IsNullOrEmpty(player.ReferenceHub.authManager.AuthenticationResponse.AuthToken.RequestIp))
+            {
+                player.ConnectionToClient.IpOverride = player.ReferenceHub.authManager.AuthenticationResponse.AuthToken.RequestIp;
+                player.ReferenceHub.queryProcessor._ipAddress = player.ConnectionToClient.IpOverride;
+
+                ApiLog.Debug("LabExtended",
+                    $"Overriden IP of &1{player.UserId}&r to &3{player.ConnectionToClient.address}&r" +
+                    $" (&6{player.ConnectionToClient.OriginalIpAddress}&r)");
+            }
+            else
+            {
+                player.ConnectionToClient.IpOverride = player.ConnectionToClient.address;
+            }
         }
 
-        private static void HandleRoundStart()
-        {
-            ExRound.StartedAt = DateTime.Now;
-            ExRound.State = RoundState.InProgress;
+        ApiLog.Info("LabExtended",
+            $"Player &3{player.Nickname}&r (&6{player.UserId}&r) &2joined&r from &3{player.IpAddress} ({player.CountryCode})&r!");
+        
+        ExPlayerEvents.OnVerified(player);
+    }
 
-            OnRoundStarted.InvokeSafe();
-            
-            ExRoundEvents.OnStarted();
+    internal static void HandlePlayerJoin(ExPlayer player)
+    {
+        if (!player.IsServer)
+        {
+            OnPlayerJoined.InvokeSafe(player);
+        }
+        else
+        {
+            OnHostJoined.InvokeSafe(player);
+
+            ExPlayerEvents.OnHostJoined(player);
         }
 
-        private static void HandleRoundEnding(RoundEndingEventArgs ev)
+        if (!player.IsNpc)
         {
-            ExRound.State = RoundState.Ending;
-            ExRoundEvents.OnEnding();
+            ExPlayerEvents.OnJoined(player);
+        }
+        else
+        {
+            ExPlayerEvents.OnNpcJoined(player);
+        }
+    }
+
+    internal static void HandlePlayerLeave(ExPlayer? player)
+    {
+        if (ExRound.State is RoundState.InProgress || ExRound.State is RoundState.WaitingForPlayers)
+        {
+            if (ApiLoader.BaseConfig.DisableRoundLockOnLeave && ExRound.IsRoundLocked 
+                                                             && ExRound.RoundLock.Player != null && ExRound.RoundLock.Player == player)
+            {
+                ExRound.IsRoundLocked = false;
+                ApiLog.Warn("Round API", $"Round Lock disabled - the player who enabled it (&3{player.Nickname}&r &6{player.UserId}&r) left the server.");
+            }
+
+            if (ApiLoader.BaseConfig.DisableLobbyLockOnLeave && ExRound.IsLobbyLocked
+                                                             && ExRound.RoundLock.Player != null && ExRound.RoundLock.Player == player)
+            {
+                ExRound.IsLobbyLocked = false;
+                ApiLog.Warn("Round API", $"Lobby Lock disabled - the player who enabled it (&3{player.Nickname}&r &6{player.UserId}&r) left the server.");
+            }
         }
 
-        private static void HandleRoundEnd(RoundEndedEventArgs _)
+        if (player is { IsServer: false, IsNpc: false, IsVerified: true })
         {
-            ExRound.State = RoundState.Ended;
-
-            OnRoundEnded.InvokeSafe();
+            ApiLog.Info("LabExtended",
+                $"Player &3{player.Nickname}&r (&3{player.UserId}&r) &1left&r from &3{player.IpAddress}&r!");
             
-            ExRoundEvents.OnEnded();
-        }
+            OnPlayerLeft.InvokeSafe(player);
 
-        internal static void Internal_Init()
+            ExPlayerEvents.OnLeft(player);
+        }
+        else if (player.IsServer)
         {
-            var plyEvents = typeof(PlayerEvents);
-            var srvEvents = typeof(ServerEvents);
-            
-            plyEvents.InsertFirst<LabEventHandler<PlayerPreAuthenticatingEventArgs>>(nameof(PlayerEvents.PreAuthenticating), HandlePlayerAuth);
-            plyEvents.InsertFirst<LabEventHandler<PlayerChangedRoleEventArgs>>(nameof(PlayerEvents.ChangedRole), HandleRoleChange);
-            plyEvents.InsertFirst<LabEventHandler<PlayerSpawningEventArgs>>(nameof(PlayerEvents.Spawning), HandleSpawning);
-            
-            srvEvents.InsertFirst<LabEventHandler<RoundEndingEventArgs>>(nameof(ServerEvents.RoundEnding), HandleRoundEnding);
-            srvEvents.InsertFirst<LabEventHandler<RoundEndedEventArgs>>(nameof(ServerEvents.RoundEnded), HandleRoundEnd);
-            srvEvents.InsertFirst<LabEventHandler>(nameof(ServerEvents.WaitingForPlayers), HandleRoundWaiting);
-            srvEvents.InsertFirst<LabEventHandler>(nameof(ServerEvents.RoundRestarted), HandleRoundRestart);
-            srvEvents.InsertFirst<LabEventHandler>(nameof(ServerEvents.RoundStarted), HandleRoundStart);
+            OnHostLeft.InvokeSafe(player);
+
+            ExPlayerEvents.OnHostLeft(player);
         }
+        else if (player.IsNpc)
+        {
+            ExPlayerEvents.OnNpcLeft(player);
+        }
+    }
+
+    private static void HandleSpawning(PlayerSpawningEventArgs args)
+        => OnSpawning.InvokeSafe(args);
+
+    private static void HandleRoleChange(PlayerChangedRoleEventArgs args)
+        => OnRoleChanged.InvokeSafe(args);
+
+    private static void HandlePlayerAuth(PlayerPreAuthenticatingEventArgs ev)
+        => ExPlayer.preauthData.TryAdd(ev.UserId, ev.Region);
+    
+    private static void HandleRoundWaiting()
+    {
+        ExPlayer.playerUpdate.Clear();
+        ExPlayer.preauthData.Clear(); 
+
+        // No reason not to reset the NPC connection ID
+        DummyNetworkConnection._idGenerator = ushort.MaxValue;
+
+        OnRoundWaiting.InvokeSafe();
+        
+        ExRoundEvents.OnWaitingForPlayers();
+    }
+
+    private static void HandleRoundRestart()
+    {
+        ExRound.State = RoundState.Restarting;
+        
+        OnRoundRestart.InvokeSafe();
+        
+        ExRoundEvents.OnRestarting();
+    }
+
+    private static void HandleRoundStart()
+    {
+        ExRound.StartedAt = DateTime.Now;
+        ExRound.State = RoundState.InProgress;
+
+        OnRoundStarted.InvokeSafe();
+        
+        ExRoundEvents.OnStarted();
+    }
+
+    private static void HandleRoundEnding(RoundEndingEventArgs ev)
+    {
+        ExRound.State = RoundState.Ending;
+        ExRoundEvents.OnEnding();
+    }
+
+    private static void HandleRoundEnd(RoundEndedEventArgs _)
+    {
+        ExRound.State = RoundState.Ended;
+
+        OnRoundEnded.InvokeSafe();
+        
+        ExRoundEvents.OnEnded();
+    }
+
+    internal static void Internal_Init()
+    {
+        var plyEvents = typeof(PlayerEvents);
+        var srvEvents = typeof(ServerEvents);
+        
+        plyEvents.InsertFirst<LabEventHandler<PlayerPreAuthenticatingEventArgs>>(nameof(PlayerEvents.PreAuthenticating), HandlePlayerAuth);
+        plyEvents.InsertFirst<LabEventHandler<PlayerChangedRoleEventArgs>>(nameof(PlayerEvents.ChangedRole), HandleRoleChange);
+        plyEvents.InsertFirst<LabEventHandler<PlayerSpawningEventArgs>>(nameof(PlayerEvents.Spawning), HandleSpawning);
+        
+        srvEvents.InsertFirst<LabEventHandler<RoundEndingEventArgs>>(nameof(ServerEvents.RoundEnding), HandleRoundEnding);
+        srvEvents.InsertFirst<LabEventHandler<RoundEndedEventArgs>>(nameof(ServerEvents.RoundEnded), HandleRoundEnd);
+        srvEvents.InsertFirst<LabEventHandler>(nameof(ServerEvents.WaitingForPlayers), HandleRoundWaiting);
+        srvEvents.InsertFirst<LabEventHandler>(nameof(ServerEvents.RoundRestarted), HandleRoundRestart);
+        srvEvents.InsertFirst<LabEventHandler>(nameof(ServerEvents.RoundStarted), HandleRoundStart);
     }
 }

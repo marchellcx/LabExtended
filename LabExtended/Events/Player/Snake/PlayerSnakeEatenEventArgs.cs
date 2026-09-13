@@ -1,8 +1,5 @@
 ﻿using InventorySystem.Items.Keycards;
 using InventorySystem.Items.Keycards.Snake;
-
-using LabExtended.API;
-
 using UnityEngine;
 
 namespace LabExtended.Events.Player.Snake;

@@ -7,10 +7,6 @@ using HarmonyLib;
 using LabApi.Events.Arguments.ServerEvents;
 using LabApi.Events.Handlers;
 
-using LabExtended.API;
-using LabExtended.Core;
-using LabExtended.Utilities;
-
 using MEC;
 
 using PlayerRoles;
@@ -91,9 +87,9 @@ public static class RoundEndPatch
 
             var summary = new RoundSummary.SumInfo_ClassList();
 
-            for (var i = 0; i < ExPlayer.Count; i++)
+            for (var i = 0; i < ExPlayer.AllCount; i++)
             {
-                var player = ExPlayer.Players[i];
+                var player = ExPlayer.AllPlayers[i];
 
                 if (!player.Toggles.CanBlockRoundEnd)
                     continue;
@@ -232,13 +228,13 @@ public static class RoundEndPatch
                     1000);
 
                 if (Singleton != null && endedArgs.ShowSummary)
+                {
                     Singleton.RpcShowRoundSummary(Singleton.classlistStart, summary, winningTeam,
                         RoundSummary.EscapedClassD, RoundSummary.EscapedScientists, RoundSummary.KilledBySCPs,
                         restartTime, (int)RoundStart.RoundLength.TotalSeconds);
+                }
 
-                Singleton._roundEndCoroutine =
-                    Timing.RunCoroutine(Singleton.InitiateRoundEnd(restartTime), Segment.FixedUpdate);
-
+                Singleton._roundEndCoroutine = Timing.RunCoroutine(Singleton.InitiateRoundEnd(restartTime), Segment.FixedUpdate);
                 yield return Timing.WaitUntilDone(Singleton._roundEndCoroutine);
             }
         }

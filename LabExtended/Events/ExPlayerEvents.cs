@@ -1,6 +1,4 @@
-﻿using LabExtended.API;
-
-using LabExtended.Extensions;
+﻿using LabExtended.Extensions;
 
 using LabExtended.Events.Player;
 using LabExtended.Events.Player.Snake;

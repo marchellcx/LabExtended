@@ -13,6 +13,12 @@ public class LoaderInitializeAttribute : Attribute
     public short Priority { get; }
 
     /// <summary>
+    /// Creates a new <see cref="LoaderInitializeAttribute"/> instance with default priority of 0.
+    /// </summary>
+    public LoaderInitializeAttribute()
+         => Priority = 0;
+
+    /// <summary>
     /// Creates a new <see cref="LoaderInitializeAttribute"/> instance.
     /// </summary>
     /// <param name="priority">The loading priority. Negative values means that the method will be called BEFORE LabAPI starts loading plugins, positive will be called AFTER.</param>

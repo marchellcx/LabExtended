@@ -6,11 +6,11 @@ using InventorySystem.Items.Keycards;
 using InventorySystem.Items.DebugTools;
 using InventorySystem.Items.Usables.Scp1344;
 
-using LabExtended.API;
-
 using Mirror;
 
 using UnityEngine;
+
+using NiveraAPI.Extensions;
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 

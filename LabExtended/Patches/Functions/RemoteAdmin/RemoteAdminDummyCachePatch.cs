@@ -1,6 +1,4 @@
 ﻿using HarmonyLib;
-
-using LabExtended.API;
 using LabExtended.Extensions;
 
 using NetworkManagerUtils.Dummies;

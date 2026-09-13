@@ -1,5 +1,7 @@
 ﻿using LabExtended.Core;
 
+using NiveraAPI.Extensions;
+
 namespace LabExtended.Extensions;
 /// <summary>
 /// Extensions for delegates.
