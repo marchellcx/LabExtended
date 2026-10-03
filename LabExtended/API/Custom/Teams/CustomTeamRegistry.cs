@@ -16,18 +16,18 @@ public static class CustomTeamRegistry
     /// <summary>
     /// Gets a list of all registered handlers.
     /// </summary>
-    public static Dictionary<Type, CustomTeamHandler> RegisteredHandlers { get; } = new();
+    public static Dictionary<string, CustomTeamHandler> RegisteredHandlers { get; } = new();
 
     /// <summary>
-    /// Attempts to find a custom team handler by it's type name.
+    /// Attempts to find a custom team handler by it's name or ID.
     /// </summary>
-    /// <param name="name">The name of the type.</param>
+    /// <param name="nameOrId">The name or ID of the type.</param>
     /// <param name="teamHandler">The found team handler.</param>
     /// <typeparam name="THandler">Handler type</typeparam>
     /// <returns>true if the handler was found</returns>
-    public static bool TryGet<THandler>(string name, out THandler teamHandler) where THandler : CustomTeamHandler
+    public static bool TryGet<THandler>(string nameOrId, out THandler teamHandler) where THandler : CustomTeamHandler
     {
-        if (string.IsNullOrEmpty(name))
+        if (string.IsNullOrEmpty(nameOrId))
         {
             teamHandler = null!;
             return false;
@@ -35,8 +35,10 @@ public static class CustomTeamRegistry
 
         foreach (var pair in RegisteredHandlers)
         {
-            if (string.Equals(name, pair.Value.GetType().Name, StringComparison.InvariantCultureIgnoreCase)
-                || string.Equals(name, pair.Value.GetType().Name.Replace("Handler", string.Empty)))
+            if (string.Equals(nameOrId, pair.Value.Name, StringComparison.InvariantCultureIgnoreCase)
+                || string.Equals(nameOrId, pair.Value.Id, StringComparison.InvariantCultureIgnoreCase)
+                || string.Equals(nameOrId, pair.Value.GetType().Name, StringComparison.InvariantCultureIgnoreCase)
+                || string.Equals(nameOrId, pair.Value.GetType().Name.Replace("Handler", string.Empty), StringComparison.InvariantCultureIgnoreCase))
             {
                 if (pair.Value is THandler handler)
                 {
@@ -58,9 +60,9 @@ public static class CustomTeamRegistry
     /// <returns>true if the handler was found</returns>
     public static bool TryGet<THandler>(out THandler handler) where THandler : CustomTeamHandler
     {
-        if (RegisteredHandlers.TryGetValue(typeof(THandler), out var result))
+        if (RegisteredHandlers.TryGetFirst(x => x.Value is THandler, out var result))
         {
-            handler = (THandler)result;
+            handler = (THandler)result.Value;
             return true;
         }
         
@@ -87,34 +89,35 @@ public static class CustomTeamRegistry
         if (type is null)
             throw new ArgumentNullException(nameof(type));
 
-        if (RegisteredHandlers.TryGetValue(type, out var active))
-            return active;
-
         if (Activator.CreateInstance(type) is not CustomTeamHandler handler)
             throw new Exception($"Type {type.FullName} could not be instantiated as a CustomTeamHandler");
-        
-        RegisteredHandlers.Add(type, handler);
+
+        if (RegisteredHandlers.ContainsKey(handler.Id))
+            throw new Exception($"A handler with the ID {handler.Id} is already registered.");
+
+        RegisteredHandlers.Add(handler.Id, handler);
         
         handler.OnRegistered();
         return handler;
     }
 
-    private static void OnDiscovered(Type type)
+    /// <summary>
+    /// Registers an already instantiated handler.
+    /// </summary>
+    /// <typeparam name="THandler">The type of the handler.</typeparam>
+    /// <param name="handler">The handler instance to register.</param>
+    /// <returns>The registered handler instance.</returns>
+    public static THandler Register<THandler>(THandler handler) where THandler : CustomTeamHandler
     {
-        if (type.HasAttribute<LoaderIgnoreAttribute>())
-            return;
-        
-        if (!type.InheritsType<CustomTeamHandler>() || type == typeof(CustomTeamHandler))
-            return;
+        if (handler is null)
+            throw new ArgumentNullException(nameof(handler));
 
-        if (AccessTools.Constructor(type) is null)
-            return;
+        if (RegisteredHandlers.ContainsKey(handler.Id))
+            throw new Exception($"A handler with the ID {handler.Id} is already registered.");
 
-        Register(type);
-    }
+        RegisteredHandlers.Add(handler.Id, handler);
 
-    internal static void Internal_Init()
-    {
-        ReflectionUtils.Discovered += OnDiscovered;
+        handler.OnRegistered();
+        return handler;
     }
 }

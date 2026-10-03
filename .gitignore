@@ -15,3 +15,4 @@ global.json
 /LabExtended.ImageConvertor/LabExtended.ImageConvertor.csproj.user
 
 .fake
+.vscode/settings.json

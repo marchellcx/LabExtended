@@ -37,7 +37,7 @@ public class CustomTeamsCommand : CommandBase, IServerSideCommand
             
             foreach (var pair in CustomTeamRegistry.RegisteredHandlers)
             {
-                x.AppendLine($"- {pair.Key.Name}: {pair.Value.Name ?? "(null)"}");
+                x.AppendLine($"- [{pair.Value.Id}] {pair.Value.Name}");
             }
         });
     }
@@ -60,7 +60,7 @@ public class CustomTeamsCommand : CommandBase, IServerSideCommand
 
         if (instances.Count() == 0)
         {
-            Fail($"Team '{handler.GetType().Name}' has no active waves.");
+            Fail($"Team '[{handler.Id}] {handler.Name}' has no active waves.");
             return;
         }
         
@@ -96,13 +96,13 @@ public class CustomTeamsCommand : CommandBase, IServerSideCommand
 
         if (instances.Count() == 0)
         {
-            Fail($"Team '{handler.GetType().Name}' has no active waves.");
+            Fail($"Team '[{handler.Id}] {handler.Name}' has no active waves.");
             return;
         }
 
         if (!instances.TryGetFirst(x => x.Id == id, out var instance))
         {
-            Fail($"Could not find active wave '{id}' in team '{handler.GetType().Name}'");
+            Fail($"Could not find active wave '{id}' in team '[{handler.Id}] {handler.Name}'");
             return;
         }
         

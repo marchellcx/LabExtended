@@ -6,17 +6,18 @@ using LabExtended.Utilities.Update;
 
 using NorthwoodLib.Pools;
 
+using System.ComponentModel;
 using UnityEngine;
 
 using Random = UnityEngine.Random;
+using YamlDotNet.Serialization;
 
 namespace LabExtended.API.Custom.Teams;
 
 /// <summary>
 /// Base class for custom team wave timers.
 /// </summary>
-public abstract class CustomTeamTimer<TInstance> : IDisposable 
-    where TInstance : CustomTeamInstance
+public class CustomTeamTimer<TInstance> : IDisposable where TInstance : CustomTeamInstance
 {
     /// <summary>
     /// Describes the reason of a wave failing to spawn.
@@ -52,61 +53,73 @@ public abstract class CustomTeamTimer<TInstance> : IDisposable
     /// <summary>
     /// Minimum amount of waves to spawn.
     /// </summary>
-    public abstract int MinWaveCount { get; }
+    [Description("Minimum amount of waves to spawn.")]
+    public virtual int MinWaveCount { get; set; }
     
     /// <summary>
     /// Maximum amount of waves to spawn.
     /// </summary>
-    public abstract int MaxWaveCount { get; }
+    [Description("Maximum amount of waves to spawn.")]
+    public virtual int MaxWaveCount { get; set; }
     
     /// <summary>
     /// Minimum number of players in a wave.
     /// </summary>
-    public abstract int MinPlayers { get; }
+    [Description("Minimum number of players in a wave.")]
+    public virtual int MinPlayers { get; set; }
     
     /// <summary>
     /// Maximum number of players in a wave.
     /// </summary>
-    public abstract int MaxPlayers { get; }
+    [Description("Maximum number of players in a wave.")]
+    public virtual int MaxPlayers { get; set; }
     
     /// <summary>
     /// Minimum time of a wave spawn (in seconds).
     /// </summary>
-    public abstract float MinWaveTime { get; }
+    [Description("Minimum time of a wave spawn (in seconds).")]
+    public virtual float MinWaveTime { get; set; }
     
     /// <summary>
     /// Maximum time of a wave spawn (in seconds).
     /// </summary>
-    public abstract float MaxWaveTime { get; }
+    [Description("Maximum time of a wave spawn (in seconds).")]
+    public virtual float MaxWaveTime { get; set; }
     
     /// <summary>
     /// The chance of a wave spawning if all conditions are met.
     /// </summary>
-    public abstract float SpawnChance { get; }
+    [Description("The chance of a wave spawning if all conditions are met.")]
+    public virtual float SpawnChance { get; set; }
     
     /// <summary>
     /// Whether or not the randomized player count must be met.
     /// </summary>
-    public abstract bool RequirePlayerCount { get; }
+    [Description("Whether or not the randomized player count must be met.")]
+    public virtual bool RequirePlayerCount { get; set; }
 
     /// <summary>
     /// Gets the remaining amount of waves to spawn this round.
     /// </summary>
+    [YamlIgnore]
     public int WavesToSpawn { get; private set; }
     
     /// <summary>
     /// Gets the remaining time (in seconds) of a wave spawn.
     /// </summary>
+    [YamlIgnore]
     public float RemainingTime { get; private set; }
     
     /// <summary>
     /// A list of all spawned waves.
     /// </summary>
+    [YamlIgnore]
     public List<TInstance> SpawnedWaves { get; } = new();
     
     /// <summary>
     /// Gets the parent handler.
     /// </summary>
+    [YamlIgnore]
     public CustomTeamHandler<TInstance> Handler { get; internal set; }
     
     /// <summary>

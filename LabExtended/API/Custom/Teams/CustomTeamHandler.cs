@@ -4,6 +4,8 @@ using LabApi.Events.Handlers;
 using LabExtended.Events;
 
 using PlayerRoles;
+using System.ComponentModel;
+using YamlDotNet.Serialization;
 
 namespace LabExtended.API.Custom.Teams;
 
@@ -13,9 +15,16 @@ namespace LabExtended.API.Custom.Teams;
 public abstract class CustomTeamHandler
 {
     /// <summary>
+    /// Gets the unique identifier of the custom team handler.
+    /// </summary>
+    [YamlIgnore]
+    public abstract string Id { get; }
+
+    /// <summary>
     /// Gets the team's name.
     /// </summary>
-    public abstract string? Name { get; }
+    [Description("The team's name.")]
+    public abstract string Name { get; set; }
     
     /// <summary>
     /// Selects a player's role.

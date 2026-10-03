@@ -335,7 +335,6 @@ public class ApiLoader : Plugin
 
             CustomTeamHandler.Internal_Init();
             CustomPlayerEffect.Internal_Init();
-            CustomTeamRegistry.Internal_Init();
 
             Elevator.Internal_Init();
 
