@@ -86,7 +86,7 @@ public abstract class CustomTeamInstance
         if (setRole.HasValue)
             player.Role.Set(setRole.Value);
 
-        if (!string.IsNullOrEmpty(Handler.Name))
+        if (Handler.ApplyCustomInfo && !string.IsNullOrEmpty(Handler.Name))
         {
             player.CustomInfo = string.Empty;
             player.InfoArea &= ~PlayerInfoArea.CustomInfo;
@@ -120,7 +120,7 @@ public abstract class CustomTeamInstance
         
         SpawnPlayer(player, role);
 
-        if (!string.IsNullOrWhiteSpace(Handler.Name))
+        if (Handler.ApplyCustomInfo && !string.IsNullOrWhiteSpace(Handler.Name))
         {
             player.CustomInfo = Handler.Name!;
 

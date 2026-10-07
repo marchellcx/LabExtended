@@ -7,6 +7,7 @@ using NorthwoodLib.Pools;
 using PlayerRoles;
 
 using UnityEngine;
+using YamlDotNet.Serialization;
 
 namespace LabExtended.API.Custom.Teams;
 
@@ -21,16 +22,19 @@ public abstract class CustomTeamHandler<TInstance> : CustomTeamHandler
     /// <summary>
     /// Gets the team's respawn timer.
     /// </summary>
+    [YamlIgnore]
     public virtual CustomTeamTimer<TInstance>? WaveTimer { get; }
 
     /// <summary>
     /// Gets the type of the team instance class.
     /// </summary>
+    [YamlIgnore]
     public Type Type { get; } = typeof(TInstance);
 
     /// <summary>
     /// Gets a list of all spawned instances.
     /// </summary>
+    [YamlIgnore]
     public Dictionary<int, TInstance> Instances { get; } = new();
     
     /// <summary>
@@ -95,7 +99,7 @@ public abstract class CustomTeamHandler<TInstance> : CustomTeamHandler
             if (player?.ReferenceHub == null)
                 continue;
             
-            if (!string.IsNullOrWhiteSpace(Name))
+            if (ApplyCustomInfo && !string.IsNullOrWhiteSpace(Name))
             {
                 player.CustomInfo = string.Empty;
                 player.InfoArea &= ~PlayerInfoArea.CustomInfo;
@@ -111,7 +115,7 @@ public abstract class CustomTeamHandler<TInstance> : CustomTeamHandler
 
             if (player?.ReferenceHub != null)
             {
-                if (!string.IsNullOrWhiteSpace(Name))
+                if (ApplyCustomInfo && !string.IsNullOrWhiteSpace(Name))
                 {
                     player.CustomInfo = string.Empty;
                     player.InfoArea &= ~PlayerInfoArea.CustomInfo;

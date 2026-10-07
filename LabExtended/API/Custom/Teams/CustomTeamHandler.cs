@@ -25,6 +25,12 @@ public abstract class CustomTeamHandler
     /// </summary>
     [Description("The team's name.")]
     public abstract string Name { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the team's name should be displayed in the player's custom information.
+    /// </summary>
+    [Description("Whether or not to show the team's name in player's custom info.")]
+    public virtual bool ApplyCustomInfo { get; set; }
     
     /// <summary>
     /// Selects a player's role.
@@ -85,7 +91,7 @@ public abstract class CustomTeamHandler
             
             if (player.Role.CustomTeam.AlivePlayers.Count == 0)
             {
-                if (player.Role.CustomTeam.Handler is CustomTeamHandler internalCustomTeamHandler)
+                if (player.Role.CustomTeam.Handler is { } internalCustomTeamHandler)
                     internalCustomTeamHandler.Internal_RemoveInstance(player.Role.CustomTeam.Id);
 
                 player.Role.CustomTeam.OnDestroy();
@@ -113,7 +119,7 @@ public abstract class CustomTeamHandler
                 if (player.Role.CustomTeam?.Handler != null)
                 {
                     if (player.Role.CustomTeam.Handler == attacker.Role.CustomTeam.Handler &&
-                        player.Role.CustomTeam.Handler is CustomTeamHandler handler &&
+                        player.Role.CustomTeam.Handler is { } handler &&
                         !handler.CanDamage(attacker, player))
                     {
                         args.IsAllowed = false;
@@ -230,7 +236,7 @@ public abstract class CustomTeamHandler
                 if (player.Role.CustomTeam?.Handler != null)
                 {
                     if (player.Role.CustomTeam.Handler == attacker.Role.CustomTeam.Handler &&
-                        player.Role.CustomTeam.Handler is CustomTeamHandler handler &&
+                        player.Role.CustomTeam.Handler is { } handler &&
                         !handler.CanDamage(attacker, player))
                     {
                         args.IsAllowed = false;
@@ -272,7 +278,7 @@ public abstract class CustomTeamHandler
 
         if (player.Role.CustomTeam != null)
         {
-            if (player.Role.CustomTeam.Handler is CustomTeamHandler handler && !string.IsNullOrWhiteSpace(handler?.Name))
+            if (player.Role.CustomTeam.Handler is { } handler && !string.IsNullOrWhiteSpace(handler?.Name))
             {
                 player.CustomInfo = string.Empty;
                 player.InfoArea &= ~PlayerInfoArea.CustomInfo;
@@ -283,7 +289,7 @@ public abstract class CustomTeamHandler
 
             if (player.Role.CustomTeam.AlivePlayers.Count == 0)
             {
-                if (player.Role.CustomTeam.Handler is CustomTeamHandler internalCustomTeamHandler)
+                if (player.Role.CustomTeam.Handler is { } internalCustomTeamHandler)
                     internalCustomTeamHandler.Internal_RemoveInstance(player.Role.CustomTeam.Id);
 
                 player.Role.CustomTeam.OnDestroy();

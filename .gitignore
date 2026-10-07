@@ -3,6 +3,7 @@
 /.cr
 /.github
 /.git
+/.vscode
 /LabExtended/bin
 /LabExtended/obj
 /packages
@@ -13,6 +14,7 @@ global.json
 /LabExtended.ImageConvertor/bin/Release/net9.0
 /LabExtended.ImageConvertor/Properties/PublishProfiles
 /LabExtended.ImageConvertor/LabExtended.ImageConvertor.csproj.user
-
 .fake
-.vscode/settings.json
+.vscode
+.vs
+.idea
