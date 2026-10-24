@@ -1854,6 +1854,15 @@ public class ExPlayer : Player, IDisposable
             if (infoBuilder.Length == 0)
             {
                 cInfoRejectionReason = null;
+
+                if (!NetworkBehaviour.SyncVarEqual(string.Empty, ref ReferenceHub.nicknameSync._customPlayerInfoString))
+                {
+                    ReferenceHub.nicknameSync._customPlayerInfoString = string.Empty;
+                    ReferenceHub.nicknameSync._playerInfoToShow &= ~PlayerInfoArea.CustomInfo;
+                    
+                    ReferenceHub.nicknameSync.syncVarDirtyBits |= 2UL;
+                }
+
                 return;
             }
 
@@ -1864,24 +1873,47 @@ public class ExPlayer : Player, IDisposable
 
             if (NetworkBehaviour.SyncVarEqual(customInfo, ref ReferenceHub.nicknameSync._customPlayerInfoString))
             {
+                if (!ReferenceHub.nicknameSync._playerInfoToShow.HasFlag(PlayerInfoArea.CustomInfo))
+                {
+                    ReferenceHub.nicknameSync._playerInfoToShow |= PlayerInfoArea.CustomInfo;
+                    ReferenceHub.nicknameSync.syncVarDirtyBits |= 4UL;
+                }
+                
                 cInfoRejectionReason = null;
                 return;
             }
 
             if (!NicknameSync.ValidateCustomInfo(customInfo, out var rejectionText))
             {
+                if (!NetworkBehaviour.SyncVarEqual(string.Empty, ref ReferenceHub.nicknameSync._customPlayerInfoString))
+                {
+                    ReferenceHub.nicknameSync._customPlayerInfoString = string.Empty;
+                    ReferenceHub.nicknameSync.syncVarDirtyBits |= 2UL;
+
+                    if (ReferenceHub.nicknameSync._playerInfoToShow.HasFlag(PlayerInfoArea.CustomInfo))
+                    {
+                        ReferenceHub.nicknameSync._playerInfoToShow &= ~PlayerInfoArea.CustomInfo;
+                        ReferenceHub.nicknameSync.syncVarDirtyBits |= 4UL;
+                    }
+                }
+                
                 if (cInfoRejectionReason != null && cInfoRejectionReason == rejectionText)
                     return;
 
                 cInfoRejectionReason = rejectionText;
 
-                ApiLog.Warn("LabExtended",
-                    $"CustomInfo of &3{ToLogString()}&r was &1REJECTED&r! (&3{rejectionText}&r)");
+                ApiLog.Warn("LabExtended", $"CustomInfo of &3{ToLogString()}&r was &1REJECTED&r! (&3{rejectionText}&r)");
                 return;
             }
 
             ReferenceHub.nicknameSync._customPlayerInfoString = customInfo;
             ReferenceHub.nicknameSync.syncVarDirtyBits |= 2UL;
+
+            if (!ReferenceHub.nicknameSync._playerInfoToShow.HasFlag(PlayerInfoArea.CustomInfo))
+            {
+                ReferenceHub.nicknameSync._playerInfoToShow |= PlayerInfoArea.CustomInfo;
+                ReferenceHub.nicknameSync.syncVarDirtyBits |= 4UL;
+            }
 
             cInfoRejectionReason = null;
         }
