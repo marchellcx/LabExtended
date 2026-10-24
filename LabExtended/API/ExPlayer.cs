@@ -1854,6 +1854,13 @@ public class ExPlayer : Player, IDisposable
             if (infoBuilder.Length == 0)
             {
                 cInfoRejectionReason = null;
+
+                if (!NetworkBehaviour.SyncVarEqual(string.Empty, ref ReferenceHub.nicknameSync._customPlayerInfoString))
+                {
+                    ReferenceHub.nicknameSync._customPlayerInfoString = string.Empty;
+                    ReferenceHub.nicknameSync.syncVarDirtyBits |= 2UL;
+                }
+
                 return;
             }
 
@@ -1875,8 +1882,7 @@ public class ExPlayer : Player, IDisposable
 
                 cInfoRejectionReason = rejectionText;
 
-                ApiLog.Warn("LabExtended",
-                    $"CustomInfo of &3{ToLogString()}&r was &1REJECTED&r! (&3{rejectionText}&r)");
+                ApiLog.Warn("LabExtended", $"CustomInfo of &3{ToLogString()}&r was &1REJECTED&r! (&3{rejectionText}&r)");
                 return;
             }
 
