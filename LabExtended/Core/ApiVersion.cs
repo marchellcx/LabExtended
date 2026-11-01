@@ -25,7 +25,7 @@ public static class ApiVersion
     /// <summary>
     /// The patch version part.
     /// </summary>
-    public const int Patch = 2;
+    public const int Patch = 3;
 
     /// <summary>
     /// Gets the loader's current version.
@@ -40,7 +40,7 @@ public static class ApiVersion
     /// <summary>
     /// Gets the loader's game version compatibility.
     /// </summary>
-    public static VersionRange? Compatibility { get; } = new VersionRange(new(14, 2, 8));
+    public static VersionRange? Compatibility { get; } = new VersionRange(new(14, 2, 9));
 
     /// <summary>
     /// Checks for server version compatibility.
