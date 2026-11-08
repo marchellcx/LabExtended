@@ -32,8 +32,7 @@ public class TranspilerContext
     /// <summary>
     /// Gets a list of declared locals.
     /// </summary>
-    public Dictionary<string, LocalBuilder> Locals { get; private set; } =
-        DictionaryPool<string, LocalBuilder>.Shared.Rent();
+    public Dictionary<string, LocalBuilder> Locals { get; private set; } = DictionaryPool<string, LocalBuilder>.Shared.Rent();
 
     /// <summary>
     /// Gets the modified instructions list.

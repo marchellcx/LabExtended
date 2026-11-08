@@ -23,13 +23,21 @@ public class BaseConfig
     /// Whether or not to show transpiler debug logs (this includes transpilers of other plugins).
     /// </summary>
     [Description("Toggles debug logs of transpilers.")]
-    public bool TranspilerDebugEnabled { get; set; }
+    public bool TranspilerDebugEnabled
+    {
+        get => ApiPatcher.TranspilerDebug;
+        set => ApiPatcher.TranspilerDebug = value;
+    }
 
     /// <summary>
     /// Gets or sets a value indicating whether the assembly name is prepended to log messages.
     /// </summary>
     [Description("Whether or not to prepend the assembly name in logs.")]
-    public bool PrependAssemblyNameInLogs { get; set; } = true;
+    public bool PrependAssemblyNameInLogs
+    {
+        get => ApiLog.PrependAssemblyName;
+        set => ApiLog.PrependAssemblyName = value;
+    }
 
     /// <summary>
     /// Whether or not to disable round lock once the player who enabled it leaves the server.
@@ -48,4 +56,10 @@ public class BaseConfig
     /// </summary>
     [Description("Whether or not to unload all plugins once the server's process quits.")]
     public bool UnloadPluginsOnQuit { get; set; } = true;
+    
+    /// <summary>
+    /// Whether or not to skip server version compatibility checking on startup.
+    /// </summary>
+    [Description("Whether or not to skip server version compatibility checking on startup.")]
+    public bool SkipVersionCompatibility { get; set; }
 }
