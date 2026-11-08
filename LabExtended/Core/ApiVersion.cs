@@ -25,7 +25,7 @@ public static class ApiVersion
     /// <summary>
     /// The patch version part.
     /// </summary>
-    public const int Patch = 3;
+    public const int Patch = 4;
 
     /// <summary>
     /// Gets the loader's current version.
@@ -48,7 +48,7 @@ public static class ApiVersion
     /// <returns>true if this loader version is compatible with this server version.</returns>
     public static bool CheckCompatibility()
     {
-        if (!Compatibility.HasValue || Compatibility.Value.InRange(Game)) 
+        if ((ApiLoader.BaseConfig != null && ApiLoader.BaseConfig.SkipVersionCompatibility) || !Compatibility.HasValue || Compatibility.Value.InRange(Game)) 
             return true;
 
         ApiLog.Error("LabExtended", $"Attempted to load for an unsupported game version (&1{Game}&r) - supported: &2{Compatibility.Value}&r");
