@@ -376,6 +376,7 @@ public class VoiceController : IDisposable
             var receivingArgs = new PlayerReceivingVoiceMessageEventArgs(player.ReferenceHub, ref msg);
             
             PlayerEvents.OnReceivingVoiceMessage(receivingArgs);
+            msg = receivingArgs.Message;
 
             if (!receivingArgs.IsAllowed)
                 continue;
