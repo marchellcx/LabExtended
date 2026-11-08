@@ -46,8 +46,16 @@ namespace LabExtended.Patches.Functions.Players
             if (!ExPlayer.TryGet(msg.Speaker, out var speaker))
                 return false;
 
+            VoiceChatChannel voiceChatChannel = voiceRole.VoiceModule.ValidateSend(msg.Channel);
+            if (voiceChatChannel == VoiceChatChannel.None) {
+                return false;
+            }
+
+            voiceRole.VoiceModule.CurrentChannel = voiceChatChannel;
+
             var sendingArgs = new PlayerSendingVoiceMessageEventArgs(ref msg);
-            
+            msg = sendingArgs.Message;
+
             PlayerEvents.OnSendingVoiceMessage(sendingArgs);
 
             if (!sendingArgs.IsAllowed)
