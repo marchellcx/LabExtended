@@ -1845,6 +1845,51 @@ public class ExPlayer : Player, IDisposable
         if (infoProperty?.Length > 0)
             infoBuilder.AppendLine(infoProperty);
 
+        void SetCustomArea(bool curStatus, bool newStatus)
+        {
+            if (curStatus == newStatus)
+                return;
+
+            if (newStatus)
+            {
+                ReferenceHub.nicknameSync._playerInfoToShow |= PlayerInfoArea.CustomInfo;
+                ReferenceHub.nicknameSync.syncVarDirtyBits |= 2UL;
+            }
+            else
+            {
+                ReferenceHub.nicknameSync._playerInfoToShow &= ~PlayerInfoArea.CustomInfo;
+                ReferenceHub.nicknameSync.syncVarDirtyBits |= 2UL;
+            }
+        }
+        
+        void SetCustomInfo(string? value)
+        {
+            var isAreaActive = (ReferenceHub.nicknameSync._playerInfoToShow & PlayerInfoArea.CustomInfo) == PlayerInfoArea.CustomInfo;
+            
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                cInfoRejectionReason = null;
+                
+                if (ReferenceHub.nicknameSync._customPlayerInfoString != null)
+                {
+                    ReferenceHub.nicknameSync._customPlayerInfoString = null;
+                    ReferenceHub.nicknameSync.syncVarDirtyBits |= 4UL;
+                }
+
+                SetCustomArea(isAreaActive, false);
+            }
+            else
+            {
+                if (ReferenceHub.nicknameSync._customPlayerInfoString != value)
+                {
+                    ReferenceHub.nicknameSync._customPlayerInfoString = value;
+                    ReferenceHub.nicknameSync.syncVarDirtyBits |= 4UL;
+                }
+
+                SetCustomArea(isAreaActive, true);
+            }
+        }
+
         try
         {
             Role.CustomRole?.OnBuildingInfo(this, ref Role.customRoleData);
@@ -1853,16 +1898,7 @@ public class ExPlayer : Player, IDisposable
 
             if (infoBuilder.Length == 0)
             {
-                cInfoRejectionReason = null;
-
-                if (!NetworkBehaviour.SyncVarEqual(string.Empty, ref ReferenceHub.nicknameSync._customPlayerInfoString))
-                {
-                    ReferenceHub.nicknameSync._customPlayerInfoString = string.Empty;
-                    ReferenceHub.nicknameSync._playerInfoToShow &= ~PlayerInfoArea.CustomInfo;
-                    
-                    ReferenceHub.nicknameSync.syncVarDirtyBits |= 2UL;
-                }
-
+                SetCustomInfo(null);
                 return;
             }
 
@@ -1871,31 +1907,15 @@ public class ExPlayer : Player, IDisposable
 
             var customInfo = infoBuilder.ToString();
 
-            if (NetworkBehaviour.SyncVarEqual(customInfo, ref ReferenceHub.nicknameSync._customPlayerInfoString))
+            if (customInfo.Length < 1)
             {
-                if (!ReferenceHub.nicknameSync._playerInfoToShow.HasFlag(PlayerInfoArea.CustomInfo))
-                {
-                    ReferenceHub.nicknameSync._playerInfoToShow |= PlayerInfoArea.CustomInfo;
-                    ReferenceHub.nicknameSync.syncVarDirtyBits |= 4UL;
-                }
-                
-                cInfoRejectionReason = null;
+                SetCustomInfo(null);
                 return;
             }
 
             if (!NicknameSync.ValidateCustomInfo(customInfo, out var rejectionText))
             {
-                if (!NetworkBehaviour.SyncVarEqual(string.Empty, ref ReferenceHub.nicknameSync._customPlayerInfoString))
-                {
-                    ReferenceHub.nicknameSync._customPlayerInfoString = string.Empty;
-                    ReferenceHub.nicknameSync.syncVarDirtyBits |= 2UL;
-
-                    if (ReferenceHub.nicknameSync._playerInfoToShow.HasFlag(PlayerInfoArea.CustomInfo))
-                    {
-                        ReferenceHub.nicknameSync._playerInfoToShow &= ~PlayerInfoArea.CustomInfo;
-                        ReferenceHub.nicknameSync.syncVarDirtyBits |= 4UL;
-                    }
-                }
+                SetCustomInfo(null);
                 
                 if (cInfoRejectionReason != null && cInfoRejectionReason == rejectionText)
                     return;
@@ -1905,15 +1925,8 @@ public class ExPlayer : Player, IDisposable
                 ApiLog.Warn("LabExtended", $"CustomInfo of &3{ToLogString()}&r was &1REJECTED&r! (&3{rejectionText}&r)");
                 return;
             }
-
-            ReferenceHub.nicknameSync._customPlayerInfoString = customInfo;
-            ReferenceHub.nicknameSync.syncVarDirtyBits |= 2UL;
-
-            if (!ReferenceHub.nicknameSync._playerInfoToShow.HasFlag(PlayerInfoArea.CustomInfo))
-            {
-                ReferenceHub.nicknameSync._playerInfoToShow |= PlayerInfoArea.CustomInfo;
-                ReferenceHub.nicknameSync.syncVarDirtyBits |= 4UL;
-            }
+            
+            SetCustomInfo(customInfo);
 
             cInfoRejectionReason = null;
         }
@@ -1942,22 +1955,19 @@ public class ExPlayer : Player, IDisposable
         {
             var mobilityController = pair.Value.GetMobilityController();
 
-            if (mobilityController is IStaminaModifier staminaModifier
-                && staminaModifier.StaminaModifierActive)
+            if (mobilityController is IStaminaModifier { StaminaModifierActive: true } staminaModifier)
             {
                 inventory._staminaModifier *= staminaModifier.StaminaUsageMultiplier;
                 inventory._sprintingDisabled |= staminaModifier.SprintingDisabled;
             }
 
-            if (mobilityController is IMovementSpeedModifier movementSpeedModifier
-                && movementSpeedModifier.MovementModifierActive)
+            if (mobilityController is IMovementSpeedModifier { MovementModifierActive: true } movementSpeedModifier)
             {
                 inventory._movementLimiter = Mathf.Min(inventory._movementLimiter, movementSpeedModifier.MovementSpeedLimit);
                 inventory._movementMultiplier *= movementSpeedModifier.MovementSpeedMultiplier;
             }
             
-            if (mobilityController is ISprintSpeedModifier sprintSpeedModifier
-                && sprintSpeedModifier.SprintModifierActive)
+            if (mobilityController is ISprintSpeedModifier { SprintModifierActive: true } sprintSpeedModifier)
                 inventory._sprintMultiplier *= sprintSpeedModifier.SprintSpeedMultiplier;
         }
 
@@ -2005,7 +2015,12 @@ public class ExPlayer : Player, IDisposable
         }
     }
 
-    private static ReferenceHub SpawnHiddenDummy(string nick)
+    /// <summary>
+    /// Spawns a new dummy player that is hidden from the player list.
+    /// </summary>
+    /// <param name="nick">The nickname to set.</param>
+    /// <returns>The newly spawned <see cref="ReferenceHub"/> instance.</returns>
+    public static ReferenceHub SpawnHiddenDummy(string nick)
     {
         var hubGo = UnityEngine.Object.Instantiate(NetworkManager.singleton.playerPrefab);
         var hub = hubGo.GetComponent<ReferenceHub>();
