@@ -1,6 +1,10 @@
-﻿using LabExtended.Extensions;
+﻿using Hazards;
+
+using LabExtended.Extensions;
+
 using MapGeneration.Distributors;
 using MapGeneration.Holidays;
+
 using Mirror;
 
 using UnityEngine;
@@ -18,6 +22,11 @@ public class PrefabDefinition
     
     private bool isLoaded;
     private bool isLoadAttempt;
+
+    /// <summary>
+    /// Gets called once a new instance of this prefab is spawned.
+    /// </summary>
+    public event Action<GameObject>? Spawned;
 
     /// <summary>
     /// Gets the prefab's name.
@@ -158,6 +167,7 @@ public class PrefabDefinition
         SetupInstance(identity, identity.transform.position, identity.transform.localScale, identity.transform.rotation);
         SpawnInstance(instance.GetComponent<NetworkIdentity>());
         
+        Spawned?.InvokeSafe(instance);
         return component;
     }
 
@@ -189,6 +199,14 @@ public class PrefabDefinition
         {
             positionSync.Network_position = positionSync._position = position;
             positionSync.Network_rotationY = positionSync._rotationY = (sbyte)Mathf.RoundToInt(rotation.eulerAngles.y / StructurePositionSync.ConversionRate);
+        }
+
+        if (identity.gameObject.TryFindComponent<EnvironmentalHazard>(out var hazard))
+        {
+            hazard.SourcePosition = position;
+
+            if (hazard is TantrumEnvironmentalHazard tantrumHazard)
+                tantrumHazard.SynchronizedPosition = new(position);
         }
     }
 
