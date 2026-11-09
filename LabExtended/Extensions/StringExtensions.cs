@@ -127,6 +127,21 @@ public static class StringExtensions
     }
 
     /// <summary>
+    /// Converts an object to a string filled with NULL if the object is null.
+    /// </summary>
+    /// <param name="obj">The target object.</param>
+    /// <param name="toString">Delegate to convert the object to string.</param>
+    /// <typeparam name="T">Type of the object.</typeparam>
+    /// <returns>The converted string.</returns>
+    public static string NullOrValueTrueColor<T>(this T obj, Func<T, string> toString)
+    {
+        if (obj == null)
+            return "&1NULL&r";
+
+        return $"&2{toString(obj)}&r";
+    }
+
+    /// <summary>
     /// Converts a Boolean value to a color-formatted string representation using custom markup codes.
     /// </summary>
     /// <remarks>The returned string uses custom markup codes (e.g., "&2" and "&1") to indicate color
@@ -849,14 +864,13 @@ public static class StringExtensions
     /// <summary>
     /// Retrieves a substring and appends a postfix string.
     /// </summary>
-    public static string SubstringPostfix(this string str, int index, int length, string postfix = " ...")
-        => str.Substring(index, length) + postfix;
-
-    /// <summary>
-    /// Retrieves a substring and appends a postfix string.
-    /// </summary>
     public static string SubstringPostfix(this string str, int length, string postfix = " ...")
-        => str.SubstringPostfix(0, length, postfix);
+    {
+        if (str.Length <= length)
+            return str;
+        
+        return str.Substring(0, length) + postfix;
+    }
 
     /// <summary>
     /// Gets all characters in a string before a specific index.

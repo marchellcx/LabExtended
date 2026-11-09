@@ -1,5 +1,6 @@
 ﻿using LabExtended.Extensions;
 using MapGeneration.Distributors;
+using MapGeneration.Holidays;
 using Mirror;
 
 using UnityEngine;
@@ -11,10 +12,96 @@ namespace LabExtended.API.Prefabs;
 /// </summary>
 public class PrefabDefinition
 {
+    private string normalName;
+
+    private GameObject? prefab;
+    
+    private bool isLoaded;
+    private bool isLoadAttempt;
+
     /// <summary>
     /// Gets the prefab's name.
     /// </summary>
-    public string Name { get; }
+    public string Name
+    {
+        get
+        {
+            if (PrefabList.ActiveHoliday != HolidayType.None)
+            {
+                if (HolidayVariations.TryGetValue(PrefabList.ActiveHoliday, out var holidayName))
+                {
+                    return holidayName;
+                }
+            }
+
+            return normalName;
+        }
+    }
+
+    /// <summary>
+    /// Checks if the prefab is successfully loaded.
+    /// </summary>
+    public bool IsLoaded
+    {
+        get
+        {
+            if (!isLoadAttempt)
+            {
+                isLoaded = TryFindPrefab(out prefab);
+                isLoadAttempt = true;
+            }
+
+            return isLoaded;
+        }
+    }
+    
+    /// <summary>
+    /// Checks whether the prefab is currently active.
+    /// </summary>
+    public bool IsActive
+    {
+        get
+        {
+            if (ActiveHolidays.HasValue && ActiveHolidays.Value != PrefabList.ActiveHoliday)
+                return false;
+
+            return true;
+        }
+    }
+
+    /// <summary>
+    /// Whether or not a holiday variation of this prefab is active.
+    /// </summary>
+    public bool IsHolidayActive => (ActiveHolidays.HasValue && ActiveHolidays.Value == PrefabList.ActiveHoliday) || HolidayVariations.ContainsKey(PrefabList.ActiveHoliday);
+    
+    /// <summary>
+    /// Specifies the holidays on which this prefab is active.
+    /// </summary>
+    public HolidayType? ActiveHolidays { get; }
+
+    /// <summary>
+    /// Specifies the name variations for specific holidays.
+    /// </summary>
+    public Dictionary<HolidayType, string> HolidayVariations { get; } = new();
+
+    /// <summary>
+    /// Creates a new <see cref="PrefabDefinition"/> instance.
+    /// </summary>
+    /// <param name="name">Name of the prefab object.</param>
+    /// <param name="activeHolidays">Holidays on which the prefab is active.</param>
+    /// <param name="holidayVariations">Name variations to specific holidays.</param>
+    public PrefabDefinition(string name, HolidayType? activeHolidays, params KeyValuePair<HolidayType, string>[] holidayVariations)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentNullException(nameof(name));
+        
+        normalName = name;
+        
+        ActiveHolidays = activeHolidays;
+        
+        foreach (var pair in holidayVariations)
+            HolidayVariations.Add(pair.Key, pair.Value);
+    }
 
     /// <summary>
     /// Gets the prefab's instance.
@@ -23,18 +110,13 @@ public class PrefabDefinition
     {
         get
         {
-            if (field is null)
+            if (!isLoadAttempt)
             {
-                if (string.IsNullOrWhiteSpace(Name))
-                    throw new Exception("Empty prefab name");
-
-                if (!NetworkClient.prefabs.TryGetFirst(x => x.Value.name.Trim() == Name, out var prefabPair))
-                    throw new Exception($"Prefab '{Name}' could not be found");
-
-                field = prefabPair.Value;
+                isLoaded = TryFindPrefab(out prefab);
+                isLoadAttempt = true;
             }
 
-            return field;
+            return prefab;
         }
     }
 
@@ -43,11 +125,11 @@ public class PrefabDefinition
     /// </summary>
     /// <param name="prefabSetup"></param>
     /// <returns></returns>
-    public GameObject Spawn(Action<GameObject> prefabSetup = null)
+    public GameObject Spawn(Action<GameObject>? prefabSetup = null)
     {
-        var instance = CreateInstance();
+        var instance = CreateInstance()!;
 
-        prefabSetup.InvokeSafe(instance);
+        prefabSetup?.InvokeSafe(instance);
 
         SpawnInstance(instance.GetComponent<NetworkIdentity>());
         return instance;
@@ -59,10 +141,10 @@ public class PrefabDefinition
     /// <typeparam name="T">Component type.</typeparam>
     /// <param name="prefabSetup"></param>
     /// <returns></returns>
-    public T Spawn<T>(Action<T> prefabSetup = null) where T : Component
+    public T Spawn<T>(Action<T>? prefabSetup = null) where T : Component
     {
         var instance = CreateInstance();
-        var identity = instance.GetComponent<NetworkIdentity>();
+        var identity = instance!.GetComponent<NetworkIdentity>();
         
         var component = default(T);
 
@@ -71,7 +153,7 @@ public class PrefabDefinition
             && (component = instance.GetComponentInParent<T>()) is null)
             throw new Exception($"Component of type '{typeof(T).FullName}' could not be found in prefab '{Name}'");
 
-        prefabSetup.InvokeSafe(component);
+        prefabSetup?.InvokeSafe(component);
 
         SetupInstance(identity, identity.transform.position, identity.transform.localScale, identity.transform.rotation);
         SpawnInstance(instance.GetComponent<NetworkIdentity>());
@@ -82,7 +164,7 @@ public class PrefabDefinition
     /// <summary>
     /// Creates a new instance from this prefab.
     /// </summary>
-    public GameObject CreateInstance()
+    public GameObject? CreateInstance()
         => UnityEngine.Object.Instantiate(GameObject);
 
     /// <summary>
@@ -101,6 +183,8 @@ public class PrefabDefinition
     /// <param name="rotation">The rotation to spawn with.</param>
     public virtual void SetupInstance(NetworkIdentity identity, Vector3 position, Vector3 scale, Quaternion rotation)
     {
+        identity.transform.localScale = scale;
+        
         if (identity.gameObject.TryFindComponent<StructurePositionSync>(out var positionSync))
         {
             positionSync.Network_position = positionSync._position = position;
@@ -109,8 +193,21 @@ public class PrefabDefinition
     }
 
     /// <summary>
-    /// Creates a new <see cref="PrefabDefinition"/> instance.
+    /// Attempts to find the prefab in <see cref="NetworkClient.prefabs"/>.
     /// </summary>
-    /// <param name="name">Name of the prefab object.</param>
-    public PrefabDefinition(string name) => Name = name;
+    /// <param name="prefab">The prefab instance if found, otherwise null.</param>
+    /// <returns>true if the prefab was found, otherwise false.</returns>
+    public bool TryFindPrefab(out GameObject prefab)
+    {
+        prefab = null!;
+        
+        if (string.IsNullOrWhiteSpace(Name))
+            return false;
+
+        if (!NetworkClient.prefabs.TryGetFirst(x => x.Value.name.Trim() == Name, out var prefabPair))
+            return false;
+
+        prefab = prefabPair.Value;
+        return true;
+    }
 }
