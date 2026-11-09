@@ -502,12 +502,6 @@ public static class PrefabList
     public static PrefabDefinition Locker { get; } = new("MiscLocker", null);
 
     /// <summary>
-    /// Gets the prefab of Hubert Moon.
-    /// </summary>
-    [Obsolete("Hubert Moon has been removed from the game due to the end of Halloween.", true)]
-    public static PrefabDefinition? HubertMoon { get; } = null;
-
-    /// <summary>
     /// Gets the prefab of an elevator's gate.
     /// </summary>
     public static PrefabDefinition ElevatorGate { get; } = new("ElevatorChamber Gates", null);
@@ -591,11 +585,6 @@ public static class PrefabList
     /// Gets the prefab of a gate door.
     /// </summary>
     public static PrefabDefinition GateDoor { get; } = new("Spawnable Unsecured Pryable GateDoor", null);
-    
-    /// <summary>
-    /// Honestly have no idea what this one is.
-    /// </summary>
-    public static PrefabDefinition SnowPoop { get; } = new("SnowPoop - TantrumObj", null);
     #endregion
 
     #region Halloween Prefabs
@@ -608,9 +597,19 @@ public static class PrefabList
     /// Gets the prefab of brown candy tantrum.
     /// </summary>
     public static PrefabDefinition BrownCandyTantrum { get; } = new("TantrumObj (Brown Candy)", HolidayType.Halloween);
+
+    /// <summary>
+    /// Gets the prefab of Hubert Moon.
+    /// </summary>
+    public static PrefabDefinition HubertMoon { get; } = new("Hubert Moon", HolidayType.Halloween);
     #endregion
     
     #region Christmas Prefabs
+    /// <summary>
+    /// Christmas variation of the regular SCP-173 tantrum.
+    /// </summary>
+    public static PrefabDefinition SnowPoop { get; } = new("SnowPoop - TantrumObj", HolidayType.Christmas);
+    
     /// <summary>
     /// Gets the SCP-559 (cake) prefab.
     /// </summary>
